@@ -1,14 +1,14 @@
 ---
 page_type: sample
 languages:
-- csharp
+- python
 products:
-- dotnet
+- azureml
 description: "Add 150 character max description"
-urlFragment: "update-this-to-unique-url-stub"
+urlFragment: "solution-accelerator-many-models"
 ---
 
-# Official Microsoft Sample
+# Many Models Solution Accelerator
 
 <!-- 
 Guidelines on README format: https://review.docs.microsoft.com/help/onboard/admin/samples/concepts/readme-template?branch=master

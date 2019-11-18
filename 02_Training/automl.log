@@ -1,0 +1,127 @@
+2019-11-18 11:25:34,921 - WARNING - 295 : XGBoost is included in recommended algorithms list but not installed locally. If you would like to include XGBoost models in the recommended algorithms please install XGBoost locally. Adding XGBoost to the blacklist.
+2019-11-18 11:26:44,735 - WARNING - 295 : XGBoost is included in recommended algorithms list but not installed locally. If you would like to include XGBoost models in the recommended algorithms please install XGBoost locally. Adding XGBoost to the blacklist.
+2019-11-18 11:26:44,789 - INFO - 295 : Starting usage telemetry collection
+2019-11-18 11:26:44,795 - INFO - 295 : Loading data using user script.
+2019-11-18 11:26:44,801 - WARNING - 295 : Failed to load user script (DataException:
+	Message: Could not execute get_data() from user script.Exception: 'AZUREML_DATAREFERENCE_output_split_train_x'
+	InnerException None
+	ErrorResponse 
+{
+    "error": {
+        "code": "UserError",
+        "inner_error": {
+            "code": "InvalidData"
+        },
+        "message": "Could not execute get_data() from user script.Exception: 'AZUREML_DATAREFERENCE_output_split_train_x'"
+    }
+}), skipping.
+2019-11-18 11:26:44,817 - INFO - 295 : Package azureml-dataprep missing from dependencies file.
+2019-11-18 11:26:44,818 - INFO - 295 : Using installed version: azureml-dataprep==1.1.31
+2019-11-18 11:26:44,819 - INFO - 295 : Package py-xgboost missing from dependencies file.
+2019-11-18 11:26:44,819 - INFO - 295 : Using pinned version: py-xgboost<=0.80
+2019-11-18 11:26:44,820 - INFO - 295 : Package inference-schema missing from dependencies file.
+2019-11-18 11:26:44,821 - INFO - 295 : Package fbprophet missing from dependencies file.
+2019-11-18 11:26:44,821 - INFO - 295 : Package setuptools-git missing from dependencies file.
+2019-11-18 11:26:45,046 - INFO - 295 : Validation service found the data has no errors.
+2019-11-18 11:27:29,797 - WARNING - 295 : XGBoost is included in recommended algorithms list but not installed locally. If you would like to include XGBoost models in the recommended algorithms please install XGBoost locally. Adding XGBoost to the blacklist.
+2019-11-18 11:27:29,819 - INFO - 295 : Starting usage telemetry collection
+2019-11-18 11:27:29,820 - INFO - 295 : Loading data using user script.
+2019-11-18 11:27:29,821 - WARNING - 295 : Failed to load user script (DataException:
+	Message: Could not execute get_data() from user script.Exception: 'AZUREML_DATAREFERENCE_output_split_train_x'
+	InnerException None
+	ErrorResponse 
+{
+    "error": {
+        "code": "UserError",
+        "inner_error": {
+            "code": "InvalidData"
+        },
+        "message": "Could not execute get_data() from user script.Exception: 'AZUREML_DATAREFERENCE_output_split_train_x'"
+    }
+}), skipping.
+2019-11-18 11:27:29,823 - INFO - 295 : Package setuptools-git missing from dependencies file.
+2019-11-18 11:27:30,482 - INFO - 295 : Validation service found the data has no errors.
+2019-11-18 11:28:48,817 - WARNING - 295 : XGBoost is included in recommended algorithms list but not installed locally. If you would like to include XGBoost models in the recommended algorithms please install XGBoost locally. Adding XGBoost to the blacklist.
+2019-11-18 11:28:48,857 - INFO - 295 : Starting usage telemetry collection
+2019-11-18 11:28:48,858 - INFO - 295 : Loading data using user script.
+2019-11-18 11:28:48,859 - WARNING - 295 : Failed to load user script (DataException:
+	Message: Could not execute get_data() from user script.Exception: 'AZUREML_DATAREFERENCE_output_split_train_x'
+	InnerException None
+	ErrorResponse 
+{
+    "error": {
+        "code": "UserError",
+        "inner_error": {
+            "code": "InvalidData"
+        },
+        "message": "Could not execute get_data() from user script.Exception: 'AZUREML_DATAREFERENCE_output_split_train_x'"
+    }
+}), skipping.
+2019-11-18 11:28:48,861 - INFO - 295 : Package setuptools-git missing from dependencies file.
+2019-11-18 11:28:49,202 - INFO - 295 : Validation service found the data has no errors.
+2019-11-18 11:29:59,147 - WARNING - 295 : XGBoost is included in recommended algorithms list but not installed locally. If you would like to include XGBoost models in the recommended algorithms please install XGBoost locally. Adding XGBoost to the blacklist.
+2019-11-18 11:29:59,178 - INFO - 295 : Starting usage telemetry collection
+2019-11-18 11:29:59,179 - INFO - 295 : Loading data using user script.
+2019-11-18 11:29:59,183 - WARNING - 295 : Failed to load user script (DataException:
+	Message: Could not execute get_data() from user script.Exception: 'AZUREML_DATAREFERENCE_output_split_train_x'
+	InnerException None
+	ErrorResponse 
+{
+    "error": {
+        "code": "UserError",
+        "inner_error": {
+            "code": "InvalidData"
+        },
+        "message": "Could not execute get_data() from user script.Exception: 'AZUREML_DATAREFERENCE_output_split_train_x'"
+    }
+}), skipping.
+2019-11-18 11:29:59,191 - INFO - 295 : Package azureml-dataprep missing from dependencies file.
+2019-11-18 11:29:59,191 - INFO - 295 : Using installed version: azureml-dataprep==1.1.31
+2019-11-18 11:29:59,192 - INFO - 295 : Package py-xgboost missing from dependencies file.
+2019-11-18 11:29:59,192 - INFO - 295 : Using pinned version: py-xgboost<=0.80
+2019-11-18 11:29:59,192 - INFO - 295 : Package inference-schema missing from dependencies file.
+2019-11-18 11:29:59,193 - INFO - 295 : Package fbprophet missing from dependencies file.
+2019-11-18 11:29:59,193 - INFO - 295 : Package setuptools-git missing from dependencies file.
+2019-11-18 11:29:59,681 - INFO - 295 : Validation service found the data has no errors.
+2019-11-18 11:32:43,264 - WARNING - 295 : XGBoost is included in recommended algorithms list but not installed locally. If you would like to include XGBoost models in the recommended algorithms please install XGBoost locally. Adding XGBoost to the blacklist.
+2019-11-18 11:32:43,294 - INFO - 295 : Starting usage telemetry collection
+2019-11-18 11:32:43,295 - INFO - 295 : Loading data using user script.
+2019-11-18 11:32:43,296 - WARNING - 295 : Failed to load user script (DataException:
+	Message: Could not execute get_data() from user script.Exception: 'AZUREML_DATAREFERENCE_output_split_train_x'
+	InnerException None
+	ErrorResponse 
+{
+    "error": {
+        "code": "UserError",
+        "inner_error": {
+            "code": "InvalidData"
+        },
+        "message": "Could not execute get_data() from user script.Exception: 'AZUREML_DATAREFERENCE_output_split_train_x'"
+    }
+}), skipping.
+2019-11-18 11:32:43,298 - INFO - 295 : Package setuptools-git missing from dependencies file.
+2019-11-18 11:32:43,837 - INFO - 295 : Validation service found the data has no errors.
+2019-11-18 11:34:35,628 - WARNING - 295 : XGBoost is included in recommended algorithms list but not installed locally. If you would like to include XGBoost models in the recommended algorithms please install XGBoost locally. Adding XGBoost to the blacklist.
+2019-11-18 11:34:35,692 - INFO - 295 : Starting usage telemetry collection
+2019-11-18 11:34:35,694 - INFO - 295 : Loading data using user script.
+2019-11-18 11:34:35,703 - WARNING - 295 : Failed to load user script (DataException:
+	Message: Could not execute get_data() from user script.Exception: 'AZUREML_DATAREFERENCE_output_split_train_x'
+	InnerException None
+	ErrorResponse 
+{
+    "error": {
+        "code": "UserError",
+        "inner_error": {
+            "code": "InvalidData"
+        },
+        "message": "Could not execute get_data() from user script.Exception: 'AZUREML_DATAREFERENCE_output_split_train_x'"
+    }
+}), skipping.
+2019-11-18 11:34:35,715 - INFO - 295 : Package azureml-dataprep missing from dependencies file.
+2019-11-18 11:34:35,716 - INFO - 295 : Using installed version: azureml-dataprep==1.1.31
+2019-11-18 11:34:35,716 - INFO - 295 : Package py-xgboost missing from dependencies file.
+2019-11-18 11:34:35,717 - INFO - 295 : Using pinned version: py-xgboost<=0.80
+2019-11-18 11:34:35,717 - INFO - 295 : Package inference-schema missing from dependencies file.
+2019-11-18 11:34:35,718 - INFO - 295 : Package fbprophet missing from dependencies file.
+2019-11-18 11:34:35,718 - INFO - 295 : Package setuptools-git missing from dependencies file.
+2019-11-18 11:34:36,219 - INFO - 295 : Validation service found the data has no errors.
