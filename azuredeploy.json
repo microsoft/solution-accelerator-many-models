@@ -1,0 +1,138 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "description": {
+            "type": "String"
+        },
+        "adbWorkspaceId": {
+            "type": "String"
+        },
+        "friendlyName": {
+            "type": "String"
+        },
+        "location": {
+            "type": "String"
+        },
+        "machineLearningApiVersion": {
+            "type": "String"
+        },
+        "name": {
+            "type": "String"
+        },
+        "newStorageAccountName": {
+            "type": "String"
+        },
+        "newStorageAccountType": {
+            "type": "String"
+        },
+        "storageAccountId": {
+            "type": "String"
+        },
+        "storageApiVersion": {
+            "type": "String"
+        },
+        "appInsightsApiVersion": {
+            "type": "String"
+        },
+        "appInsightsId": {
+            "type": "String"
+        },
+        "appInsightsName": {
+            "type": "String"
+        },
+        "appInsightsKind": {
+            "type": "String"
+        },
+        "appInsightsType": {
+            "type": "String"
+        },
+        "appInsightsLocation": {
+            "type": "String"
+        },
+        "keyVaultApiVersion": {
+            "type": "String"
+        },
+        "keyVaultName": {
+            "type": "String"
+        },
+        "keyVaultId": {
+            "type": "String"
+        },
+        "keyVaultTenant": {
+            "type": "String"
+        },
+        "tagValues": {
+            "type": "Object"
+        },
+        "sku": {
+            "type": "Object"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.MachineLearningServices/workspaces",
+            "apiVersion": "2019-11-01",
+            "name": "[parameters('name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[parameters('keyVaultId')]",
+                "[parameters('storageAccountId')]",
+                "[parameters('appInsightsId')]"
+            ],
+            "tags": "[parameters('tagValues')]",
+            "sku": {
+                "name": "Enterprise",
+                "tier": "Enterprise"
+            },
+            "identity": {
+                "type": "systemAssigned"
+            },
+            "properties": {
+                "descsription": "[parameters('description')]",
+                "friendlyName": "[parameters('friendlyName')]",
+                "keyVault": "[parameters('keyVaultId')]",
+                "storageAccount": "[parameters('storageAccountId')]",
+                "adbWorkspace": "[parameters('adbWorkspaceId')]",
+                "applicationInsights": "[parameters('appInsightsId')]"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "[parameters('storageApiVersion')]",
+            "name": "[parameters('newStorageAccountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('newStorageAccountType')]"
+            },
+            "kind": "Storage"
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "[parameters('keyVaultApiVersion')]",
+            "name": "[parameters('keyVaultName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "accessPolicies": [],
+                "enabledForDeployment": true,
+                "enabledForTemplateDeployment": true,
+                "enabledForVolumeEncryption": true,
+                "sku": {
+                    "name": "Standard",
+                    "family": "A"
+                },
+                "tenantId": "[parameters('keyVaultTenant')]"
+            }
+        },
+        {
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "[parameters('appInsightsApiVersion')]",
+            "name": "[parameters('appInsightsName')]",
+            "location": "[parameters('appInsightsLocation')]",
+            "kind": "[parameters('appInsightsKind')]",
+            "properties": {
+                "Application_Type": "[parameters('appInsightsType')]"
+            }
+        }
+    ]
+}
