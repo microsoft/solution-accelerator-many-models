@@ -1,5 +1,1 @@
-{
-    "subscription_id": "ef96be94-eb8b-4cb0-950d-151cda7e92ed",
-    "resource_group": "GBIT-MachineLearning-POC-NE-rg",
-    "workspace_name": "pop-project"
-}
+{"Id": null, "Scope": "/subscriptions/bbd86e7d-3602-4e6d-baa4-40ae2ad9303c/resourceGroups/DerekSandboxAML/providers/Microsoft.MachineLearningServices/workspaces/derek-sandbox"}
