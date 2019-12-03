@@ -72,7 +72,7 @@ def run(input_data):
             data.index = pd.to_datetime(data.index)
             train = data[data.index <= split_date]
             test = data[data.index > split_date]
-            # 3.train the model
+            # 3.Train the model
             model = pm.auto_arima(train[args.target_column], 
                       start_p=0,
                       start_q=0,
@@ -94,7 +94,7 @@ def run(input_data):
                       out_of_sample_size = 16
                      )
             logger.info('done training')
-            # 4. save the model
+            # 4. Save the model
             logger.info(model)
             logger.info(mname)
             with open(mname, 'wb') as file:
