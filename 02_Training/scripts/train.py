@@ -93,6 +93,7 @@ def run(input_data):
                       suppress_warnings = True, 
                       out_of_sample_size = 16
                      )
+            model = model.fit(train[args.target_column])
             logger.info('done training')
             # 4. Save the model
             logger.info(model)
