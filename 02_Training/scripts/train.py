@@ -66,31 +66,31 @@ def run(input_data):
             data = pd.read_csv(file,header=0)
             logger.info(data.head())
             # 2. Split the data into train and test sets
-            data = data.set_index(args.timestamp_column)             
+            data = data.set_index(args.timestamp_column)
             max_date = datetime.datetime.strptime(data.index.max(),'%Y-%m-%d')
             split_date = max_date - timedelta(days=7*args.n_test_periods)
             data.index = pd.to_datetime(data.index)
             train = data[data.index <= split_date]
             test = data[data.index > split_date]
             # 3.Train the model
-            model = pm.auto_arima(train[args.target_column], 
+            model = pm.auto_arima(train[args.target_column],
                       start_p=0,
                       start_q=0,
                       test='adf', #default stationarity test is kpps
                       max_p =3,
-                      max_d = 2, 
+                      max_d = 2,
                       max_q=3,
-                      m=3, #number of observations per seasonal cycle 
+                      m=3, #number of observations per seasonal cycle
                       #d=None,
                       seasonal=True,
                       #trend = None, # adjust this if the series have trend
-                      #start_P=0, 
+                      #start_P=0,
                       #D=0,
                       information_criterion = 'aic',
-                      trace=True, #prints status on the fits 
-                      #error_action='ignore', 
+                      trace=True, #prints status on the fits
+                      #error_action='ignore',
                       stepwise = False, # this increments instead of doing a grid search
-                      suppress_warnings = True, 
+                      suppress_warnings = True,
                       out_of_sample_size = 16
                      )
             model = model.fit(train[args.target_column])
