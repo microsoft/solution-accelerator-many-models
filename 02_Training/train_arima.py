@@ -43,6 +43,7 @@ def train_auto_arima(input_data, target_column, timestamp_column, n_test_periods
         AzureML Run object
  """
     # Create Directory under outputs for model objects 
+	# update directory to blob 
     model_outputs = os.path.join("outputs")
     if not os.path.exists(model_outputs):
         os.makedirs(model_outputs)
