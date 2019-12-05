@@ -4,7 +4,7 @@ languages:
 - python
 products:
 - azureml
-description: "Add 150 character max description"
+description: "Solution Accelerator designed to help get you up and running with the many models pattern on Azure"
 urlFragment: "solution-accelerator-many-models"
 ---
 
