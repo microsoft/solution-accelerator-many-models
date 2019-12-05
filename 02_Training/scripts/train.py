@@ -65,48 +65,49 @@ def run(input_data):
             date1=datetime.datetime.now()
             logger.info('starting ('+file+') ' + str(date1))
             childrun.log(mname,'starttime-'+str(date1))
-                      
+
             data = pd.read_csv(file,header=0)
             logger.info(data.head())
-            
+
             # 2. Split the data into train and test sets based on dates
-            data = data.set_index(args.timestamp_column)             
+            data = data.set_index(args.timestamp_column)
             max_date = datetime.datetime.strptime(data.index.max(),'%Y-%m-%d')
             split_date = max_date - timedelta(days=7*args.n_test_periods)
             data.index = pd.to_datetime(data.index)
             train = data[data.index <= split_date]
             test = data[data.index > split_date]
-            
+
             # 3.Train the model
-            model = pm.auto_arima(train[args.target_column], 
+            model = pm.auto_arima(train[args.target_column],
                       start_p=0,
                       start_q=0,
                       test='adf', #default stationarity test is kpps
                       max_p =3,
-                      max_d = 2, 
+                      max_d = 2,
                       max_q=3,
-                      m=3, #number of observations per seasonal cycle 
+                      m=3, #number of observations per seasonal cycle
                       #d=None,
                       seasonal=True,
                       #trend = None, # adjust this if the series have trend
-                      #start_P=0, 
+                      #start_P=0,
                       #D=0,
                       information_criterion = 'aic',
-                      trace=True, #prints status on the fits 
-                      #error_action='ignore', 
+                      trace=True, #prints status on the fits
+                      #error_action='ignore',
                       stepwise = False, # this increments instead of doing a grid search
-                      suppress_warnings = True, 
+                      suppress_warnings = True,
                       out_of_sample_size = 16
                      )
             model = model.fit(train[args.target_column])
+
             logger.info('done training')
-            
+
             # 4. Save the model
             logger.info(model)
-            logger.info(mname)           
+            logger.info(mname)
             with open(mname, 'wb') as file:
                 joblib.dump(value=model, filename=os.path.join('./outputs/', mname))
-            
+
             # 5. Register the model to the workspace
             ws1 = childrun.experiment.workspace
             try:
@@ -117,7 +118,7 @@ def run(input_data):
             Model.register(workspace=ws1, model_path=os.path.join('./outputs/', mname), model_name='arima_'+str(input_data).split('/')[-1][:-6], model_framework='pmdarima')
             date2=datetime.datetime.now()
             logger.info('ending ('+str(file)+') ' + str(date2))
-            
+
             #6. Log some metrics
             childrun.log(mname,'endtime-'+str(date2))
             childrun.log(mname,'auc-1')
