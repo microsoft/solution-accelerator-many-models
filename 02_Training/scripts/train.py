@@ -56,17 +56,17 @@ def run(input_data):
     logger.info('processing all files')
 
     # 1. Read in the data file
-    for file in input_data:
+    for idx, csv_file_path in enumerate(input_data):
         u1 = uuid.uuid4()
         mname='arima'+str(u1)[0:16]
         with thisrun.child_run(name=mname) as childrun:
             for w in range(0,5):
                 thisrun.log(mname,str(w))
             date1=datetime.datetime.now()
-            logger.info('starting ('+file+') ' + str(date1))
+            logger.info('starting ('+csv_file_path+') ' + str(date1))
             childrun.log(mname,'starttime-'+str(date1))
 
-            data = pd.read_csv(file,header=0)
+            data = pd.read_csv(csv_file_path,header=0)
             logger.info(data.head())
 
             # 2. Split the data into train and test sets based on dates
@@ -99,7 +99,6 @@ def run(input_data):
                       out_of_sample_size = 16
                      )
             model = model.fit(train[args.target_column])
-
             logger.info('done training')
 
             # 4. Save the model
