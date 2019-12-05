@@ -4,7 +4,7 @@ languages:
 - python
 products:
 - azureml
-description: "Add 150 character max description"
+description: "Solution Accelerator designed to help get you up and running with the many models pattern on Azure"
 urlFragment: "solution-accelerator-many-models"
 ---
 
@@ -17,37 +17,38 @@ Guidance on onboarding samples to docs.microsoft.com/samples: https://review.doc
 
 Taxonomies for products and languages: https://review.docs.microsoft.com/new-hope/information-architecture/metadata/taxonomies?branch=master
 -->
+In the real world, many problems can be too complex to be solved by a single model. Whether that be predicting sales for each individual store, building a predictive maintanence model for hundreds of oil wells, or tailoring an experience to individual users, building a model for each instance can lead to improved results on many machine learning problems.
 
-Give a short description for your sample here. What does it do and why is it important?
-
-## Contents
-
-Outline the file contents of the repository. It helps users navigate the codebase, build configuration and any related assets.
-
-| File/folder       | Description                                |
-|-------------------|--------------------------------------------|
-| `src`             | Sample source code.                        |
-| `.gitignore`      | Define what to ignore at commit time.      |
-| `CHANGELOG.md`    | List of changes to the sample.             |
-| `CONTRIBUTING.md` | Guidelines for contributing to the sample. |
-| `README.md`       | This README file.                          |
-| `LICENSE`         | The license for the sample.                |
+Azure Machine Learning makes it easy to train, deploy, and manage hundreds or thousands of models. This repo will walk you through the end to end process of creating a many models solution from training to deploying to monitoring.
 
 ## Prerequisites
 
-Outline the required components and tools that a user might need to have on their machine in order to run the sample. This can be anything from frameworks, SDKs, OS versions or IDE releases.
+To use this solution accelerator, all you need is access to an Azure Subscription.
 
-## Setup
+While it's not required, a basic understanding of Azure Machine Learning will be helpful for understanding the solution. The following resources can help introduce you to AML: adhfjh, ajdhfkj, ajdfhkjf.
 
-Explain how to prepare the sample once the user clones or downloads the repository. The section should outline every step necessary to install dependencies and set up any settings (for example, API keys and output folders).
+## Getting started
 
-## Runnning the sample
+Start by deploying the resources to Azure using button below. From there, walk through the folders chronologically following the steps outlined in each README.
 
-Outline step-by-step instructions to execute the sample and see its output. Include steps for executing the sample from the IDE, starting specific services in the Azure portal or anything related to the overall launch of the code.
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fazure-search-knowledge-mining%2Fmaster%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+
+## Contents
+
+
+
+
+| Folder       | Description                                |
+|-------------------|--------------------------------------------|
+| `01_Data_Preparation`             | Sample source code.                        |
+| `02_Training`      | Define what to ignore at commit time.      |
+| `03_Scoring`    | List of changes to the sample.             |
 
 ## Key concepts
 
-Provide users with more context on the tools and services used in the sample. Explain some of the code that is being used and how services interact with each other.
+
 
 ## Contributing
 
