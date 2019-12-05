@@ -49,10 +49,13 @@ def init():
     return
 
 def run(input_data):
+    # 0. Set up logging
     logger = logging.getLogger(LOG_NAME)
     os.makedirs('./outputs', exist_ok=True)
     resultList = []
     logger.info('processing all files')
+
+    # 1. Read in the data file
     for file in input_data:
         u1 = uuid.uuid4()
         mname='arima'+str(u1)[0:16]
@@ -62,16 +65,18 @@ def run(input_data):
             date1=datetime.datetime.now()
             logger.info('starting ('+file+') ' + str(date1))
             childrun.log(mname,'starttime-'+str(date1))
-            # 1. Read in the data file
+
             data = pd.read_csv(file,header=0)
             logger.info(data.head())
-            # 2. Split the data into train and test sets
+
+            # 2. Split the data into train and test sets based on dates
             data = data.set_index(args.timestamp_column)
             max_date = datetime.datetime.strptime(data.index.max(),'%Y-%m-%d')
             split_date = max_date - timedelta(days=7*args.n_test_periods)
             data.index = pd.to_datetime(data.index)
             train = data[data.index <= split_date]
             test = data[data.index > split_date]
+
             # 3.Train the model
             model = pm.auto_arima(train[args.target_column],
                       start_p=0,
@@ -94,13 +99,16 @@ def run(input_data):
                       out_of_sample_size = 16
                      )
             model = model.fit(train[args.target_column])
+
             logger.info('done training')
+
             # 4. Save the model
             logger.info(model)
             logger.info(mname)
             with open(mname, 'wb') as file:
                 joblib.dump(value=model, filename=os.path.join('./outputs/', mname))
-            # 5. Register the model
+
+            # 5. Register the model to the workspace
             ws1 = childrun.experiment.workspace
             try:
                 childrun.upload_file(mname, os.path.join('./outputs/', mname))
@@ -110,6 +118,7 @@ def run(input_data):
             Model.register(workspace=ws1, model_path=os.path.join('./outputs/', mname), model_name='arima_'+str(input_data).split('/')[-1][:-6], model_framework='pmdarima')
             date2=datetime.datetime.now()
             logger.info('ending ('+str(file)+') ' + str(date2))
+
             #6. Log some metrics
             childrun.log(mname,'endtime-'+str(date2))
             childrun.log(mname,'auc-1')
