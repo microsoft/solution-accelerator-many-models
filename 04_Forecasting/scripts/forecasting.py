@@ -56,7 +56,6 @@ def run(input_data):
     logger = logging.getLogger(LOG_NAME)
     os.makedirs('./outputs', exist_ok=True)
     resultsList = []
-    #predictions = pd.DataFrame()
     logger.info('making forecasts...')
     
     print('looping through data')
@@ -78,7 +77,7 @@ def run(input_data):
         brand_list = [brand] * args.forecast_horizon
         date_list = pd.date_range(args.starting_date, periods = args.forecast_horizon, freq ='W-THU')
         
-        prediciton_df = pd.DataFrame(list(zip(date_list, store_list, brand_list)), 
+        prediction_df = pd.DataFrame(list(zip(date_list, store_list, brand_list)), 
                                     columns = ['WeekStarting', 'Store', 'Brand'])
         
         # 3. Unpickle Model and Make Predictions             
@@ -94,11 +93,9 @@ def run(input_data):
         run_date = datetime.datetime.now().date()
         ws1 = thisrun.experiment.workspace
         output_path = os.path.join('./outputs/', model_name + str(run_date))
-        test.to_csv(path_or_buf=output_path + '.csv', index = False)
+        prediction_df.to_csv(path_or_buf=output_path + '.csv', index = False)
         dstore = ws1.get_default_datastore()
         dstore.upload_files([output_path + '.csv'], target_path='oj_forecasts' + str(run_date), overwrite=False, show_progress=True)
-
-        # 5. Append the predictions to return a dataframe if desired 
 
         # 6. Log Metrics
         date2=datetime.datetime.now()
