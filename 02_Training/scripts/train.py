@@ -57,7 +57,7 @@ def run(input_data):
     resultList = []
 
     # 1. Read in the data file
-    for idx, csv_file_path in enumerate(input_data):   
+    for idx, csv_file_path in enumerate(input_data):       
         u1 = uuid.uuid4()
         mname='arima'+str(u1)[0:16]
         logs = []
@@ -116,13 +116,17 @@ def run(input_data):
         model_name = 'arima_'+str(input_data).split('/')[-1][:-6]
         print('Trained '+ model_name)
         
-        thisrun.register_model(model_path=mname, model_name=model_name, model_framework='pmdarima') 
+        tags_dict={'Store': str(csv_file_path).split('/')[-1][:-4].split('_')[0], 'Brand': str(csv_file_path).split('/')[-1][:-4].split('_')[1], 'ModelType':'ARIMA'}
+        thisrun.register_model(model_path=mname, model_name=model_name, model_framework='pmdarima',tags=tags_dict) 
         print('Registered '+ model_name)
         
         #6. Log some metrics       
         date2=datetime.datetime.now()
         logger.info('ending ('+str(csv_file_path)+') ' + str(date2))
         
+        logs.append(str(csv_file_path).split('/')[-1][:-4].split('_')[0])
+        logs.append(str(csv_file_path).split('/')[-1][:-4].split('_')[1])
+        logs.append('ARIMA')
         logs.append(str(csv_file_path).split('/')[-1][:-4])
         logs.append(model_name)
         logs.append(str(date1))
