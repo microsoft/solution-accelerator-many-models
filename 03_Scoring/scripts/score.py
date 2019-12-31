@@ -115,14 +115,18 @@ def run(input_data):
         logger.info(metrics)
 
         # 5. Save the output back to blob storage
-        run_date = datetime.datetime.now().date()
-        ws1 = thisrun.experiment.workspace
-        output_path = os.path.join('./outputs/', model_name)
-        test.to_csv(path_or_buf=output_path + '.csv', index = False)
+        '''
+        If you need to evaluate each models predicted sales quantity versus actual sales quantity,
+        you can uncomment the following code and run the script with ParallelRunStep.
+        '''
+#         run_date = datetime.datetime.now().date()
+#         ws1 = thisrun.experiment.workspace
+#         output_path = os.path.join('./outputs/', model_name)
+#         test.to_csv(path_or_buf=output_path + '.csv', index = False)
 
-        scoring_dstore = Datastore(ws1, args.output_datastore)
-        scoring_dstore.upload_files([output_path +'.csv'], target_path = 'oj_scoring_' + str(run_date),
-                                    overwrite = args.overwrite_scoring, show_progress = True)
+#         scoring_dstore = Datastore(ws1, args.output_datastore)
+#         scoring_dstore.upload_files([output_path +'.csv'], target_path = 'oj_scoring_' + str(run_date),
+#                                     overwrite = args.overwrite_scoring, show_progress = True)
 
         # 6. Append the predictions to return a dataframe if desired
         predictions = predictions.append(test)
