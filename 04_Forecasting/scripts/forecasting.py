@@ -100,7 +100,7 @@ def run(input_data):
         prediction_df.to_csv(path_or_buf=output_path + '.csv', index = False)
         forecasting_dstore = Datastore(ws1, args.output_datastore)
         forecasting_dstore.upload_files([output_path + '.csv'], target_path='oj_forecasts' + str(run_date),
-                                        overwrite=False, show_progress=True)
+                                        overwrite=args.overwrite_forecasting, show_progress=True)
 
         # 6. Log Metrics
         date2=datetime.datetime.now()
