@@ -1,3 +1,4 @@
+# Training Pipeline
 ## 1.0 Entry Script
 
 To train the models, you will need an entry script and a list of dependencies. The entry_script is a user script as a local file path that will be run in parallel on multiple nodes. If source_directly is present, use a relative path. Otherwise, use any path that's accessible on the machine.
