@@ -1,20 +1,8 @@
-# Training Pipeline
-## 1.0 Entry Script
+# Training Pipeline Tutorial
 
-To train the models, you will need an entry script and a list of dependencies. The entry_script is a user script as a local file path that will be run in parallel on multiple nodes. If source_directly is present, use a relative path. Otherwise, use any path that's accessible on the machine.
+This README provides guidance on how to set ParallelRunConfig parameters and explains Entry Script. It's also applicable to scoring and forecasting pipeline.
 
-The <b>entry script</b> accepts requests, tain and register the model, and then returns the results.
-
-* <b>init()</b> - Typically this function loads the model into a global object. This function is run only once at the start of batch processing per worker node/process. init method can make use of following environment variables (ParallelRunStep input):
-
-                    AZUREML_BI_OUTPUT_PATH – output folder path
-
-* <b>run(mini_batch)</b> - The method to be parallelized. Each invocation will have one minibatch.
-mini_batch: Batch inference will invoke run method and pass either a list or Pandas DataFrame as an argument to the method. Each entry in mini_batch will be - a filepath if input is a FileDataset, a Pandas DataFrame if input is a TabularDataset.
-
-* <b>run method response</b>: run() method should return a Pandas DataFrame or an array. For append_row output_action, these returned elements are appended into the common output file. For summary_only, the contents of the elements are ignored. For all output actions, each returned output element indicates one successful inference of input element in the input mini-batch. User should make sure that enough data is included in inference result to map input to inference. Inference output will be written in output file and not guaranteed to be in order, user should use some key in the output to map it to input.
-
-## 2.0 How to set ParallelRunConfig Parameters
+## 1.0 How to set ParallelRunConfig parameters
 
 In the [ParallelRunConfig](https://docs.microsoft.com/en-us/python/api/azureml-contrib-pipeline-steps/azureml.contrib.pipeline.steps.parallel_run_config.parallelrunconfig), you will want to determine the number of workers and nodes appropriate for your use case. The workercount is based off the number of cores of the compute VM. The nodecount will determine the number of master nodes to use. In time-series ARIMA model scenario, increasing the node count will speed up the training process.
 
@@ -44,3 +32,19 @@ In the [ParallelRunConfig](https://docs.microsoft.com/en-us/python/api/azureml-c
 * <b>output_action</b>: One of the following values indicates how the output will be organized -
     * <b>summary_only</b>: The user script will store the output. ParallelRunStep will use the output only for the error threshold calculation. The parallel_run_step.txt will return
     * <b>append_row</b>: For all input files, only one file will be created in the output folder to append all outputs separated by line. The file name will be parallel_run_step.txt. We set it to 'append_row' here because we collect the aggregated output file as our training log.
+
+
+## 2.0 Entry Script
+
+To train the models, you will need an entry script and a list of dependencies. The entry_script is a user script as a local file path that will be run in parallel on multiple nodes. If source_directly is present, use a relative path. Otherwise, use any path that's accessible on the machine.
+
+The <b>entry script</b> accepts requests, tain and register the model, and then returns the results.
+
+* <b>init()</b> - Typically this function loads the model into a global object. This function is run only once at the start of batch processing per worker node/process. init method can make use of following environment variables (ParallelRunStep input):
+
+                AZUREML_BI_OUTPUT_PATH – output folder path
+
+* <b>run(mini_batch)</b> - The method to be parallelized. Each invocation will have one minibatch.
+    mini_batch: Batch inference will invoke run method and pass either a list or Pandas DataFrame as an argument to the method. Each entry in mini_batch will be - a filepath if input is a FileDataset, a Pandas DataFrame if input is a TabularDataset.
+
+* <b>run method response</b>: run() method should return a Pandas DataFrame or an array. For append_row output_action, these returned elements are appended into the common output file. For summary_only, the contents of the elements are ignored. For all output actions, each returned output element indicates one successful inference of input element in the input mini-batch. User should make sure that enough data is included in inference result to map input to inference. Inference output will be written in output file and not guaranteed to be in order, user should use some key in the output to map it to input.
