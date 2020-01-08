@@ -13,7 +13,7 @@ import logging
 
 # Import the AzureML packages 
 from azureml.core.model import Model
-from azureml.core import Experiment, Workspace, Run
+from azureml.core import Experiment, Workspace, Run, Datastore
 from azureml.core import ScriptRunConfig
 from azureml.core.run import Run
 
@@ -30,17 +30,16 @@ LOG_NAME = "user_log"
 # Parse the arguments passed in the PipelineStep through the arguments option 
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--forecast_horizon", type=int, help="input number of predictions")
-parser.add_argument("--starting_date", type=str, help="date to begin forecasting")
-#parser.add_argument("--output_datastore", type=str, help="input the name of registered forecast datastore")
-#parser.add_argument("--overwrite_forecasting", type=str, help="True will over write the forecasting files")
+parser.add_argument("--starting_date", type=str, help="date to begin forcasting")
+# parser.add_argument("--output_datastore", type=str, help="input the name of registered forecast datastore")
+# parser.add_argument("--overwrite_forecasting", type=str, help="True will over write the forecasting files")
 
 args, unknown = parser.parse_known_args()
 
 print("Argument 1(forecast_horizon): %s" % args.forecast_horizon)
 print("Argument 2(starting_date): %s" % args.starting_date)
-#print("Argument 3(output_datastore): %s" % args.output_datastore)
-#print("Argument 4(overwrite_forecasting): %s" % args.overwrite_forecasting)
-
+# print("Argument 3(output_datastore): %s" % args.output_datastore)
+# print("Argument 4(overwrite_forecasting): %s" % args.overwrite_forecasting)
 
 def init():
     EntryScriptHelper().config(LOG_NAME)
