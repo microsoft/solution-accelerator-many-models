@@ -1,4 +1,4 @@
-# Training Pipeline Tutorial
+# Pipeline Tutorial
 
 This README provides guidance on how to set ParallelRunConfig parameters and explains Entry Script. It's also applicable to scoring and forecasting pipeline.
 
