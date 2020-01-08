@@ -7,11 +7,8 @@ import datetime
 import numpy as np
 from sklearn.externals import joblib
 from joblib import dump, load
-import pmdarima as pm
 import time
 from datetime import timedelta
-from sklearn.metrics import mean_squared_error, mean_absolute_error 
-import pickle
 import logging 
 
 # Import the AzureML packages 
@@ -34,15 +31,15 @@ LOG_NAME = "user_log"
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--forecast_horizon", type=int, help="input number of predictions")
 parser.add_argument("--starting_date", type=str, help="date to begin forecasting")
-parser.add_argument("--output_datastore", type=str, help="input the name of registered forecast datastore")
-parser.add_argument("--overwrite_forecasting", type=str, help="True will over write the forecasting files")
+#parser.add_argument("--output_datastore", type=str, help="input the name of registered forecast datastore")
+#parser.add_argument("--overwrite_forecasting", type=str, help="True will over write the forecasting files")
 
 args, unknown = parser.parse_known_args()
 
 print("Argument 1(forecast_horizon): %s" % args.forecast_horizon)
 print("Argument 2(starting_date): %s" % args.starting_date)
-print("Argument 3(output_datastore): %s" % args.output_datastore)
-print("Argument 4(overwrite_forecasting): %s" % args.overwrite_forecasting)
+#print("Argument 3(output_datastore): %s" % args.output_datastore)
+#print("Argument 4(overwrite_forecasting): %s" % args.overwrite_forecasting)
 
 
 def init():
@@ -59,7 +56,8 @@ def run(input_data):
     # 0. Set up Logging
     logger = logging.getLogger(LOG_NAME)
     os.makedirs('./outputs', exist_ok=True)
-    resultsList = []
+    #resultsList = []
+    all_predictions = pd.DataFrame()
     logger.info('making forecasts...')
     
     print('looping through data')
@@ -67,7 +65,6 @@ def run(input_data):
     for idx, file in enumerate(input_data):
         u1 = uuid.uuid4()
         mname='arima'+str(u1)[0:16]        
-        logs = []
 
         date1=datetime.datetime.now()
         logger.info('starting ('+file+') ' + str(date1))
@@ -92,35 +89,23 @@ def run(input_data):
         prediction_list, conf_int = model.predict(args.forecast_horizon, return_conf_int = True)
 
         prediction_df['Predictions'] = prediction_list
+        
+        all_predictions = all_predictions.append(prediction_df)
 
         # 4. Save the output back to blob storage 
-        run_date = datetime.datetime.now().date()
-        ws1 = thisrun.experiment.workspace
-        output_path = os.path.join('./outputs/', model_name + str(run_date))
-        prediction_df.to_csv(path_or_buf=output_path + '.csv', index = False)
-        forecasting_dstore = Datastore(ws1, args.output_datastore)
-        forecasting_dstore.upload_files([output_path + '.csv'], target_path='oj_forecasts' + str(run_date),
-                                        overwrite=args.overwrite_forecasting, show_progress=True)
+        #run_date = datetime.datetime.now().date()
+        #ws1 = thisrun.experiment.workspace
+        #output_path = os.path.join('./outputs/', model_name + str(run_date))
+        #prediction_df.to_csv(path_or_buf=output_path + '.csv', index = False)
+        #forecasting_dstore = Datastore(ws1, args.output_datastore)
+        #forecasting_dstore.upload_files([output_path + '.csv'], target_path='oj_forecasts' + str(run_date),
+        #                                overwrite=args.overwrite_forecasting, show_progress=True)
 
-        # 6. Log Metrics
+        # 5. Log Metrics
         date2=datetime.datetime.now()
-        logger.info('ending ('+str(file)+') ' + str(date2))
-        
-        
-        logs.append(store)
-        logs.append(brand)
-        logs.append("ARIMA")
-        logs.append(str(file).split('/')[-1][:-4])
-        logs.append(model_name)
-        logs.append(str(date1))
-        logs.append(str(date2))
-        logs.append(date2-date1)
-        logs.append(idx)
-        logs.append(len(input_data))
-        logs.append(thisrun.get_status())        
+        logger.info('ending ('+str(file)+') ' + str(date2))     
 
         thisrun.log(mname,'endtime-'+str(date2))
         thisrun.log(mname,'auc-1')
 
-    resultsList.append(logs)
-    return resultsList
+    return all_predictions
