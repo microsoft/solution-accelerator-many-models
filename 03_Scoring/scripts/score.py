@@ -10,16 +10,17 @@ from joblib import dump, load
 import pmdarima as pm
 import time
 from datetime import timedelta
-from sklearn.metrics import mean_squared_error, mean_absolute_error 
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 import pickle
-import logging 
+import logging
 
-# Import the AzureML packages 
+# Import the AzureML packages
 from azureml.core.model import Model
-from azureml.core import Experiment, Workspace, Run
+from azureml.core import Experiment, Workspace, Run, Datastore
 from azureml.core import ScriptRunConfig
+from azureml.core.run import Run
 
-# Import the helper script 
+# Import the helper script
 from entry_script_helper import EntryScriptHelper
 
 
@@ -29,16 +30,19 @@ thisrun = Run.get_context()
 # Set the log file name
 LOG_NAME = "user_log"
 
-# Parse the arguments passed in the PipelineStep through the arguments option 
+# Parse the arguments passed in the PipelineStep through the arguments option
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--n_test_set", type=int, help="input number of predictions")
 parser.add_argument("--timestamp_column", type=str, help="model name")
+parser.add_argument("--output_datastore", type=str, help="datastore to upload predictions to")
+parser.add_argument("--overwrite_scoring", type=str, help="setting if the scoring files should be overwritten")
 
 args, unknown = parser.parse_known_args()
 
 print("Argument 1(n_test_set): %s" % args.n_test_set)
 print("Argument 2(timestamp_column): %s" % args.timestamp_column)
-
+print("Argument 3(output_datastore): %s" % args.output_datastore)
+print("Argument 4(overwrite_scoring): %s" % args.overwrite_scoring)
 
 def init():
     EntryScriptHelper().config(LOG_NAME)

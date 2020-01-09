@@ -1,3 +1,4 @@
+
 import pandas as pd
 from azureml.core.run import Run
 from azureml.core import Workspace, Experiment, Datastore
@@ -56,4 +57,5 @@ print('Saved the forecasting_results.csv')
 # upload the prediction file
 forecast_dstore = Datastore(ws, args.datastore)
 forecast_dstore.upload_files(['./prediction/forecasting_results'+'.csv'], target_path='oj_forecasts_'+str(datetime.datetime.now().date()), overwrite=args.overwrite_predictions, show_progress=True)
+
 print('Uploaded the forecasting_results.csv')
