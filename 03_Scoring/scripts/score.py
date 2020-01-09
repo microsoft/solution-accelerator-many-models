@@ -74,7 +74,6 @@ def run(input_data):
         logger.info('starting ('+file+') ' + str(date1))
         thisrun.log(mname,'starttime-'+str(date1))
 
-        print("UNPICKLE MODEL, MAKE PREDICTIONS")
         # 2. Unpickle Model and Make Predictions
         model_name = 'arima_'+str(file).split('/')[-1][:-4]
         print(model_name)
@@ -82,7 +81,6 @@ def run(input_data):
         model = joblib.load(model_path)
         prediction_list, conf_int = model.predict(args.n_test_set, return_conf_int = True)
 
-        print("TEST DATA SPLIT")
         # 3. Split the data for test set
         data = pd.read_csv(file, header=0)
         data = data.set_index(args.timestamp_column)
@@ -94,8 +92,7 @@ def run(input_data):
         test['Predictions'] = prediction_list
         print(test.head())
 
-        print("ACCURACY METRICS ")
-        # 4. Calculating Accuracy Metrics
+        # 4. Calculate Accuracy Metrics
         metrics = []
         mse = mean_squared_error(test['Quantity'], test['Predictions'])
         rmse = np.sqrt(mse)
@@ -116,8 +113,8 @@ def run(input_data):
 
         # 5. Save the output back to blob storage
         '''
-        If you need to evaluate each models predicted sales quantity versus actual sales quantity,
-        you can uncomment the following code and run the script with ParallelRunStep.
+        If you want to return the predictions and acutal values for each model as a seperate file, use the code below to output the results 
+        of each iteration to the specified output_datastore. 
         '''
 #         run_date = datetime.datetime.now().date()
 #         ws1 = thisrun.experiment.workspace
@@ -128,7 +125,7 @@ def run(input_data):
 #         scoring_dstore.upload_files([output_path +'.csv'], target_path = 'oj_scoring_' + str(run_date),
 #                                     overwrite = args.overwrite_scoring, show_progress = True)
 
-        # 6. Append the predictions to return a dataframe if desired
+        # 6. Append the predictions to return a dataframe (optional)
         predictions = predictions.append(test)
 
         # 7. Log Metrics

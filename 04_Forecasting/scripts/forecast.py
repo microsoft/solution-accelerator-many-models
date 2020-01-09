@@ -7,11 +7,8 @@ import datetime
 import numpy as np
 from sklearn.externals import joblib
 from joblib import dump, load
-import pmdarima as pm
 import time
 from datetime import timedelta
-from sklearn.metrics import mean_squared_error, mean_absolute_error 
-import pickle
 import logging 
 
 # Import the AzureML packages 
@@ -58,12 +55,13 @@ def run(input_data):
     # 0. Set up Logging
     logger = logging.getLogger(LOG_NAME)
     os.makedirs('./outputs', exist_ok=True)
-    allpredictions = pd.DataFrame()
+    #resultsList = []
+    all_predictions = pd.DataFrame()
     logger.info('making forecasts...')
     
     print('looping through data')
     # 1. Loop through the input data 
-    for idx, file in enumerate(input_data): # add the enumerate for the 12,000 files 
+    for idx, file in enumerate(input_data):
         u1 = uuid.uuid4()
         mname='arima'+str(u1)[0:16]        
 
@@ -82,8 +80,6 @@ def run(input_data):
         prediction_df = pd.DataFrame(list(zip(date_list, store_list, brand_list)), 
                                     columns = ['WeekStarting', 'Store', 'Brand'])
         
-        print(prediction_df)
-                
         # 3. Unpickle Model and Make Predictions             
         model_name = 'arima_'+str(file).split('/')[-1][:-4]  
         model_path = Model.get_model_path(model_name)         
@@ -92,23 +88,23 @@ def run(input_data):
         prediction_list, conf_int = model.predict(args.forecast_horizon, return_conf_int = True)
 
         prediction_df['Predictions'] = prediction_list
-        print(prediction_df)
-
-        allpredictions = allpredictions.append(prediction_df)
         
+        all_predictions = all_predictions.append(prediction_df)
+
         # 4. Save the output back to blob storage 
-#         run_date = datetime.datetime.now().date()
-#         ws1 = thisrun.experiment.workspace
-#         output_path = os.path.join('./outputs/', model_name)
-#         prediction_df.to_csv(path_or_buf=output_path + '.csv', index = False)
-#         forecasting_dstore = Datastore(ws1, args.output_datastore)
-#         forecasting_dstore.upload_files([output_path + '.csv'], target_path='oj_forecasts_' + str(run_date), overwrite=args.overwrite_forecasting, show_progress=True)
+        #run_date = datetime.datetime.now().date()
+        #ws1 = thisrun.experiment.workspace
+        #output_path = os.path.join('./outputs/', model_name + str(run_date))
+        #prediction_df.to_csv(path_or_buf=output_path + '.csv', index = False)
+        #forecasting_dstore = Datastore(ws1, args.output_datastore)
+        #forecasting_dstore.upload_files([output_path + '.csv'], target_path='oj_forecasts' + str(run_date),
+        #                                overwrite=args.overwrite_forecasting, show_progress=True)
 
         # 5. Log Metrics
         date2=datetime.datetime.now()
-        logger.info('ending ('+str(file)+') ' + str(date2))    
+        logger.info('ending ('+str(file)+') ' + str(date2))     
 
         thisrun.log(mname,'endtime-'+str(date2))
         thisrun.log(mname,'auc-1')
 
-    return allpredictions
+    return all_predictions
