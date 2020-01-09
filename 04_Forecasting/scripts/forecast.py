@@ -7,6 +7,7 @@ from joblib import dump, load
 import time
 from datetime import timedelta
 import logging 
+import datetime
 
 # Import the AzureML packages 
 from azureml.core.model import Model
