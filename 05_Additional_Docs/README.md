@@ -1,4 +1,4 @@
-# Troubleshooting Tutorial
+# Troubleshooting
 
 We developed customized log scripts to monitor training and scoring pipelines in a PowerBI dashboard.
 
@@ -10,7 +10,7 @@ When running into errors and existing logs are not suffice for troubleshooting, 
 
 In Azure ML Studio, navigate to 'Pipelines' tab. Identify the failed pipeline run. Click on the failed step (e.g. 'many-models-training'). On the right hand side click on 'Logs'.
 
-Under 'azureml-logs' tab, a file called '70_driver_log.txt' provides valuable information of the run. This log is a high level overview of the run.
+Under 'azureml-logs' tab, a file called '70_driver_log.txt' provides valuable information of the run. This log is a high level overview of the run. This file also contains the print statements you put into the Run method in the script.
 
 In addition to driver log file, stderr_10.0.0.. files provide more details regarding the errors.
 
