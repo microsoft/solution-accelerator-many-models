@@ -116,8 +116,8 @@ def run(input_data):
             logs.append(idx)
             logs.append(len(input_data))
             logs.append(current_run.get_status())
-
-            current_run.log(model_name, model.aic())
+            AIC = 'AIC ' + str(model.aic())
+            current_run.log(model_name, AIC)
         except Exception as e:
             model_name = 'arima_'+str(input_data).split('/')[-1][:-6]
             date2=datetime.datetime.now()
