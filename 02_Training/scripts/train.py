@@ -1,26 +1,17 @@
 
-from azureml.core.run import Run
+from azureml.core import Experiment, Workspace, Run
+import pmdarima as pm
 import pandas as pd
 import os
-import uuid
+import logging
 import argparse
 import datetime
-
-from azureml.core.model import Model
-from sklearn import metrics
-import pickle
-from azureml.core import Experiment, Workspace, Run
-from azureml.core import ScriptRunConfig
-from entry_script_helper import EntryScriptHelper
-import logging
-
+from datetime import timedelta
 from sklearn.externals import joblib
 from joblib import dump, load
-import pmdarima as pm
-import time
-from datetime import timedelta
+from entry_script_helper import EntryScriptHelper
 
-thisrun = Run.get_context()
+current_run = Run.get_context()
 
 LOG_NAME = "user_log"
 
@@ -38,7 +29,6 @@ print("Argument 1(n_test_periods): %s" % args.n_test_periods)
 print("Argument 2(target_column): %s" % args.target_column)
 print("Argument 3(timestamp_column): %s" % args.timestamp_column)
 print("Argument 4(stepwise_training): %s" % args.stepwise_training)
-
 
 def init():
     EntryScriptHelper().config(LOG_NAME)
@@ -58,15 +48,12 @@ def run(input_data):
 
     # 1. Read in the data file
     for idx, csv_file_path in enumerate(input_data):
-        u1 = uuid.uuid4()
-        mname='arima'+str(u1)[0:16]
         logs = []
         date1=datetime.datetime.now()
         logger.info('starting ('+csv_file_path+') ' + str(date1))
-        thisrun.log(mname,'starttime-'+str(date1))
-
         data = pd.read_csv(csv_file_path,header=0)
         logger.info(data.head())
+        model_name = 'arima_'+str(input_data).split('/')[-1][:-6]
 
         # 2. Split the data into train and test sets based on dates
         try:
@@ -86,14 +73,9 @@ def run(input_data):
                   max_d = 2,
                   max_q=3,
                   m=3, #number of observations per seasonal cycle
-                  #d=None,
                   seasonal=True,
-                  #trend = None, # adjust this if the series have trend
-                  #start_P=0,
-                  #D=0,
                   information_criterion = 'aic',
                   trace=True, #prints status on the fits
-                  #error_action='ignore',
                   stepwise = args.stepwise_training, # this increments instead of doing a grid search
                   suppress_warnings = True,
                   out_of_sample_size = 16
@@ -103,22 +85,20 @@ def run(input_data):
 
             # 4. Save the model
             logger.info(model)
-            logger.info(mname)
-            with open(mname, 'wb') as file:
-                joblib.dump(value=model, filename=os.path.join('./outputs/', mname))
+            with open(model_name, 'wb') as file:
+                joblib.dump(value=model, filename=os.path.join('./outputs/', model_name))
 
             # 5. Register the model to the workspace
-            ws1 = thisrun.experiment.workspace
+            ws1 = current_run.experiment.workspace
             try:
-                thisrun.upload_file(mname, os.path.join('./outputs/', mname))
+                current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
             except:
                 logger.info('dont need to upload')
             logger.info('register model, skip the outputs prefix')
-            model_name = 'arima_'+str(input_data).split('/')[-1][:-6]
             print('Trained '+ model_name)
 
             tags_dict={'Store': str(csv_file_path).split('/')[-1][:-4].split('_')[0], 'Brand': str(csv_file_path).split('/')[-1][:-4].split('_')[1], 'ModelType':'ARIMA'}
-            thisrun.register_model(model_path=mname, model_name=model_name, model_framework='pmdarima',tags=tags_dict)
+            current_run.register_model(model_path=model_name, model_name=model_name, model_framework='pmdarima',tags=tags_dict)
             print('Registered '+ model_name)
 
             #6. Log some metrics
@@ -135,10 +115,9 @@ def run(input_data):
             logs.append(str(date2-date1))
             logs.append(idx)
             logs.append(len(input_data))
-            logs.append(thisrun.get_status())
+            logs.append(current_run.get_status())
 
-            thisrun.log(mname,'endtime-'+str(date2))
-            thisrun.log(mname,'auc-1')
+            current_run.log(model_name,'auc-1')
         except Exception as e:
             model_name = 'arima_'+str(input_data).split('/')[-1][:-6]
             date2=datetime.datetime.now()
