@@ -1,4 +1,3 @@
-
 import pandas as pd
 from azureml.core.run import Run
 from azureml.core import Workspace, Experiment, Datastore
@@ -17,7 +16,7 @@ parser.add_argument("--overwrite_predictions", type=str, help="input overwrite p
 parser.add_argument("--pipeline_output_name", type=str, help="input ParralelRunStep output name")
 
 args, unknown = parser.parse_known_args()
-print("Argument1 (ParallelRunStep_name): %s" % args.ParallelRunStep_name)
+print("Argument1 (parallelrunstep_name): %s" % args.parallelrunstep_name)
 print("Argument2 (datastore): %s" % args.datastore)
 print("Argument3 (experiment): %s" % args.experiment)
 print("Argument4 (overwrite_predictions): %s" % args.overwrite_predictions)
@@ -31,7 +30,7 @@ experiment = Experiment(ws, args.experiment)
 # retrieve the prediction file
 pipeline_runId = current_run.get_details()['properties']['azureml.pipelinerunid']
 pipeline_run = PipelineRun(experiment, pipeline_runId)
-step_run = pipeline_run.find_step_run(args.ParallelRunStep_name)[0]
+step_run = pipeline_run.find_step_run(args.parallelrunstep_name)[0]
 prediction_output = step_run.get_output_data(args.pipeline_output_name)
 prediction_output.download(local_path="prediction")
 print('Downloaded the prediction file of Pipeline Id: '+pipeline_runId)
