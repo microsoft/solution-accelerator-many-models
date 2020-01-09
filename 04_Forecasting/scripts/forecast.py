@@ -1,10 +1,7 @@
 
 import pandas as pd
 import os
-import uuid
 import argparse
-import datetime
-import numpy as np
 from sklearn.externals import joblib
 from joblib import dump, load
 import time
@@ -22,7 +19,7 @@ from entry_script_helper import EntryScriptHelper
 
 
 # Get the information for the current Run
-thisrun = Run.get_context()
+current_run = Run.get_context()
 
 # Set the log file name
 LOG_NAME = "user_log"
@@ -50,20 +47,16 @@ def init():
     return
 
 def run(input_data):
-    print("begin run ")
     
     # 0. Set up Logging
     logger = logging.getLogger(LOG_NAME)
     os.makedirs('./outputs', exist_ok=True)
-    #resultsList = []
     all_predictions = pd.DataFrame()
     logger.info('making forecasts...')
     
-    print('looping through data')
-    # 1. Loop through the input data 
+    # 1. Iterate through the input data 
     for idx, file in enumerate(input_data):
-        u1 = uuid.uuid4()
-        mname='arima'+str(u1)[0:16]        
+        mname='arima'
 
         date1=datetime.datetime.now()
         logger.info('starting ('+file+') ' + str(date1))
@@ -103,8 +96,5 @@ def run(input_data):
         # 5. Log Metrics
         date2=datetime.datetime.now()
         logger.info('ending ('+str(file)+') ' + str(date2))     
-
-        thisrun.log(mname,'endtime-'+str(date2))
-        thisrun.log(mname,'auc-1')
 
     return all_predictions
