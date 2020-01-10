@@ -17,9 +17,9 @@ Guidance on onboarding samples to docs.microsoft.com/samples: https://review.doc
 
 Taxonomies for products and languages: https://review.docs.microsoft.com/new-hope/information-architecture/metadata/taxonomies?branch=master
 -->
-In the real world, many problems can be too complex to be solved by a single model. Whether that be predicting sales for each individual store, building a predictive maintanence model for hundreds of oil wells, or tailoring an experience to individual users, building a model for each instance can lead to improved results on many machine learning problems.
+In the real world, many problems can be too complex to be solved by a single machine learning model. Whether that be predicting sales for each individual store, building a predictive maintanence model for hundreds of oil wells, or tailoring an experience to individual users, building a model for each instance can lead to improved results on many machine learning problems.
 
-Azure Machine Learning makes it easy to train, deploy, and manage hundreds or thousands of models. This repo will walk you through the end to end process of creating a many models solution from training to scoring to monitoring.
+Azure Machine Learning makes it easy to train, operate, and manage hundreds or even thousands of models. This repo will walk you through the end to end process of creating a many models solution from training to scoring to monitoring.
 
 ## Prerequisites
 
@@ -44,6 +44,11 @@ From there, walk through the folders chronologically following the steps outline
 
 ## Contents
 
+In this repo, you'll train and score a forecasting model for each orange juice brand and for each store at a (simulated) grocery store. By the end, you'll have forecasted sales by using 11,973 models to predict sales for the next few weeks.
+
+The data used in this sample is simulated based on the [Dominick's Orange Juice Dataset](http://www.cs.unitn.it/~taufer/QMMA/L10-OJ-Data.html#(1)), sales data from a Chicago area grocery store.
+
+The functionality is broken into the following folders designed to be run step by step:
 | Folder       | Description                                |
 |-------------------|--------------------------------------------|
 | `00_Environment_Setup`             | Configures your environment including deploying compute for training and configuring your blob storage for logging                         |
@@ -62,7 +67,7 @@ From there, walk through the folders chronologically following the steps outline
 
 ### Other Concepts
 
-In additional to ParallelRunStep and Pipelines, you'll also be working the following concepts include [workspace](https://docs.microsoft.com/en-us/azure/machine-learning/concept-workspace), [datasets](https://docs.microsoft.com/en-us/azure/machine-learning/concept-data#datasets), [compute targets](https://docs.microsoft.com/en-us/azure/machine-learning/concept-compute-target#train), [python script steps](https://docs.microsoft.com/en-us/python/api/azureml-pipeline-steps/azureml.pipeline.steps.python_script_step.pythonscriptstep?view=azure-ml-py), and [Azure Open Datasets](https://azure.microsoft.com/en-us/services/open-datasets/).
+In additional to ParallelRunStep and Pipelines, you'll also be working with the following concepts including [workspace](https://docs.microsoft.com/en-us/azure/machine-learning/concept-workspace), [datasets](https://docs.microsoft.com/en-us/azure/machine-learning/concept-data#datasets), [compute targets](https://docs.microsoft.com/en-us/azure/machine-learning/concept-compute-target#train), [python script steps](https://docs.microsoft.com/en-us/python/api/azureml-pipeline-steps/azureml.pipeline.steps.python_script_step.pythonscriptstep?view=azure-ml-py), and [Azure Open Datasets](https://azure.microsoft.com/en-us/services/open-datasets/).
 
 ## Contributing
 
