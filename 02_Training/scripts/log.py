@@ -23,7 +23,7 @@ print("Argument3 (experiment): %s" % args.experiment)
 print("Argument4 (overwrite_logs): %s" % args.overwrite_logs)
 print("Argument5 (pipeline_output_name): %s" % args.pipeline_output_name)
 
-# set workspace and experiment 
+# set workspace and experiment
 thisrun = Run.get_context()
 ws = thisrun.experiment.workspace
 experiment = Experiment(ws, args.experiment)
@@ -42,7 +42,7 @@ for root, dirs, files in os.walk("logs"):
         if file.endswith('parallel_run_step.txt'):
             result_file = os.path.join(root,file)
             print ('Log file path: ' + result_file)
-            
+
 # read the file and clean up data
 df_log = pd.read_csv(result_file, converters={0: lambda x: x.strip("["),10: lambda x: x.strip("]")}, delimiter=",", header=None)
 df_log.columns=['Store','Brand','ModelType','FileName','ModelName','StartTime','EndTime','Duration','Index','BatchSize','Status']
@@ -55,6 +55,7 @@ df_log['StartTime'] = df_log['StartTime'].apply(str).str.replace("'", '')
 df_log['EndTime'] = df_log['EndTime'].apply(str).str.replace("'", '')
 df_log['Duration'] = df_log['Duration'].apply(str).str.replace("'", '')
 df_log['Status'] = df_log['Status'].apply(str).str.replace("'", '')
+df_log['Status'] = df_log['Status'].apply(str).str.replace('"','')
 print (df_log.head())
 print ('Read and cleaned the log file')
 
