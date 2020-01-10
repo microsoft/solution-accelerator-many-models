@@ -1,4 +1,3 @@
-
 import pandas as pd
 import os
 import argparse
@@ -11,6 +10,7 @@ from datetime import timedelta
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import pickle
 import logging
+import datetime
 
 # Import the AzureML packages
 from azureml.core.model import Model
