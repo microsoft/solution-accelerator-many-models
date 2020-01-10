@@ -49,6 +49,7 @@ In this repo, you'll train and score a forecasting model for each orange juice b
 The data used in this sample is simulated based on the [Dominick's Orange Juice Dataset](http://www.cs.unitn.it/~taufer/QMMA/L10-OJ-Data.html#(1)), sales data from a Chicago area grocery store.
 
 The functionality is broken into the following folders designed to be run step by step:
+
 | Folder       | Description                                |
 |-------------------|--------------------------------------------|
 | `00_Environment_Setup`             | Configures your environment including deploying compute for training and configuring your blob storage for logging                         |
@@ -60,9 +61,11 @@ The functionality is broken into the following folders designed to be run step b
 ## Key concepts
 
 ### ParallelRunStep
+
 [ParallelRunStep](https://docs.microsoft.com/en-us/python/api/azureml-contrib-pipeline-steps/azureml.contrib.pipeline.steps.parallel_run_step.parallelrunstep?view=azure-ml-py) enables the parallel training of models.
 
 ### Pipelines
+
 [Pipelines](https://docs.microsoft.com/en-us/azure/machine-learning/concept-ml-pipelines) allow you to create workflows in your machine learning projects. These workflows have a number of benefits including speed, simplicity, repeatability, and modularity.
 
 ### Other Concepts
