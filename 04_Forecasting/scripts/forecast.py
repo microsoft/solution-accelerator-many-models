@@ -7,6 +7,7 @@ from joblib import dump, load
 import time
 from datetime import timedelta
 import logging 
+import datetime
 
 # Import the AzureML packages 
 from azureml.core.model import Model
@@ -60,7 +61,7 @@ def run(input_data):
 
         date1=datetime.datetime.now()
         logger.info('starting ('+file+') ' + str(date1))
-        thisrun.log(mname,'starttime-'+str(date1))
+        current_run.log(mname,'starttime-'+str(date1))
         
         store = str(file).split('/')[-1][:-4].split('_')[0]
         brand = str(file).split('/')[-1][:-4].split('_')[-1]
