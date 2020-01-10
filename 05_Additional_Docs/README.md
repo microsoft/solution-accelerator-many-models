@@ -19,3 +19,9 @@ In addition to driver log file, stderr_10.0.0.. files provide more details regar
 In the blob storage explorer, identify the default datastore and the subfolder named 'azureml'.
 
 Each pipeline run will generate a unique Run ID and a folder named as the Run ID is created. Once you navigate to the desired Run ID folder, click on logs/sys/error. There should be folders named as 10.0.0.. and files inside the folders named as 'Process..'. These files are similar to the stderr_10.0.0.. files which provide details regarding the errors.
+
+## 3.0 Common error message
+
+When training, scoring, or forecasting 10,000+ models, you may run into 'RequestThrottled : Too Many requests: retry after 1 seconds' or '429 : Too Many requests: retry after 1 seconds' in AML Studio UI.
+
+It's caused by UI aggressively checking the log file contents. It shouldn't affect the completion of the pipeline. You can check back once the pipeline finishes.
