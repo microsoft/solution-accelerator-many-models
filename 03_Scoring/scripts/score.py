@@ -26,14 +26,14 @@ LOG_NAME = "user_log"
 
 # Parse the arguments passed in the PipelineStep through the arguments option
 parser = argparse.ArgumentParser("split")
-parser.add_argument("--n_test_set", type=int, help="input number of predictions")
+parser.add_argument("--n_test_periods", type=int, help="input number of predictions")
 parser.add_argument("--timestamp_column", type=str, help="time column from the data")
 parser.add_argument("--output_datastore", type=str, help="datastore to upload predictions to")
 parser.add_argument("--overwrite_scoring", type=str, help="setting if the scoring files should be overwritten")
 
 args, unknown = parser.parse_known_args()
 
-print("Argument 1(n_test_set): %s" % args.n_test_set)
+print("Argument 1(n_test_periods): %s" % args.n_test_periods)
 print("Argument 2(timestamp_column): %s" % args.timestamp_column)
 print("Argument 3(output_datastore): %s" % args.output_datastore)
 print("Argument 4(overwrite_scoring): %s" % args.overwrite_scoring)
@@ -70,13 +70,13 @@ def run(input_data):
         print(model_name)
         model_path = Model.get_model_path(model_name)
         model = joblib.load(model_path)
-        prediction_list, conf_int = model.predict(args.n_test_set, return_conf_int = True)
+        prediction_list, conf_int = model.predict(args.n_test_periods, return_conf_int = True)
 
         # 2. Split the data for test set
         data = pd.read_csv(file, header=0)
         data = data.set_index(args.timestamp_column)
         max_date = datetime.datetime.strptime(data.index.max(), '%Y-%m-%d')
-        split_date = max_date - timedelta(days = 7*args.n_test_set)
+        split_date = max_date - timedelta(days = 7*args.n_test_periods)
         data.index = pd.to_datetime(data.index)
         test = data[data.index > split_date]
 
