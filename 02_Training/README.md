@@ -1,5 +1,3 @@
-# Pipeline
-
 This README provides guidance on how to set ParallelRunConfig parameters and explains Entry Script. It's also applicable to scoring and forecasting pipeline.
 
 ## 1.0 How to set ParallelRunConfig parameters
