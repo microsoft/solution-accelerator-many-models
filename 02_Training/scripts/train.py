@@ -56,16 +56,15 @@ def run(input_data):
         model_name = 'arima_'+str(input_data).split('/')[-1][:-6]
 
         # 2. Split the data into train and test sets based on dates
-        try:
-            data = data.set_index(args.timestamp_column)
-            max_date = datetime.datetime.strptime(data.index.max(),'%Y-%m-%d')
-            split_date = max_date - timedelta(days=7*args.n_test_periods)
-            data.index = pd.to_datetime(data.index)
-            train = data[data.index <= split_date]
-            test = data[data.index > split_date]
+        data = data.set_index(args.timestamp_column)
+        max_date = datetime.datetime.strptime(data.index.max(),'%Y-%m-%d')
+        split_date = max_date - timedelta(days=7*args.n_test_periods)
+        data.index = pd.to_datetime(data.index)
+        train = data[data.index <= split_date]
+        test = data[data.index > split_date]
 
         # 3.Train the model
-            model = pm.auto_arima(train[args.target_column],
+        model = pm.auto_arima(train[args.target_column],
                   start_p=0,
                   start_q=0,
                   test='adf', #default stationarity test is kpps
@@ -80,59 +79,43 @@ def run(input_data):
                   suppress_warnings = True,
                   out_of_sample_size = 16
                  )
-            model = model.fit(train[args.target_column])
-            logger.info('done training')
+        model = model.fit(train[args.target_column])
+        logger.info('done training')
 
             # 4. Save the model
-            logger.info(model)
-            with open(model_name, 'wb') as file:
-                joblib.dump(value=model, filename=os.path.join('./outputs/', model_name))
+        logger.info(model)
+        with open(model_name, 'wb') as file:
+            joblib.dump(value=model, filename=os.path.join('./outputs/', model_name))
 
             # 5. Register the model to the workspace
-            ws1 = current_run.experiment.workspace
-            try:
-                current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
-            except:
-                logger.info('dont need to upload')
-            logger.info('register model, skip the outputs prefix')
-            print('Trained '+ model_name)
+        ws1 = current_run.experiment.workspace
+        try:
+            current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
+        except:
+            logger.info('dont need to upload')
+        logger.info('register model, skip the outputs prefix')
+        print('Trained '+ model_name)
 
-            tags_dict={'Store': str(csv_file_path).split('/')[-1][:-4].split('_')[0], 'Brand': str(csv_file_path).split('/')[-1][:-4].split('_')[1], 'ModelType':'ARIMA'}
-            current_run.register_model(model_path=model_name, model_name=model_name, model_framework='pmdarima',tags=tags_dict)
-            print('Registered '+ model_name)
+        tags_dict={'Store': str(csv_file_path).split('/')[-1][:-4].split('_')[0], 'Brand': str(csv_file_path).split('/')[-1][:-4].split('_')[1], 'ModelType':'ARIMA'}
+        current_run.register_model(model_path=model_name, model_name=model_name, model_framework='pmdarima',tags=tags_dict)
+        print('Registered '+ model_name)
 
             #6. Log some metrics
-            date2=datetime.datetime.now()
-            logger.info('ending ('+str(csv_file_path)+') ' + str(date2))
+        date2=datetime.datetime.now()
+        logger.info('ending ('+str(csv_file_path)+') ' + str(date2))
 
-            logs.append(str(csv_file_path).split('/')[-1][:-4].split('_')[0])
-            logs.append(str(csv_file_path).split('/')[-1][:-4].split('_')[1])
-            logs.append('ARIMA')
-            logs.append(str(csv_file_path).split('/')[-1][:-4])
-            logs.append(model_name)
-            logs.append(str(date1))
-            logs.append(str(date2))
-            logs.append(str(date2-date1))
-            logs.append(idx)
-            logs.append(len(input_data))
-            logs.append(current_run.get_status())
-            current_run.log(model_name, model.aic())
-        except Exception as e:
-            model_name = 'arima_'+str(input_data).split('/')[-1][:-6]
-            date2=datetime.datetime.now()
-            error_message = 'Failed to train the model. '+'Error message: '+str(e)
-
-            logs.append(str(csv_file_path).split('/')[-1][:-4].split('_')[0])
-            logs.append(str(csv_file_path).split('/')[-1][:-4].split('_')[1])
-            logs.append('ARIMA')
-            logs.append(str(csv_file_path).split('/')[-1][:-4])
-            logs.append(model_name)
-            logs.append(str(date1))
-            logs.append(str(date2))
-            logs.append(str(date2-date1))
-            logs.append(idx)
-            logs.append(len(input_data))
-            logs.append(error_message)
+        logs.append(str(csv_file_path).split('/')[-1][:-4].split('_')[0])
+        logs.append(str(csv_file_path).split('/')[-1][:-4].split('_')[1])
+        logs.append('ARIMA')
+        logs.append(str(csv_file_path).split('/')[-1][:-4])
+        logs.append(model_name)
+        logs.append(str(date1))
+        logs.append(str(date2))
+        logs.append(str(date2-date1))
+        logs.append(idx)
+        logs.append(len(input_data))
+        logs.append(current_run.get_status())
+        current_run.log(model_name, model.aic())
 
     resultList.append(logs)
     return resultList
