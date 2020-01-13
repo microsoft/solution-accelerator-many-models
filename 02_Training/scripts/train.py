@@ -49,7 +49,7 @@ def run(input_data):
         logs = []
         date1 = datetime.datetime.now()
         logger.info('starting ('+csv_file_path+') ' + str(date1))
-        data = pd.read_csv(csv_file_path,header=0)
+        data = pd.read_csv(csv_file_path, header=0)
         logger.info(data.head())
         model_name = 'arima_'+str(input_data).split('/')[-1][:-6]
 
@@ -113,8 +113,7 @@ def run(input_data):
         logs.append(idx)
         logs.append(len(input_data))
         logs.append(current_run.get_status())
-        aic = 'AIC ' + str(model.aic())
-        current_run.log(model_name, aic)
+        current_run.log(model_name + '_aic', model.aic())
 
     resultList.append(logs)
     return resultList
