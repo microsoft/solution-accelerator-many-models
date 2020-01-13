@@ -73,4 +73,5 @@ class EntryScriptHelper:
 
     def get_run(self):
         """ Return the Run from the context."""
+
         return Run.get_context(allow_offline=False)

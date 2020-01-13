@@ -7,31 +7,29 @@ import datetime
 from azureml.pipeline.core import PipelineRun
 import argparse
 
-# parse input arguments
 parser = argparse.ArgumentParser("Logging arguments")
-
-parser.add_argument("--ParallelRunStep_name", type=str, help="input ParralelRunStep name")
+parser.add_argument("--parallelrunstep_name", type=str, help="input ParralelRunStep name")
 parser.add_argument("--datastore", type=str, help="input datastore name")
 parser.add_argument("--experiment", type=str, help="input experiment name")
 parser.add_argument("--overwrite_logs", type=str, help="input overwrite logs True or False")
 parser.add_argument("--pipeline_output_name", type=str, help="input ParralelRunStep output name")
 
 args, unknown = parser.parse_known_args()
-print("Argument1 (ParallelRunStep_name): %s" % args.ParallelRunStep_name)
+print("Argument1 (parallelrunstep_name): %s" % args.parallelrunstep_name)
 print("Argument2 (datastore): %s" % args.datastore)
 print("Argument3 (experiment): %s" % args.experiment)
 print("Argument4 (overwrite_logs): %s" % args.overwrite_logs)
 print("Argument5 (pipeline_output_name): %s" % args.pipeline_output_name)
 
 # set workspace and experiment 
-thisrun = Run.get_context()
-ws = thisrun.experiment.workspace
+current_run = Run.get_context()
+ws = current_run.experiment.workspace
 experiment = Experiment(ws, args.experiment)
 
 # retrieve the log file
-pipeline_runId = thisrun.get_details()['properties']['azureml.pipelinerunid']
+pipeline_runId = current_run.get_details()['properties']['azureml.pipelinerunid']
 pipeline_run = PipelineRun(experiment, pipeline_runId)
-step_run = pipeline_run.find_step_run(args.ParallelRunStep_name)[0]
+step_run = pipeline_run.find_step_run(args.parallelrunstep_name)[0]
 prediction_output = step_run.get_output_data(args.pipeline_output_name)
 prediction_output.download(local_path="logs")
 print('Downloaded the log file of Pipeline Id: '+pipeline_runId)
