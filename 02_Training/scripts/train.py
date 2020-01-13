@@ -23,12 +23,12 @@ parser.add_argument("--n_test_periods", type=int, help="input number of test per
 parser.add_argument("--timestamp_column", type=str, help="input timestamp column")
 parser.add_argument("--stepwise_training", type=str, help="input stepwise training True or False")
 
-args, unknown = parser.parse_known_args()
+args, _ = parser.parse_known_args()
 
-print("Argument 1(n_test_periods): %s" % args.n_test_periods)
-print("Argument 2(target_column): %s" % args.target_column)
-print("Argument 3(timestamp_column): %s" % args.timestamp_column)
-print("Argument 4(stepwise_training): %s" % args.stepwise_training)
+print("Argument 1 n_test_periods: {}".format(args.n_test_periods))
+print("Argument 2 target_column: {}".format(args.target_column))
+print("Argument 3 timestamp_column: {}".format(args.timestamp_column))
+print("Argument 4 stepwise_training: {}".format(args.stepwise_training))
 
 def init():
     EntryScriptHelper().config(LOG_NAME)
@@ -36,8 +36,6 @@ def init():
     output_folder = os.path.join(os.environ.get("AZ_BATCHAI_INPUT_AZUREML", ""), "temp/output")
     logger.info(f"{__file__}.output_folder:{output_folder}")
     logger.info("init()")
-    return
-
 
 def run(input_data):
     # 0. Set up logging
@@ -49,7 +47,7 @@ def run(input_data):
     # 1. Read in the data file
     for idx, csv_file_path in enumerate(input_data):
         logs = []
-        date1=datetime.datetime.now()
+        date1 = datetime.datetime.now()
         logger.info('starting ('+csv_file_path+') ' + str(date1))
         data = pd.read_csv(csv_file_path,header=0)
         logger.info(data.head())
@@ -81,33 +79,33 @@ def run(input_data):
                  )
         model = model.fit(train[args.target_column])
         logger.info('done training')
+        print('Trained '+ model_name)
 
             # 4. Save the model
         logger.info(model)
         with open(model_name, 'wb') as file:
             joblib.dump(value=model, filename=os.path.join('./outputs/', model_name))
+        print('Saved '+ model_name)
 
             # 5. Register the model to the workspace
-        ws1 = current_run.experiment.workspace
         try:
             current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
         except:
             logger.info('dont need to upload')
         logger.info('register model, skip the outputs prefix')
-        print('Trained '+ model_name)
 
-        tags_dict={'Store': str(csv_file_path).split('/')[-1][:-4].split('_')[0], 'Brand': str(csv_file_path).split('/')[-1][:-4].split('_')[1], 'ModelType':'ARIMA'}
+        tags_dict = {'Store': csv_file_path.split('/')[-1][:-4].split('_')[0], 'Brand': csv_file_path.split('/')[-1][:-4].split('_')[1], 'ModelType':'ARIMA'}
         current_run.register_model(model_path=model_name, model_name=model_name, model_framework='pmdarima',tags=tags_dict)
         print('Registered '+ model_name)
 
             #6. Log some metrics
-        date2=datetime.datetime.now()
-        logger.info('ending ('+str(csv_file_path)+') ' + str(date2))
+        date2 = datetime.datetime.now()
+        logger.info('ending ('+csv_file_path+') ' + str(date2))
 
-        logs.append(str(csv_file_path).split('/')[-1][:-4].split('_')[0])
-        logs.append(str(csv_file_path).split('/')[-1][:-4].split('_')[1])
+        logs.append(csv_file_path.split('/')[-1][:-4].split('_')[0])
+        logs.append(csv_file_path.split('/')[-1][:-4].split('_')[1])
         logs.append('ARIMA')
-        logs.append(str(csv_file_path).split('/')[-1][:-4])
+        logs.append(csv_file_path.split('/')[-1][:-4])
         logs.append(model_name)
         logs.append(str(date1))
         logs.append(str(date2))
@@ -115,7 +113,8 @@ def run(input_data):
         logs.append(idx)
         logs.append(len(input_data))
         logs.append(current_run.get_status())
-        current_run.log(model_name, model.aic())
+        aic = 'AIC ' + str(model.aic())
+        current_run.log(model_name, aic)
 
     resultList.append(logs)
     return resultList
