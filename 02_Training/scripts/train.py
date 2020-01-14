@@ -51,7 +51,11 @@ def run(input_data):
         logger.info('starting ('+csv_file_path+') ' + str(date1))
         data = pd.read_csv(csv_file_path, header=0)
         logger.info(data.head())
+
         model_name = 'arima_'+str(input_data).split('/')[-1][:-6]
+        store_name = csv_file_path.split('/')[-1][:-4].split('_')[0]
+        brand_name = csv_file_path.split('/')[-1][:-4].split('_')[1]
+        file_name = csv_file_path.split('/')[-1][:-4]
 
         # 2. Split the data into train and test sets based on dates
         data = data.set_index(args.timestamp_column)
@@ -94,7 +98,7 @@ def run(input_data):
             logger.info('dont need to upload')
         logger.info('register model, skip the outputs prefix')
 
-        tags_dict = {'Store': csv_file_path.split('/')[-1][:-4].split('_')[0], 'Brand': csv_file_path.split('/')[-1][:-4].split('_')[1], 'ModelType':'ARIMA'}
+        tags_dict = {'Store': store_name, 'Brand': brand_name, 'ModelType':'ARIMA'}
         current_run.register_model(model_path=model_name, model_name=model_name, model_framework='pmdarima',tags=tags_dict)
         print('Registered '+ model_name)
 
@@ -102,10 +106,10 @@ def run(input_data):
         date2 = datetime.datetime.now()
         logger.info('ending ('+csv_file_path+') ' + str(date2))
 
-        logs.append(csv_file_path.split('/')[-1][:-4].split('_')[0])
-        logs.append(csv_file_path.split('/')[-1][:-4].split('_')[1])
+        logs.append(store_name)
+        logs.append(brand_name)
         logs.append('ARIMA')
-        logs.append(csv_file_path.split('/')[-1][:-4])
+        logs.append(file_name)
         logs.append(model_name)
         logs.append(str(date1))
         logs.append(str(date2))
