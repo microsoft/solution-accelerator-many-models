@@ -20,7 +20,7 @@ args, _ = parser.parse_known_args()
 print("Argument1 parallelrunstep_name: {}".format(args.parallelrunstep_name))
 print("Argument2 datastore: {}".format(args.datastore))
 print("Argument3 experiment: {}".format(args.experiment))
-print("Argument4 overwrite_logs: {}".format(args.overwrite_logs))
+print("Argument4 overwrite_predictions: {}".format(args.overwrite_predictions))
 print("Argument5 pipeline_output_name: {}".format(args.pipeline_output_name))
 
 # set workspace and experiment
