@@ -102,11 +102,11 @@ def run(input_data):
         of each iteration to the specified output_datastore.
         '''
 #         run_date = datetime.datetime.now().date()
-#         ws1 = current_run.experiment.workspace
+#         ws = current_run.experiment.workspace
 #         output_path = os.path.join('./outputs/', model_name)
 #         test.to_csv(path_or_buf=output_path + '.csv', index = False)
 
-#         scoring_dstore = Datastore(ws1, args.output_datastore)
+#         scoring_dstore = Datastore(ws, args.output_datastore)
 #         scoring_dstore.upload_files([output_path +'.csv'], target_path = 'oj_scoring_' + str(run_date),
 #                                     overwrite = args.overwrite_scoring, show_progress = True)
 
