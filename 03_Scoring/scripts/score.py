@@ -52,21 +52,24 @@ def run(input_data):
     logger.info('making predictions...')
 
     for idx, csv_file_path in enumerate(input_data):
-        logs = []
-        model_name = 'arima_' + csv_file_path.split('/')[-1][:-4]
-
         date1 = datetime.datetime.now()
+        logs = []
+
+        file_name = os.path.basename(csv_file_path)[:-4]
+        model_name = 'arima_' + file_name
+        store_name = file_name.split('_')[0]
+        brand_name = file_name.split('_')[1]
+
         logger.info('starting ('+csv_file_path+') ' + str(date1))
         current_run.log(model_name,'starttime-'+str(date1))
-
-        # 1. Unpickle Model and Make Predictions
+        # 1. Unpickle model and make predictions on test set
         model_path = Model.get_model_path(model_name)
         model = joblib.load(model_path)
         print('Unpickled ' + model_name)
         prediction_list, conf_int = model.predict(args.n_test_periods, return_conf_int = True)
         print('Made predictions on  ' + model_name)
 
-        # 2. Split the data for test set
+        # 2. Split the data for test set and insert predictions
         data = pd.read_csv(csv_file_path, header=0)
         data = data.set_index(args.timestamp_column)
         max_date = datetime.datetime.strptime(data.index.max(), '%Y-%m-%d')
@@ -77,7 +80,7 @@ def run(input_data):
         test['Predictions'] = prediction_list
         print(test.head())
 
-        # 3. Calculate Accuracy Metrics
+        # 3. Calculate accuracy metrics
         metrics = []
         mse = mean_squared_error(test['Quantity'], test['Predictions'])
         rmse = np.sqrt(mse)
@@ -115,11 +118,6 @@ def run(input_data):
 
         # 6. Log Metrics
         date2 = datetime.datetime.now()
-        logger.info('ending ('+csv_file_path+') ' + str(date2))
-
-        store_name = csv_file_path.split('/')[-1][:-4].split('_')[0]
-        brand_name = csv_file_path.split('/')[-1][:-4].split('_')[1]
-
         logs.append(store_name)
         logs.append(brand_name)
         logs.append('ARIMA')
@@ -135,6 +133,7 @@ def run(input_data):
         logs.append(idx)
         logs.append(len(input_data))
         logs.append(current_run.get_status())
+        logger.info('ending ('+csv_file_path+') ' + str(date2))
 
     resultsList.append(logs)
     return resultsList

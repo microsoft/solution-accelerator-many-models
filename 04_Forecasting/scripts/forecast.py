@@ -55,22 +55,23 @@ def run(input_data):
     # 1. Iterate through the input data
     for idx, csv_file_path in enumerate(input_data):
         date1 = datetime.datetime.now()
-        model_name = 'arima_'+str(csv_file_path).split('/')[-1][:-4]
-        store = str(csv_file_path).split('/')[-1][:-4].split('_')[0]
-        brand = str(csv_file_path).split('/')[-1][:-4].split('_')[-1]
+        file_name = os.path.basename(csv_file_path)[:-4]
+        model_name = 'arima_' + file_name
+        store_name = file_name.split('_')[0]
+        brand_name = file_name.split('_')[1]
 
         logger.info('starting ('+csv_file_path+') ' + str(date1))
         current_run.log(model_name,'starttime-' + str(date1))
 
         # 2. Set up data to predict on
-        store_list = [store] * args.forecast_horizon
-        brand_list = [brand] * args.forecast_horizon
+        store_list = [store_name] * args.forecast_horizon
+        brand_list = [brand_name] * args.forecast_horizon
         date_list = pd.date_range(args.starting_date, periods = args.forecast_horizon, freq ='W-THU')
 
         prediction_df = pd.DataFrame(list(zip(date_list, store_list, brand_list)),
                                     columns = ['WeekStarting', 'Store', 'Brand'])
 
-        # 3. Unpickle Model and Make Predictions
+        # 3. Unpickle model and make predictions
         model_path = Model.get_model_path(model_name)
         model = joblib.load(model_path)
         print('Unpickled the model ' + model_name)
@@ -78,7 +79,6 @@ def run(input_data):
         prediction_list, conf_int = model.predict(args.forecast_horizon, return_conf_int = True)
         prediction_df['Predictions'] = prediction_list
         all_predictions = all_predictions.append(prediction_df)
-
         print('Made predictions ' + model_name)
 
         # 4. Save the output back to blob storage
