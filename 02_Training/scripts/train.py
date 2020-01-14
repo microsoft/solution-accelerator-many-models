@@ -48,7 +48,6 @@ def run(input_data):
         date1 = datetime.datetime.now()
         logs = []
         logger.info('starting ('+csv_file_path+') ' + str(date1))
-        logger.info(data.head())
 
         file_name = os.path.basename(csv_file_path)[:-4]
         model_name = 'arima_' + file_name
@@ -56,6 +55,7 @@ def run(input_data):
         brand_name = file_name.split('_')[1]
 
         data = pd.read_csv(csv_file_path, header = 0)
+        logger.info(data.head())
 
         # 2. Split the data into train and test sets based on dates
         data = data.set_index(args.timestamp_column)
