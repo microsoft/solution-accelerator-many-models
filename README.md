@@ -30,17 +30,22 @@ While it's not required, a basic understanding of Azure Machine Learning will be
 ## Getting started
 
 #### 1. Deploy Resources
-Start by deploying the resources to Azure using button below: 
+
+Start by deploying the resources to Azure using button below:
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdereklegenzoff%2FSampleArmTemplates%2Fmaster%2FAzureML.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
 #### 2. Configure Development Environment
+
 Next you'll need to configure your [development environment](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-configure-environment) for Azure Machine Learning. We recommend using a [cloud based compute instance](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-configure-environment#compute-instance) as it's the fastest way to get up and running.
 
+The easiest way to get these folders onto a Notebook VM is to upload the repo as a zip file and run ```!unzip solution-accelerator-many-models.zip``` in a Jupyter Notebook or in the terminal.
+
 #### 3. Run Notebooks
-From there, walk through the folders chronologically following the steps outlined in each notebook.
+
+From there, walk through the folders chronologically following the steps outlined in each notebook. 
 
 ## Contents
 
