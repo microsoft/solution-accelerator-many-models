@@ -103,6 +103,7 @@ def run(input_data):
         print('Registered '+ model_name)
 
             #6. Log some metrics
+        current_run.log(model_name + '_aic', model.aic())
         date2 = datetime.datetime.now()
         logs.append(store_name)
         logs.append(brand_name)
@@ -115,7 +116,7 @@ def run(input_data):
         logs.append(idx)
         logs.append(len(input_data))
         logs.append(current_run.get_status())
-        current_run.log(model_name + '_aic', model.aic())
+
         logger.info('ending ('+csv_file_path+') ' + str(date2))
 
     resultList.append(logs)
