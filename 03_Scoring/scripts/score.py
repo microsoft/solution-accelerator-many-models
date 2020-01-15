@@ -11,12 +11,8 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 import pickle
 import logging
 import datetime
-
-# Import the AzureML packages
 from azureml.core.model import Model
 from azureml.core import Experiment, Workspace, Run, Datastore
-
-# Import the helper script
 from entry_script_helper import EntryScriptHelper
 
 current_run = Run.get_context()
@@ -48,7 +44,6 @@ def run(input_data):
     logger = logging.getLogger(LOG_NAME)
     os.makedirs('./outputs', exist_ok=True)
     resultsList = []
-    predictions = pd.DataFrame()
     logger.info('making predictions...')
 
     for idx, csv_file_path in enumerate(input_data):
@@ -62,6 +57,7 @@ def run(input_data):
 
         logger.info('starting ('+csv_file_path+') ' + str(date1))
         current_run.log(model_name,'starttime-'+str(date1))
+
         # 1. Unpickle model and make predictions on test set
         model_path = Model.get_model_path(model_name)
         model = joblib.load(model_path)
@@ -79,6 +75,7 @@ def run(input_data):
 
         test['Predictions'] = prediction_list
         print(test.head())
+        print('Inserted predictions ' + model_name)
 
         # 3. Calculate accuracy metrics
         metrics = []
@@ -95,7 +92,7 @@ def run(input_data):
         print('Calculated accuracy metrics  ' + model_name)
         print(metrics)
 
-        # add in a log for accuracy metrics
+        # 3.1 Log accuracy metrics
         logger.info('accuracy metrics')
         logger.info(metrics)
 
@@ -113,15 +110,13 @@ def run(input_data):
 #         scoring_dstore.upload_files([output_path +'.csv'], target_path = 'oj_scoring_' + str(run_date),
 #                                     overwrite = args.overwrite_scoring, show_progress = True)
 
-        # 5. Append the predictions to return a dataframe (optional)
-        predictions = predictions.append(test)
-
-        # 6. Log Metrics
+        # 5. Log the run
         date2 = datetime.datetime.now()
+
         logs.append(store_name)
         logs.append(brand_name)
         logs.append('ARIMA')
-        logs.append(csv_file_path.split('/')[-1][:-4])
+        logs.append(file_name)
         logs.append(model_name)
         logs.append(str(date1))
         logs.append(str(date2))
@@ -133,6 +128,7 @@ def run(input_data):
         logs.append(idx)
         logs.append(len(input_data))
         logs.append(current_run.get_status())
+
         logger.info('ending ('+csv_file_path+') ' + str(date2))
 
     resultsList.append(logs)
