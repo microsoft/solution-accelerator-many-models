@@ -85,13 +85,13 @@ def run(input_data):
         logger.info('done training')
         print('Trained '+ model_name)
 
-            # 4. Save the model
+        # 4. Save the model
         logger.info(model)
         with open(model_name, 'wb') as file:
             joblib.dump(value=model, filename=os.path.join('./outputs/', model_name))
         print('Saved '+ model_name)
 
-            # 5. Register the model to the workspace
+        # 5. Register the model to the workspace
         try:
             current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
         except:
@@ -102,7 +102,9 @@ def run(input_data):
         current_run.register_model(model_path = model_name, model_name = model_name, model_framework = 'pmdarima', tags = tags_dict)
         print('Registered '+ model_name)
 
-            #6. Log some metrics
+        #6. Log some metrics
+        current_run.log(model_name + '_aic', model.aic())
+
         date2 = datetime.datetime.now()
         logs.append(store_name)
         logs.append(brand_name)
@@ -115,7 +117,7 @@ def run(input_data):
         logs.append(idx)
         logs.append(len(input_data))
         logs.append(current_run.get_status())
-        current_run.log(model_name + '_aic', model.aic())
+
         logger.info('ending ('+csv_file_path+') ' + str(date2))
 
     resultList.append(logs)
