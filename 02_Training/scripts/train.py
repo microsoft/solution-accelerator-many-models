@@ -58,67 +58,86 @@ def run(input_data):
         logger.info(data.head())
 
         # 2. Split the data into train and test sets based on dates
-        data = data.set_index(args.timestamp_column)
-        max_date = datetime.datetime.strptime(data.index.max(),'%Y-%m-%d')
-        split_date = max_date - timedelta(days=7*args.n_test_periods)
-        data.index = pd.to_datetime(data.index)
-        train = data[data.index <= split_date]
-        test = data[data.index > split_date]
+        try:
+            data = data.set_index(args.timestamp_column)
+            max_date = datetime.datetime.strptime(data.index.max(),'%Y-%m-%d')
+            split_date = max_date - timedelta(days = 7*args.n_test_periods)
+            data.index = pd.to_datetime(data.index)
+            train = data[data.index <= split_date]
+            test = data[data.index > split_date]
 
-        # 3.Train the model
-        model = pm.auto_arima(train[args.target_column],
-                  start_p=0,
-                  start_q=0,
-                  test='adf', #default stationarity test is kpps
-                  max_p =3,
+            # 3.Train the model
+            model = pm.auto_arima(train[args.target_column],
+                  start_p = 0,
+                  start_q = 0,
+                  test = 'adf', #default stationarity test is kpps
+                  max_p = 3,
                   max_d = 2,
-                  max_q=3,
-                  m=3, #number of observations per seasonal cycle
-                  seasonal=True,
+                  max_q = 3,
+                  m = 3, #number of observations per seasonal cycle
+                  seasonal = True,
                   information_criterion = 'aic',
-                  trace=True, #prints status on the fits
+                  trace = True, #prints status on the fits
                   stepwise = args.stepwise_training, # this increments instead of doing a grid search
                   suppress_warnings = True,
                   out_of_sample_size = 16
                  )
-        model = model.fit(train[args.target_column])
-        logger.info('done training')
-        print('Trained '+ model_name)
+            model = model.fit(train[args.target_column])
+            logger.info('done training')
+            print('Trained '+ model_name)
 
-        # 4. Save the model
-        logger.info(model)
-        with open(model_name, 'wb') as file:
-            joblib.dump(value=model, filename=os.path.join('./outputs/', model_name))
-        print('Saved '+ model_name)
+            # 4. Save the model
+            logger.info(model)
+            with open(model_name, 'wb') as file:
+                joblib.dump(value = model, filename = os.path.join('./outputs/', model_name))
+            print('Saved '+ model_name)
 
-        # 5. Register the model to the workspace
-        try:
-            current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
-        except:
-            logger.info('dont need to upload')
-        logger.info('register model, skip the outputs prefix')
+            # 5. Register the model to the workspace
+            try:
+                current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
+            except:
+                logger.info('dont need to upload')
+            logger.info('register model, skip the outputs prefix')
 
-        tags_dict = {'Store': store_name, 'Brand': brand_name, 'ModelType':'ARIMA'}
-        current_run.register_model(model_path = model_name, model_name = model_name, model_framework = 'pmdarima', tags = tags_dict)
-        print('Registered '+ model_name)
+            tags_dict = {'Store': store_name, 'Brand': brand_name, 'ModelType':'ARIMA'}
+            current_run.register_model(model_path = model_name, model_name = model_name, model_framework = 'pmdarima', tags = tags_dict)
+            print('Registered '+ model_name)
 
-        #6. Log some metrics
-        current_run.log(model_name + '_aic', model.aic())
+            #6. Log some metrics
+            current_run.log(model_name + '_aic', model.aic())
 
-        date2 = datetime.datetime.now()
-        logs.append(store_name)
-        logs.append(brand_name)
-        logs.append('ARIMA')
-        logs.append(file_name)
-        logs.append(model_name)
-        logs.append(str(date1))
-        logs.append(str(date2))
-        logs.append(str(date2-date1))
-        logs.append(idx)
-        logs.append(len(input_data))
-        logs.append(current_run.get_status())
+            date2 = datetime.datetime.now()
+            logs.append(store_name)
+            logs.append(brand_name)
+            logs.append('ARIMA')
+            logs.append(file_name)
+            logs.append(model_name)
+            logs.append(str(date1))
+            logs.append(str(date2))
+            logs.append(str(date2-date1))
+            logs.append(idx)
+            logs.append(len(input_data))
+            logs.append(current_run.get_status())
 
-        logger.info('ending ('+csv_file_path+') ' + str(date2))
+            logger.info('ending ('+csv_file_path+') ' + str(date2))
+
+        except (ValueError, NameError, ModuleNotFoundError, AttributeError, ImportError, FileNotFoundError, KeyError) as error:
+            date2 = datetime.datetime.now()
+            error_message = 'Failed to train the model. '+'Error message: '+str(error)
+
+            logs.append(store_name)
+            logs.append(brand_name)
+            logs.append('ARIMA')
+            logs.append(file_name)
+            logs.append(model_name)
+            logs.append(str(date1))
+            logs.append(str(date2))
+            logs.append(str(date2-date1))
+            logs.append(idx)
+            logs.append(len(input_data))
+            logs.append(error_message)
+
+            logger.info('ending ('+csv_file_path+') ' + str(date2))
 
     resultList.append(logs)
     return resultList

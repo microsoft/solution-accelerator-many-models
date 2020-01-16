@@ -7,12 +7,8 @@ import time
 from datetime import timedelta
 import logging
 import datetime
-
-# Import the AzureML packages
 from azureml.core.model import Model
 from azureml.core import Experiment, Workspace, Run, Datastore
-
-# Import the helper script
 from entry_script_helper import EntryScriptHelper
 
 # Get the information for the current Run
@@ -27,7 +23,7 @@ parser.add_argument("--forecast_horizon", type=int, help="input number of predic
 parser.add_argument("--starting_date", type=str, help="date to begin forcasting")
 
 ''' If you'd like to upload individual predictioon files as opposed to a concatenated prediction file,
-    uncomment the following arguments and include these arguments in the ParralelRunStep as well. '''
+    uncomment the following arguments and include these arguments in the ParralelRunStep. '''
 # parser.add_argument("--output_datastore", type=str, help="input the name of registered forecast datastore")
 # parser.add_argument("--overwrite_forecasting", type=str, help="True will over write the forecasting files")
 
@@ -92,7 +88,7 @@ def run(input_data):
         #forecasting_dstore.upload_files([output_path + '.csv'], target_path='oj_forecasts' + str(run_date),
         #                                overwrite=args.overwrite_forecasting, show_progress=True)
 
-        # 5. Log Metrics
+        # 5. Log the run
         date2 = datetime.datetime.now()
         logger.info('ending ('+str(csv_file_path)+') ' + str(date2))
 

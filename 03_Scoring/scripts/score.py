@@ -59,77 +59,99 @@ def run(input_data):
         current_run.log(model_name,'starttime-'+str(date1))
 
         # 1. Unpickle model and make predictions on test set
-        model_path = Model.get_model_path(model_name)
-        model = joblib.load(model_path)
-        print('Unpickled ' + model_name)
-        prediction_list, conf_int = model.predict(args.n_test_periods, return_conf_int = True)
-        print('Made predictions on  ' + model_name)
+        try:
+            model_path = Model.get_model_path(model_name)
+            model = joblib.load(model_path)
+            print('Unpickled ' + model_name)
+            prediction_list, conf_int = model.predict(args.n_test_periods, return_conf_int = True)
+            print('Made predictions on  ' + model_name)
 
-        # 2. Split the data for test set and insert predictions
-        data = pd.read_csv(csv_file_path, header=0)
-        data = data.set_index(args.timestamp_column)
-        max_date = datetime.datetime.strptime(data.index.max(), '%Y-%m-%d')
-        split_date = max_date - timedelta(days = 7*args.n_test_periods)
-        data.index = pd.to_datetime(data.index)
-        test = data[data.index > split_date]
+            # 2. Split the data for test set and insert predictions
+            data = pd.read_csv(csv_file_path, header=0)
+            data = data.set_index(args.timestamp_column)
+            max_date = datetime.datetime.strptime(data.index.max(), '%Y-%m-%d')
+            split_date = max_date - timedelta(days = 7*args.n_test_periods)
+            data.index = pd.to_datetime(data.index)
+            test = data[data.index > split_date]
 
-        test['Predictions'] = prediction_list
-        print(test.head())
-        print('Inserted predictions ' + model_name)
+            test['Predictions'] = prediction_list
+            print(test.head())
 
-        # 3. Calculate accuracy metrics
-        metrics = []
-        mse = mean_squared_error(test['Quantity'], test['Predictions'])
-        rmse = np.sqrt(mse)
-        mae = mean_absolute_error(test['Quantity'], test['Predictions'])
-        act, pred = np.array(test['Quantity']), np.array(test['Predictions'])
-        mape = np.mean(np.abs((act - pred)/act)*100)
+            # 3. Calculate accuracy metrics
+            metrics = []
+            mse = mean_squared_error(test['Quantity'], test['Predictions'])
+            rmse = np.sqrt(mse)
+            mae = mean_absolute_error(test['Quantity'], test['Predictions'])
+            act, pred = np.array(test['Quantity']), np.array(test['Predictions'])
+            mape = np.mean(np.abs((act - pred)/act)*100)
 
-        metrics.append(mse)
-        metrics.append(rmse)
-        metrics.append(mae)
-        metrics.append(mape)
-        print('Calculated accuracy metrics  ' + model_name)
-        print(metrics)
+            metrics.append(mse)
+            metrics.append(rmse)
+            metrics.append(mae)
+            metrics.append(mape)
+            print('Calculated accuracy metrics  ' + model_name)
+            print(metrics)
 
-        # 3.1 Log accuracy metrics
-        logger.info('accuracy metrics')
-        logger.info(metrics)
+            # 3.1 log accuracy metrics
+            logger.info('accuracy metrics')
+            logger.info(metrics)
 
-        # 4. Save the output back to blob storage
-        '''
-        If you want to return the predictions and acutal values for each model as a seperate file, use the code below to output the results
-        of each iteration to the specified output_datastore.
-        '''
-#         run_date = datetime.datetime.now().date()
-#         ws = current_run.experiment.workspace
-#         output_path = os.path.join('./outputs/', model_name)
-#         test.to_csv(path_or_buf=output_path + '.csv', index = False)
+            # 4. Save the output back to blob storage
+            '''
+            If you want to return the predictions and acutal values for each model as a seperate file, use the code below to output the results
+            of each iteration to the specified output_datastore.
+            '''
+            # run_date = datetime.datetime.now().date()
+            # ws = current_run.experiment.workspace
+            # output_path = os.path.join('./outputs/', model_name)
+            # test.to_csv(path_or_buf=output_path + '.csv', index = False)
 
-#         scoring_dstore = Datastore(ws, args.output_datastore)
-#         scoring_dstore.upload_files([output_path +'.csv'], target_path = 'oj_scoring_' + str(run_date),
-#                                     overwrite = args.overwrite_scoring, show_progress = True)
+            # scoring_dstore = Datastore(ws, args.output_datastore)
+            # scoring_dstore.upload_files([output_path +'.csv'], target_path = 'oj_scoring_' + str(run_date),
+            #                             overwrite = args.overwrite_scoring, show_progress = True)
 
-        # 5. Log the run
-        date2 = datetime.datetime.now()
+            # 5. Log the run
+            date2 = datetime.datetime.now()
 
-        logs.append(store_name)
-        logs.append(brand_name)
-        logs.append('ARIMA')
-        logs.append(file_name)
-        logs.append(model_name)
-        logs.append(str(date1))
-        logs.append(str(date2))
-        logs.append(str(date2-date1))
-        logs.append(mse)
-        logs.append(rmse)
-        logs.append(mae)
-        logs.append(mape)
-        logs.append(idx)
-        logs.append(len(input_data))
-        logs.append(current_run.get_status())
+            logs.append(store_name)
+            logs.append(brand_name)
+            logs.append('ARIMA')
+            logs.append(file_name)
+            logs.append(model_name)
+            logs.append(str(date1))
+            logs.append(str(date2))
+            logs.append(str(date2-date1))
+            logs.append(mse)
+            logs.append(rmse)
+            logs.append(mae)
+            logs.append(mape)
+            logs.append(idx)
+            logs.append(len(input_data))
+            logs.append(current_run.get_status())
 
-        logger.info('ending ('+csv_file_path+') ' + str(date2))
+            logger.info('ending ('+csv_file_path+') ' + str(date2))
+
+        except (ValueError, UnboundLocalError, NameError, ModuleNotFoundError, AttributeError, ImportError, FileNotFoundError, KeyError) as error:
+            date2 = datetime.datetime.now()
+            error_message = 'Failed to score the model. '+'Error message: '+str(error)
+
+            logs.append(store_name)
+            logs.append(brand_name)
+            logs.append('ARIMA')
+            logs.append(file_name)
+            logs.append(model_name)
+            logs.append(str(date1))
+            logs.append(str(date2))
+            logs.append(str(date2-date1))
+            logs.append('Null')
+            logs.append('Null')
+            logs.append('Null')
+            logs.append('Null')
+            logs.append(idx)
+            logs.append(len(input_data))
+            logs.append(error_message)
+
+            logger.info('ending ('+csv_file_path+') ' + str(date2))
 
     resultsList.append(logs)
     return resultsList
