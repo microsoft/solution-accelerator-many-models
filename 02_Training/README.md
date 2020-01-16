@@ -1,6 +1,25 @@
+# Training Many Models 
+
+
+## Overview
+The notebook in the folder will walk you through the process of training many models. In this README you can find additional information on the training process as well as information on how to set up the reports. After you have run through the notebook, you can spin up the Power BI dashboard to review the training process. 
+
+## 1.0 Reporting 
+Once you have run through the training notebook, navigate to Microsoft Storage Explorer. From the Microsoft Storage Explorer navigate to the Azure Storage Container you have designated your training logs to. You will want to download the most recent training file and save it to your local computer.
+
+![image of Storage Explorer](..\images\TrainingStorageExplorer.png) 
+
+Now that you have downloaded the training log file, open up the Many Models Training Power BI file. You will be prompted for the **file path** of the training log file located on your computer. Once you have entered the file path, click **Load** to populate the Power BI report. 
+
+ ![image of Power BI file path input](..\images\TrainingLoadFile.png) 
+
+When the training log file loads into Power BI, you will see the populated report as seen below: 
+
+![image of Power BI report](..\images\TrainingReport.png) 
+
 This README provides guidance on how to set ParallelRunConfig parameters and explains Entry Script. It's also applicable to scoring and forecasting pipeline.
 
-## 1.0 How to set ParallelRunConfig parameters
+## 2.0 How to set ParallelRunConfig parameters
 
 In the [ParallelRunConfig](https://docs.microsoft.com/en-us/python/api/azureml-contrib-pipeline-steps/azureml.contrib.pipeline.steps.parallel_run_config.parallelrunconfig), you will want to determine the number of workers and nodes appropriate for your use case. The workercount is based off the number of cores of the compute VM. The nodecount will determine the number of master nodes to use. In time-series ARIMA model scenario, increasing the node count will speed up the training process.
 
@@ -32,7 +51,7 @@ In the [ParallelRunConfig](https://docs.microsoft.com/en-us/python/api/azureml-c
     * <b>append_row</b>: For all input files, only one file will be created in the output folder to append all outputs separated by line. The file name will be parallel_run_step.txt. We set it to 'append_row' here because we collect the aggregated output file as our training log.
 
 
-## 2.0 Entry Script
+## 3.0 Entry Script
 
 To train the models, you will need an entry script and a list of dependencies. The entry_script is a user script as a local file path that will be run in parallel on multiple nodes. If source_directly is present, use a relative path. Otherwise, use any path that's accessible on the machine.
 
