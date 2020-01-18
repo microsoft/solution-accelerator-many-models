@@ -5,17 +5,10 @@ from sklearn.externals import joblib
 from joblib import dump, load
 import time
 from datetime import timedelta
-import logging
 import datetime
 from azureml.core.model import Model
 from azureml.core import Experiment, Workspace, Run, Datastore
-from entry_script_helper import EntryScriptHelper
-
-# Get the information for the current Run
-current_run = Run.get_context()
-
-# Set the log file name
-LOG_NAME = "user_log"
+from entry_script import EntryScript
 
 # Parse the arguments passed in the PipelineStep through the arguments option
 parser = argparse.ArgumentParser("split")
@@ -34,19 +27,14 @@ print("Argument 2 starting_date: {}".format(args.starting_date))
 # print("Argument 3(output_datastore): {}".format(args.output_datastore))
 # print("Argument 4(overwrite_forecasting): {}".format(args.overwrite_forecasting))
 
-def init():
-    EntryScriptHelper().config(LOG_NAME)
-    logger = logging.getLogger(LOG_NAME)
-    output_folder = os.path.join(os.environ.get("AZ_BATCHAI_INPUT_AZUREML", ""), "temp/output")
-    logger.info(f"{__file__}.output_folder:{output_folder}")
-    logger.info("init()")
-
 def run(input_data):
     # 0. Set up Logging
-    logger = logging.getLogger(LOG_NAME)
+    entry_script = EntryScript()
+    logger = entry_script.logger
+    logger.info('Making forecasts')
     os.makedirs('./outputs', exist_ok=True)
     all_predictions = pd.DataFrame()
-    logger.info('making forecasts...')
+    current_run = Run.get_context()
 
     # 1. Iterate through the input data
     for idx, csv_file_path in enumerate(input_data):
@@ -57,7 +45,6 @@ def run(input_data):
         brand_name = file_name.split('_')[1]
 
         logger.info('starting ('+csv_file_path+') ' + str(date1))
-        current_run.log(model_name,'starttime-' + str(date1))
 
         # 2. Set up data to predict on
         store_list = [store_name] * args.forecast_horizon
