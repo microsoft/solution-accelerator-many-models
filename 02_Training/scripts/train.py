@@ -2,17 +2,12 @@ from azureml.core import Experiment, Workspace, Run
 import pmdarima as pm
 import pandas as pd
 import os
-import logging
 import argparse
 import datetime
 from datetime import timedelta
 from sklearn.externals import joblib
 from joblib import dump, load
-from entry_script_helper import EntryScriptHelper
-
-current_run = Run.get_context()
-
-LOG_NAME = "user_log"
+from entry_script import EntryScript
 
 print("Split the data into train and test")
 
@@ -29,19 +24,14 @@ print("Argument 2 target_column: {}".format(args.target_column))
 print("Argument 3 timestamp_column: {}".format(args.timestamp_column))
 print("Argument 4 stepwise_training: {}".format(args.stepwise_training))
 
-def init():
-    EntryScriptHelper().config(LOG_NAME)
-    logger = logging.getLogger(LOG_NAME)
-    output_folder = os.path.join(os.environ.get("AZ_BATCHAI_INPUT_AZUREML", ""), "temp/output")
-    logger.info(f"{__file__}.output_folder:{output_folder}")
-    logger.info("init()")
-
 def run(input_data):
     # 0. Set up logging
-    logger = logging.getLogger(LOG_NAME)
-    os.makedirs('./outputs', exist_ok=True)
-    logger.info('processing all files')
+    entry_script = EntryScript()
+    logger = entry_script.logger
+    logger.info('Training models')
     resultList = []
+    current_run = Run.get_context()
+    os.makedirs('./outputs', exist_ok=True)
 
     # 1. Read in the data file
     for idx, csv_file_path in enumerate(input_data):
