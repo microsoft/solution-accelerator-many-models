@@ -2,21 +2,15 @@ import pandas as pd
 import os
 import argparse
 import numpy as np
-from sklearn.externals import joblib
-from joblib import dump, load
 import pmdarima as pm
-import time
 from datetime import timedelta
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-import pickle
-import logging
 import datetime
+from entry_script import EntryScript
+from sklearn.externals import joblib
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+from joblib import dump, load
 from azureml.core.model import Model
 from azureml.core import Experiment, Workspace, Run, Datastore
-from entry_script_helper import EntryScriptHelper
-
-current_run = Run.get_context()
-LOG_NAME = "user_log"
 
 # Parse the arguments passed in the PipelineStep through the arguments option
 parser = argparse.ArgumentParser("split")
@@ -32,19 +26,13 @@ print("Argument 2 timestamp_column: {}".format(args.timestamp_column))
 print("Argument 3 output_datastore: {}".format(args.output_datastore))
 print("Argument 4 overwrite_scoring: {}".format(args.overwrite_scoring))
 
-def init():
-    EntryScriptHelper().config(LOG_NAME)
-    logger = logging.getLogger(LOG_NAME)
-    output_folder = os.path.join(os.environ.get("AZ_BATCHAI_INPUT_AZUREML", ""), "temp/output")
-    logger.info(f"{__file__}.output_folder:{output_folder}")
-    logger.info("init()")
-
 def run(input_data):
     # 0. Set up Logging
-    logger = logging.getLogger(LOG_NAME)
-    os.makedirs('./outputs', exist_ok=True)
+    entry_script = EntryScript()
+    logger = entry_script.logger
+    logger.info('Making predictions')
+    current_run = Run.get_context()
     resultsList = []
-    logger.info('making predictions...')
 
     for idx, csv_file_path in enumerate(input_data):
         date1 = datetime.datetime.now()
@@ -56,7 +44,6 @@ def run(input_data):
         brand_name = file_name.split('_')[1]
 
         logger.info('starting ('+csv_file_path+') ' + str(date1))
-        current_run.log(model_name,'starttime-'+str(date1))
 
         # 1. Unpickle model and make predictions on test set
         try:
