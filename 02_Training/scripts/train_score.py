@@ -4,18 +4,13 @@ import pmdarima as pm
 import pandas as pd
 import numpy as np
 import os
-import logging
 import argparse
 import datetime
 from datetime import timedelta
 from sklearn.externals import joblib
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from joblib import dump, load
-from entry_script_helper import EntryScriptHelper
-
-current_run = Run.get_context()
-
-LOG_NAME = "user_log"
+from entry_script import EntryScript
 
 print("Split the data into train and test")
 
@@ -32,18 +27,13 @@ print("Argument 2 target_column: {}".format(args.target_column))
 print("Argument 3 timestamp_column: {}".format(args.timestamp_column))
 print("Argument 4 stepwise_training: {}".format(args.stepwise_training))
 
-def init():
-    EntryScriptHelper().config(LOG_NAME)
-    logger = logging.getLogger(LOG_NAME)
-    output_folder = os.path.join(os.environ.get("AZ_BATCHAI_INPUT_AZUREML", ""), "temp/output")
-    logger.info(f"{__file__}.output_folder:{output_folder}")
-    logger.info("init()")
-
 def run(input_data):
     # 0. Set up logging
-    logger = logging.getLogger(LOG_NAME)
+    entry_script = EntryScript()
+    logger = entry_script.logger
     os.makedirs('./outputs', exist_ok=True)
-    logger.info('processing all files')
+    logger.info('Train and score models')
+    current_run = Run.get_context()
     resultList = []
 
     # 1. Read in the data file
@@ -71,16 +61,16 @@ def run(input_data):
 
             # 3.Train the model
             model = pm.auto_arima(train[args.target_column],
-                    start_p=0,
-                    start_q=0,
-                    test='adf', #default stationarity test is kpps
-                    max_p =3,
+                    start_p = 0,
+                    start_q = 0,
+                    test = 'adf', #default stationarity test is kpps
+                    max_p = 3,
                     max_d = 2,
-                    max_q=3,
-                    m=3, #number of observations per seasonal cycle
-                    seasonal=True,
+                    max_q = 3,
+                    m = 3, #number of observations per seasonal cycle
+                    seasonal = True,
                     information_criterion = 'aic',
-                    trace=True, #prints status on the fits
+                    trace = True, #prints status on the fits
                     stepwise = args.stepwise_training, # this increments instead of doing a grid search
                     suppress_warnings = True,
                     out_of_sample_size = 16
@@ -92,7 +82,7 @@ def run(input_data):
             # 4. Save the model
             logger.info(model)
             with open(model_name, 'wb') as file:
-                joblib.dump(value=model, filename=os.path.join('./outputs/', model_name))
+                joblib.dump(value = model, filename = os.path.join('./outputs/', model_name))
             print('Saved '+ model_name)
 
             # 5. Register the model to the workspace
@@ -155,7 +145,7 @@ def run(input_data):
             logs.append(current_run.get_status())
 
             logger.info('ending ('+csv_file_path+') ' + str(date2))
-            
+
         except (ValueError, UnboundLocalError, NameError, ModuleNotFoundError, AttributeError, ImportError, FileNotFoundError, KeyError) as error:
             date2 = datetime.datetime.now()
             error_message = 'Failed to score the model. '+'Error message: '+str(error)
