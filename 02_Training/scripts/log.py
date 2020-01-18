@@ -1,4 +1,3 @@
-
 import pandas as pd
 from azureml.core.run import Run
 from azureml.core import Workspace, Experiment, Datastore
@@ -7,7 +6,7 @@ import datetime
 from azureml.pipeline.core import PipelineRun
 import argparse
 
-# parse input arguments
+# 1.0 parse input arguments
 parser = argparse.ArgumentParser("Logging arguments")
 
 parser.add_argument("--parallelrunstep_name", type=str, help="input ParralelRunStep name")
@@ -24,7 +23,7 @@ print("Argument 3 experiment: {}".format(args.experiment))
 print("Argument 4 overwrite_logs: {}".format(args.overwrite_logs))
 print("Argument 5 pipeline_output_name: {}".format(args.pipeline_output_name))
 
-# set workspace and experiment
+# 2.0 set workspace and experiment
 current_run = Run.get_context()
 ws = current_run.experiment.workspace
 experiment = Experiment(ws, args.experiment)
@@ -37,14 +36,14 @@ prediction_output = step_run.get_output_data(args.pipeline_output_name)
 prediction_output.download(local_path = "logs")
 print('Downloaded the log file of Pipeline Id: '+pipeline_runId)
 
-# check the log file path
+# 3.0 check the log file path
 for root, dirs, files in os.walk("logs"):
     for file in files:
         if file.endswith('parallel_run_step.txt'):
             result_file = os.path.join(root,file)
             print ('Log file path: ' + result_file)
 
-# read the file and clean up data
+# 4.0 read the file and clean up data
 df_log = pd.read_csv(result_file, converters = {0: lambda x: x.strip("["),10: lambda x: x.strip("]")}, delimiter = ",", header = None)
 df_log.columns = ['Store','Brand','ModelType','FileName','ModelName','StartTime','EndTime','Duration','Index','BatchSize','Status']
 df_log['Store'] = df_log['Store'].apply(str).str.replace("'", '')
@@ -60,12 +59,12 @@ df_log['Status'] = df_log['Status'].apply(str).str.replace('"','')
 print (df_log.head())
 print ('Read and cleaned the log file')
 
-# save the log file
+# 5.0 save the log file
 output_path = os.path.join('./logs/', 'training_log')
 df_log.to_csv(path_or_buf = output_path + '.csv', index = False)
 print('Saved the training_log.csv')
 
-# upload the log file
+# 6.0 upload the log file
 log_dstore = Datastore(ws, args.datastore)
 log_dstore.upload_files(['./logs/training_log'+'.csv'], target_path = 'training_log_'+str(datetime.datetime.now().date()), overwrite = args.overwrite_logs, show_progress = True)
 print('Uploaded the training_log.csv')
