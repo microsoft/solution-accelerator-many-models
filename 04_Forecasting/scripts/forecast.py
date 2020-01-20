@@ -10,7 +10,7 @@ from azureml.core.model import Model
 from azureml.core import Experiment, Workspace, Run, Datastore
 from entry_script import EntryScript
 
-# Parse the arguments passed in the PipelineStep through the arguments option
+# 0.0 Parse input arguments
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--forecast_horizon", type=int, help="input number of predictions")
 parser.add_argument("--starting_date", type=str, help="date to begin forcasting")
@@ -28,7 +28,7 @@ print("Argument 2 starting_date: {}".format(args.starting_date))
 # print("Argument 4(overwrite_forecasting): {}".format(args.overwrite_forecasting))
 
 def run(input_data):
-    # 0. Set up Logging
+    # 1.0 Set up Logging
     entry_script = EntryScript()
     logger = entry_script.logger
     logger.info('Making forecasts')
@@ -36,7 +36,7 @@ def run(input_data):
     all_predictions = pd.DataFrame()
     current_run = Run.get_context()
 
-    # 1. Iterate through the input data
+    # 2.0 Iterate through input data
     for idx, csv_file_path in enumerate(input_data):
         date1 = datetime.datetime.now()
         file_name = os.path.basename(csv_file_path)[:-4]
@@ -46,7 +46,7 @@ def run(input_data):
 
         logger.info('starting ('+csv_file_path+') ' + str(date1))
 
-        # 2. Set up data to predict on
+        # 3.0 Set up data to predict on
         store_list = [store_name] * args.forecast_horizon
         brand_list = [brand_name] * args.forecast_horizon
         date_list = pd.date_range(args.starting_date, periods = args.forecast_horizon, freq ='W-THU')
@@ -54,7 +54,7 @@ def run(input_data):
         prediction_df = pd.DataFrame(list(zip(date_list, store_list, brand_list)),
                                     columns = ['WeekStarting', 'Store', 'Brand'])
 
-        # 3. Unpickle model and make predictions
+        # 4.0 Unpickle model and make predictions
         model_path = Model.get_model_path(model_name)
         model = joblib.load(model_path)
         print('Unpickled the model ' + model_name)
@@ -64,7 +64,7 @@ def run(input_data):
         all_predictions = all_predictions.append(prediction_df)
         print('Made predictions ' + model_name)
 
-        # 4. Save the output back to blob storage
+        # Save the forecast output as individual files back to blob storage (optional)
         '''If you'd like to upload individual predictioon files as opposed to a concatenated prediction file,
         uncomment the following code block.'''
         #run_date = datetime.datetime.now().date()
@@ -75,7 +75,7 @@ def run(input_data):
         #forecasting_dstore.upload_files([output_path + '.csv'], target_path='oj_forecasts' + str(run_date),
         #                                overwrite=args.overwrite_forecasting, show_progress=True)
 
-        # 5. Log the run
+        # 5.0 Log the run
         date2 = datetime.datetime.now()
         logger.info('ending ('+str(csv_file_path)+') ' + str(date2))
 

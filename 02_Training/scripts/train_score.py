@@ -12,6 +12,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from joblib import dump, load
 from entry_script import EntryScript
 
+# 0.0 Parse input arguments
 print("Split the data into train and test")
 
 parser = argparse.ArgumentParser("split")
@@ -28,7 +29,7 @@ print("Argument 3 timestamp_column: {}".format(args.timestamp_column))
 print("Argument 4 stepwise_training: {}".format(args.stepwise_training))
 
 def run(input_data):
-    # 0. Set up logging
+    # 1.0 Set up logging
     entry_script = EntryScript()
     logger = entry_script.logger
     os.makedirs('./outputs', exist_ok=True)
@@ -36,7 +37,7 @@ def run(input_data):
     current_run = Run.get_context()
     resultList = []
 
-    # 1. Read in the data file
+    # 2.0 Read in the data file
     for idx, csv_file_path in enumerate(input_data):
         date1 = datetime.datetime.now()
         logs = []
@@ -50,16 +51,16 @@ def run(input_data):
         data = pd.read_csv(csv_file_path, header = 0)
         logger.info(data.head())
 
-        # 2. Split the data into train and test sets based on dates
+        # 3.0 Split the data into train and test sets based on dates
         try:
             data = data.set_index(args.timestamp_column)
             max_date = datetime.datetime.strptime(data.index.max(),'%Y-%m-%d')
-            split_date = max_date - timedelta(days=7*args.n_test_periods)
+            split_date = max_date - timedelta(days = 7*args.n_test_periods)
             data.index = pd.to_datetime(data.index)
             train = data[data.index <= split_date]
             test = data[data.index > split_date]
 
-            # 3.Train the model
+            # 4.0 Train the model
             model = pm.auto_arima(train[args.target_column],
                     start_p = 0,
                     start_q = 0,
@@ -79,13 +80,13 @@ def run(input_data):
             logger.info('done training')
             print('Trained '+ model_name)
 
-            # 4. Save the model
+            # 5.0 Save the model
             logger.info(model)
             with open(model_name, 'wb') as file:
                 joblib.dump(value = model, filename = os.path.join('./outputs/', model_name))
             print('Saved '+ model_name)
 
-            # 5. Register the model to the workspace
+            # 6.0 Register the model to the workspace
             try:
                 current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
             except:
@@ -96,16 +97,16 @@ def run(input_data):
             current_run.register_model(model_path = model_name, model_name = model_name, model_framework = 'pmdarima', tags = tags_dict)
             print('Registered '+ model_name)
 
-            # 6. Make predictions on test set
+            # 7.0 Make predictions on test set
             prediction_list, conf_int = model.predict(args.n_test_periods, return_conf_int = True)
             print('Made predictions on  ' + model_name)
 
-            # 7. Insert predictions on test set
+            # 8.0 Insert predictions to test set
             test['Predictions'] = prediction_list
             print(test.head())
             print('Inserted predictions ' + model_name)
 
-            # 8. Calculate accuracy metrics
+            # 9.0 Calculate accuracy metrics
             metrics = []
             mse = mean_squared_error(test['Quantity'], test['Predictions'])
             rmse = np.sqrt(mse)
@@ -124,7 +125,7 @@ def run(input_data):
             logger.info('accuracy metrics')
             logger.info(metrics)
 
-            #6. Log some metrics
+            # 10.0 Log the run
             current_run.log(model_name + '_aic', model.aic())
             date2 = datetime.datetime.now()
 
@@ -146,9 +147,10 @@ def run(input_data):
 
             logger.info('ending ('+csv_file_path+') ' + str(date2))
 
+        # 10.1 Log the error message if an exception occurs
         except (ValueError, UnboundLocalError, NameError, ModuleNotFoundError, AttributeError, ImportError, FileNotFoundError, KeyError) as error:
             date2 = datetime.datetime.now()
-            error_message = 'Failed to score the model. '+'Error message: '+str(error)
+            error_message = 'Failed to score the model. ' + 'Error message: ' + str(error)
 
             logs.append(store_name)
             logs.append(brand_name)
