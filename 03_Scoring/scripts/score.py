@@ -2,23 +2,17 @@ import pandas as pd
 import os
 import argparse
 import numpy as np
-from sklearn.externals import joblib
-from joblib import dump, load
 import pmdarima as pm
-import time
 from datetime import timedelta
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-import pickle
-import logging
 import datetime
+from entry_script import EntryScript
+from sklearn.externals import joblib
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+from joblib import dump, load
 from azureml.core.model import Model
 from azureml.core import Experiment, Workspace, Run, Datastore
-from entry_script_helper import EntryScriptHelper
 
-current_run = Run.get_context()
-LOG_NAME = "user_log"
-
-# Parse the arguments passed in the PipelineStep through the arguments option
+# 0.0 Parse input arguments
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--n_test_periods", type=int, help="input number of predictions")
 parser.add_argument("--timestamp_column", type=str, help="time column from the data")
@@ -32,20 +26,15 @@ print("Argument 2 timestamp_column: {}".format(args.timestamp_column))
 print("Argument 3 output_datastore: {}".format(args.output_datastore))
 print("Argument 4 overwrite_scoring: {}".format(args.overwrite_scoring))
 
-def init():
-    EntryScriptHelper().config(LOG_NAME)
-    logger = logging.getLogger(LOG_NAME)
-    output_folder = os.path.join(os.environ.get("AZ_BATCHAI_INPUT_AZUREML", ""), "temp/output")
-    logger.info(f"{__file__}.output_folder:{output_folder}")
-    logger.info("init()")
-
 def run(input_data):
-    # 0. Set up Logging
-    logger = logging.getLogger(LOG_NAME)
-    os.makedirs('./outputs', exist_ok=True)
+    # 1.0 Set up Logging
+    entry_script = EntryScript()
+    logger = entry_script.logger
+    logger.info('Making predictions')
+    current_run = Run.get_context()
     resultsList = []
-    logger.info('making predictions...')
 
+    # 2.0 Iterate through input data
     for idx, csv_file_path in enumerate(input_data):
         date1 = datetime.datetime.now()
         logs = []
@@ -56,9 +45,8 @@ def run(input_data):
         brand_name = file_name.split('_')[1]
 
         logger.info('starting ('+csv_file_path+') ' + str(date1))
-        current_run.log(model_name,'starttime-'+str(date1))
 
-        # 1. Unpickle model and make predictions on test set
+        # 3.0 Unpickle model and make predictions on test set
         try:
             model_path = Model.get_model_path(model_name)
             model = joblib.load(model_path)
@@ -66,7 +54,7 @@ def run(input_data):
             prediction_list, conf_int = model.predict(args.n_test_periods, return_conf_int = True)
             print('Made predictions on  ' + model_name)
 
-            # 2. Split the data for test set and insert predictions
+            # 4.0 Split the data for test set and insert predictions
             data = pd.read_csv(csv_file_path, header=0)
             data = data.set_index(args.timestamp_column)
             max_date = datetime.datetime.strptime(data.index.max(), '%Y-%m-%d')
@@ -77,7 +65,7 @@ def run(input_data):
             test['Predictions'] = prediction_list
             print(test.head())
 
-            # 3. Calculate accuracy metrics
+            # 5.0 Calculate accuracy metrics
             metrics = []
             mse = mean_squared_error(test['Quantity'], test['Predictions'])
             rmse = np.sqrt(mse)
@@ -92,11 +80,11 @@ def run(input_data):
             print('Calculated accuracy metrics  ' + model_name)
             print(metrics)
 
-            # 3.1 log accuracy metrics
+            # 5.1 Log accuracy metrics
             logger.info('accuracy metrics')
             logger.info(metrics)
 
-            # 4. Save the output back to blob storage
+            # Save scoring output back to blob storage as individual file (optional)
             '''
             If you want to return the predictions and acutal values for each model as a seperate file, use the code below to output the results
             of each iteration to the specified output_datastore.
@@ -110,7 +98,7 @@ def run(input_data):
             # scoring_dstore.upload_files([output_path +'.csv'], target_path = 'oj_scoring_' + str(run_date),
             #                             overwrite = args.overwrite_scoring, show_progress = True)
 
-            # 5. Log the run
+            # 6.0 Log the run
             date2 = datetime.datetime.now()
 
             logs.append(store_name)
@@ -131,9 +119,10 @@ def run(input_data):
 
             logger.info('ending ('+csv_file_path+') ' + str(date2))
 
+        # 8.0 Log the error message if an exception occurs
         except (ValueError, UnboundLocalError, NameError, ModuleNotFoundError, AttributeError, ImportError, FileNotFoundError, KeyError) as error:
             date2 = datetime.datetime.now()
-            error_message = 'Failed to score the model. '+'Error message: '+str(error)
+            error_message = 'Failed to score the model. ' + 'Error message: ' + str(error)
 
             logs.append(store_name)
             logs.append(brand_name)

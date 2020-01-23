@@ -2,18 +2,14 @@ from azureml.core import Experiment, Workspace, Run
 import pmdarima as pm
 import pandas as pd
 import os
-import logging
 import argparse
 import datetime
 from datetime import timedelta
 from sklearn.externals import joblib
 from joblib import dump, load
-from entry_script_helper import EntryScriptHelper
+from entry_script import EntryScript
 
-current_run = Run.get_context()
-
-LOG_NAME = "user_log"
-
+# 0.0 Parse input arguments
 print("Split the data into train and test")
 
 parser = argparse.ArgumentParser("split")
@@ -29,21 +25,16 @@ print("Argument 2 target_column: {}".format(args.target_column))
 print("Argument 3 timestamp_column: {}".format(args.timestamp_column))
 print("Argument 4 stepwise_training: {}".format(args.stepwise_training))
 
-def init():
-    EntryScriptHelper().config(LOG_NAME)
-    logger = logging.getLogger(LOG_NAME)
-    output_folder = os.path.join(os.environ.get("AZ_BATCHAI_INPUT_AZUREML", ""), "temp/output")
-    logger.info(f"{__file__}.output_folder:{output_folder}")
-    logger.info("init()")
-
 def run(input_data):
-    # 0. Set up logging
-    logger = logging.getLogger(LOG_NAME)
-    os.makedirs('./outputs', exist_ok=True)
-    logger.info('processing all files')
+    # 1.0 Set up logging
+    entry_script = EntryScript()
+    logger = entry_script.logger
+    logger.info('Training models')
     resultList = []
+    current_run = Run.get_context()
+    os.makedirs('./outputs', exist_ok=True)
 
-    # 1. Read in the data file
+    # 2.0 Read in the data file
     for idx, csv_file_path in enumerate(input_data):
         date1 = datetime.datetime.now()
         logs = []
@@ -57,7 +48,7 @@ def run(input_data):
         data = pd.read_csv(csv_file_path, header = 0)
         logger.info(data.head())
 
-        # 2. Split the data into train and test sets based on dates
+        # 3.0 Split the data into train and test sets based on dates
         try:
             data = data.set_index(args.timestamp_column)
             max_date = datetime.datetime.strptime(data.index.max(),'%Y-%m-%d')
@@ -66,7 +57,7 @@ def run(input_data):
             train = data[data.index <= split_date]
             test = data[data.index > split_date]
 
-            # 3.Train the model
+            # 4.0 Train the model
             model = pm.auto_arima(train[args.target_column],
                   start_p = 0,
                   start_q = 0,
@@ -86,13 +77,13 @@ def run(input_data):
             logger.info('done training')
             print('Trained '+ model_name)
 
-            # 4. Save the model
+            # 5.0 Save the model
             logger.info(model)
             with open(model_name, 'wb') as file:
                 joblib.dump(value = model, filename = os.path.join('./outputs/', model_name))
             print('Saved '+ model_name)
 
-            # 5. Register the model to the workspace
+            # 6.0 Register the model to the workspace
             try:
                 current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
             except:
@@ -103,7 +94,7 @@ def run(input_data):
             current_run.register_model(model_path = model_name, model_name = model_name, model_framework = 'pmdarima', tags = tags_dict)
             print('Registered '+ model_name)
 
-            #6. Log some metrics
+            # 7.0 Log the run
             current_run.log(model_name + '_aic', model.aic())
 
             date2 = datetime.datetime.now()
@@ -121,9 +112,10 @@ def run(input_data):
 
             logger.info('ending ('+csv_file_path+') ' + str(date2))
 
+        # 8.0 Log the error message if an exception occurs
         except (ValueError, NameError, ModuleNotFoundError, AttributeError, ImportError, FileNotFoundError, KeyError) as error:
             date2 = datetime.datetime.now()
-            error_message = 'Failed to train the model. '+'Error message: '+str(error)
+            error_message = 'Failed to train the model. ' + 'Error message: ' + str(error)
 
             logs.append(store_name)
             logs.append(brand_name)
