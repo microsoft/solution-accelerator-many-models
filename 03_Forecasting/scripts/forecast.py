@@ -2,12 +2,9 @@ import pandas as pd
 import os
 import argparse
 from sklearn.externals import joblib
-from joblib import dump, load
-import time
-from datetime import timedelta
 import datetime
 from azureml.core.model import Model
-from azureml.core import Experiment, Workspace, Run, Datastore
+from azureml.core import Run
 from entry_script import EntryScript
 
 # 0.0 Parse input arguments
