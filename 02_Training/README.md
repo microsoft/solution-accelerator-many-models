@@ -1,28 +1,27 @@
-# Training Many Models 
-
+# Training Many Models
 
 ## Overview
-The notebook in the folder will walk you through the process of training many models. In this README you can find additional information on the training process as well as information on how to set up the reports. After you have run through the notebook, you can spin up the Power BI dashboard to review the training process. 
 
-## 1.0 Reporting 
+The notebook in the folder will walk you through the process of training many models. In this README you can find additional information on the training process as well as information on how to set up the reports. After you have run through the notebook, you can spin up the Power BI dashboard to review the training process.
+
+## 1.0 Reporting
+
 Once you have run through the training notebook, navigate to Microsoft Storage Explorer. From the Microsoft Storage Explorer navigate to the Azure Storage Container you have designated your training logs to. You will want to download the most recent training file and save it to your local computer.
 
-![image of Storage Explorer](../images/TrainingStorageExplorer.png) 
+![image of Storage Explorer](../images/TrainingStorageExplorer.png)
 
-Now that you have downloaded the training log file, open up the Many Models Training Power BI file. You will be prompted for the **file path** of the training log file located on your computer. Once you have entered the file path, click **Load** to populate the Power BI report. 
+Now that you have downloaded the training log file, open up the Many Models Training Power BI file. You will be prompted for the **file path** of the training log file located on your computer. Once you have entered the file path, click **Load** to populate the Power BI report.
 
- ![image of Power BI file path input](../images/TrainingLoadFile.png) 
+ ![image of Power BI file path input](../images/TrainingLoadFile.png)
 
-When the training log file loads into Power BI, you will see the populated report as seen below: 
+When the training log file loads into Power BI, you will see the populated report as seen below:
 
-![image of Power BI report](../images/TrainingReport.png) 
-
-This README provides guidance on how to set ParallelRunConfig parameters and explains Entry Script. It's also applicable to scoring and forecasting pipeline.
+![image of Power BI report](../images/TrainingReport.png)
+![image of Power BI report](../images/ScoringReport.png)
 
 ## 2.0 How to set ParallelRunConfig parameters
 
 In the [ParallelRunConfig](https://docs.microsoft.com/en-us/python/api/azureml-contrib-pipeline-steps/azureml.contrib.pipeline.steps.parallel_run_config.parallelrunconfig), you will want to determine the number of workers and nodes appropriate for your use case. The workercount is based off the number of cores of the compute VM. The nodecount will determine the number of master nodes to use. In time-series ARIMA model scenario, increasing the node count will speed up the training process.
-
 
 * <b>node_count</b>: The number of compute nodes to be used for running the user script. We recommend to start with 3 and increase the node_count if the training time is taking too long.
 
@@ -30,7 +29,7 @@ In the [ParallelRunConfig](https://docs.microsoft.com/en-us/python/api/azureml-c
 
 * <b>compute_target</b>: Only AmlCompute is supported. You can change to a different compute cluster if one fails.
 
-* <b>run_invocation_timeout</b>: The run() method invocation timeout in seconds. The timeout should be set to be higher than the maximum training time of one model (in seconds), by default it's 60. Since the model that takes the longest to train is about 120 seconds, we set it to be 500 which is greater than 120.   
+* <b>run_invocation_timeout</b>: The run() method invocation timeout in seconds. The timeout should be set to be higher than the maximum training time of one model (in seconds), by default it's 60. Since the model that takes the longest to train is about 120 seconds, we set it to be 500 which is greater than 120.
 
 * <b>entry_script</b>: The name of the training script.
 
