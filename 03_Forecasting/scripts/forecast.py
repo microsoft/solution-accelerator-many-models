@@ -12,17 +12,8 @@ parser = argparse.ArgumentParser("split")
 parser.add_argument("--forecast_horizon", type=int, help="input number of predictions")
 parser.add_argument("--starting_date", type=str, help="date to begin forcasting")
 
-''' If you'd like to upload individual predictioon files as opposed to a concatenated prediction file,
-    uncomment the following arguments and include these arguments in the ParralelRunStep. '''
-# parser.add_argument("--output_datastore", type=str, help="input the name of registered forecast datastore")
-# parser.add_argument("--overwrite_forecasting", type=str, help="True will over write the forecasting files")
-
 args, _ = parser.parse_known_args()
 
-print("Argument 1 forecast_horizon: {}".format(args.forecast_horizon))
-print("Argument 2 starting_date: {}".format(args.starting_date))
-# print("Argument 3(output_datastore): {}".format(args.output_datastore))
-# print("Argument 4(overwrite_forecasting): {}".format(args.overwrite_forecasting))
 
 def run(input_data):
     # 1.0 Set up Logging
@@ -54,26 +45,17 @@ def run(input_data):
         # 4.0 Unpickle model and make predictions
         model_path = Model.get_model_path(model_name)
         model = joblib.load(model_path)
-        print('Unpickled the model ' + model_name)
 
         prediction_list, conf_int = model.predict(args.forecast_horizon, return_conf_int = True)
         prediction_df['Predictions'] = prediction_list
         all_predictions = all_predictions.append(prediction_df)
-        print('Made predictions ' + model_name)
 
         # Save the forecast output as individual files back to blob storage (optional)
-        '''If you'd like to upload individual predictioon files as opposed to a concatenated prediction file,
-        uncomment the following code block.'''
-        #run_date = datetime.datetime.now().date()
-        #ws = current_run.experiment.workspace
-        #output_path = os.path.join('./outputs/', model_name + str(run_date))
-        #prediction_df.to_csv(path_or_buf=output_path + '.csv', index = False)
-        #forecasting_dstore = Datastore(ws, args.output_datastore)
-        #forecasting_dstore.upload_files([output_path + '.csv'], target_path='oj_forecasts' + str(run_date),
-        #                                overwrite=args.overwrite_forecasting, show_progress=True)
-
-        # 5.0 Log the run
+        
+        output_path = os.path.join('./outputs/', model_name + str(run_date))
+        prediction_df.to_csv(output_path + '.csv', index = False)
+        
         date2 = datetime.datetime.now()
-        logger.info('ending ('+str(csv_file_path)+') ' + str(date2))
+        logger.info('ending (' + csv_file_path + ') ' + str(date2))
 
     return all_predictions

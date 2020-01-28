@@ -24,16 +24,11 @@ def run(input_data):
     entry_script = EntryScript()
     logger = entry_script.logger
     os.makedirs('./outputs', exist_ok=True)
-    logger.info('Train and score models')
     current_run = Run.get_context()
     result_list = []
 
     # 2.0 Read in the data file
     for idx, csv_file_path in enumerate(input_data):
-        date1 = datetime.datetime.now()
-        logs = []
-        logger.info('starting (' + csv_file_path + ') ' + str(date1))
-
         file_name = os.path.basename(csv_file_path)[:-4]
         model_name = 'arima_' + file_name
         store_name = file_name.split('_')[0]
@@ -43,109 +38,61 @@ def run(input_data):
         logger.info(data.head())
 
         # 3.0 Split the data into train and test sets based on dates
-        try:
-            data = data.set_index(args.timestamp_column)
-            max_date = datetime.datetime.strptime(data.index.max(), '%Y-%m-%d')
-            split_date = max_date - timedelta(days = 7 * args.n_test_periods)
-            data.index = pd.to_datetime(data.index)
-            train = data[data.index <= split_date]
-            test = data[data.index > split_date]
+        data = data.set_index(args.timestamp_column)
+        max_date = datetime.datetime.strptime(data.index.max(), '%Y-%m-%d')
+        split_date = max_date - timedelta(days=7 * args.n_test_periods)
+        data.index = pd.to_datetime(data.index)
+        train = data[data.index <= split_date]
+        test = data[data.index > split_date]
 
-            # 4.0 Train the model
-            model = pm.auto_arima(train[args.target_column],
-                    start_p=0,
-                    start_q=0,
-                    test='adf', # default stationarity test is kpps
-                    max_p=3,
-                    max_d=2,
-                    max_q=3,
-                    m=3, # number of observations per seasonal cycle
-                    seasonal=True,
-                    information_criterion='aic',
-                    trace=True, # prints status on the fits
-                    stepwise=args.stepwise_training, # this increments instead of doing a grid search
-                    suppress_warnings=True,
-                    out_of_sample_size=16
-            )
-            model = model.fit(train[args.target_column])
+        # 4.0 Train the model
+        model = pm.auto_arima(train[args.target_column],
+                start_p=0,
+                start_q=0,
+                test='adf', # default stationarity test is kpps
+                max_p=3,
+                max_d=2,
+                max_q=3,
+                m=3, # number of observations per seasonal cycle
+                seasonal=True,
+                information_criterion='aic',
+                trace=True, # prints status on the fits
+                stepwise=args.stepwise_training, # this increments instead of doing a grid search
+                suppress_warnings=True,
+                out_of_sample_size=16
+        )
+        model = model.fit(train[args.target_column])
 
-            # 5.0 Save the model
-            logger.info(model)
-            with open(model_name, 'wb') as file:
-                joblib.dump(value = model, filename = os.path.join('./outputs/', model_name))
+        # 5.0 Save the model
+        joblib.dump(model, filename=os.path.join('./outputs/', model_name))
 
-            # 6.0 Register the model to the workspace
-            try:
-                current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
-            except:
-                logger.info('dont need to upload')
+        # 6.0 Register the model to the workspace
+        current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
 
-            tags_dict = {'Store': store_name, 'Brand': brand_name, 'ModelType':'ARIMA'}
-            current_run.register_model(model_path = model_name, model_name = model_name, model_framework = 'pmdarima', tags = tags_dict)
+        tags_dict = {'Store': store_name, 'Brand': brand_name, 'ModelType': 'ARIMA'}
+        current_run.register_model(model_path = model_name, model_name = model_name, model_framework = 'pmdarima',
+                                   tags = tags_dict)
 
-            # 7.0 Make predictions on test set
-            prediction_list, conf_int = model.predict(args.n_test_periods, return_conf_int = True)
+        # 7.0 Make predictions on test set
+        prediction_list, conf_int = model.predict(args.n_test_periods, return_conf_int=True)
 
-            # 8.0 Insert predictions to test set
-            test['Predictions'] = prediction_list
+        # 9.0 Calculate accuracy metrics
+        metrics = []
+        mse = mean_squared_error(test['Quantity'], prediction_list)
+        rmse = np.sqrt(mse)
+        mae = mean_absolute_error(test['Quantity'], prediction_list)
+        act, pred = np.array(test['Quantity']), np.array(prediction_list)
+        mape = np.mean(np.abs((act - pred) / act) * 100)
 
-            # 9.0 Calculate accuracy metrics
-            metrics = []
-            mse = mean_squared_error(test['Quantity'], test['Predictions'])
-            rmse = np.sqrt(mse)
-            mae = mean_absolute_error(test['Quantity'], test['Predictions'])
-            act, pred = np.array(test['Quantity']), np.array(test['Predictions'])
-            mape = np.mean(np.abs((act - pred) / act) * 100)
+        # 10.0 Log metrics
+        current_run.log(model_name + '_aic', model.aic())
+        current_run.log(model_name + '_mse', mse)
+        current_run.log(model_name + '_rmse', rmse)
+        current_run.log(model_name + '_mae', mae)
+        current_run.log(model_name + '_mape', mape)
+        date2 = datetime.datetime.now()
 
-            metrics.append(mse)
-            metrics.append(rmse)
-            metrics.append(mae)
-            metrics.append(mape)
+        logger.info('ending (' + csv_file_path + ') ' + str(date2))
 
-            # 10.0 Log metrics
-            current_run.log(model_name + '_aic', model.aic())
-            date2 = datetime.datetime.now()
-
-            logs.append(store_name)
-            logs.append(brand_name)
-            logs.append('ARIMA')
-            logs.append(file_name)
-            logs.append(model_name)
-            logs.append(str(date1))
-            logs.append(str(date2))
-            logs.append(str(date2-date1))
-            logs.append(mse)
-            logs.append(rmse)
-            logs.append(mae)
-            logs.append(mape)
-            logs.append(idx)
-            logs.append(len(input_data))
-            logs.append(current_run.get_status())
-
-            logger.info('ending (' + csv_file_path + ') ' + str(date2))
-
-        # 10.1 Log the error message if an exception occurs
-        except (ValueError, UnboundLocalError, NameError, ModuleNotFoundError, AttributeError, ImportError, FileNotFoundError, KeyError) as error:
-            date2 = datetime.datetime.now()
-            error_message = 'Failed to score the model. ' + 'Error message: ' + str(error)
-
-            logs.append(store_name)
-            logs.append(brand_name)
-            logs.append('ARIMA')
-            logs.append(file_name)
-            logs.append(model_name)
-            logs.append(str(date1))
-            logs.append(str(date2))
-            logs.append(str(date2-date1))
-            logs.append('Null')
-            logs.append('Null')
-            logs.append('Null')
-            logs.append('Null')
-            logs.append(idx)
-            logs.append(len(input_data))
-            logs.append(error_message)
-
-            logger.info('ending (' + csv_file_path + ') ' + str(date2))
-
-    result_list.append(logs)
+        result_list.append(True)
     return result_list
