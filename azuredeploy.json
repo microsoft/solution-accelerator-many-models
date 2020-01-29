@@ -10,6 +10,7 @@
       },
       "location": {
         "type": "string",
+        "defaultValue": "westus2",
         "allowedValues": [
           "australiaeast",
           "brazilsouth",
@@ -37,7 +38,7 @@
       },
       "sku":{
         "type": "string",
-        "defaultValue": "basic",
+        "defaultValue": "enterprise",
           "allowedValues": [
             "basic",
             "enterprise"

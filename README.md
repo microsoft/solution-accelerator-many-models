@@ -59,9 +59,8 @@ The functionality is broken into the following folders designed to be run step b
 |-------------------|--------------------------------------------|
 | `00_Environment_Setup`             | Configures your environment including deploying compute for training and configuring your blob storage for logging                         |
 | `01_Data_Preparation`             | Walks through downloading the dataset from [Azure Open Datasets](https://azure.microsoft.com/en-us/services/open-datasets/catalog/) and registers the dataset with AML.                      |
-| `02_Training`      | Creates a pipeline to train a model for each store and orange juice brand in the dataset.     |
-| `03_Scoring`    | Creates a pipeline to score each of the models trained.           |
-| `04_Forecasting`    | Creates a pipeline to forecast future orange juice sales.            |
+| `02_Training`      | Creates a pipeline to train and score a model model for each store and orange juice brand in the dataset.     |
+| `03_Forecasting`    | Creates a pipeline to forecast future orange juice sales.            |
 
 ## Key concepts
 
