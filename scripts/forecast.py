@@ -10,6 +10,7 @@ from entry_script import EntryScript
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--forecast_horizon", type=int, help="input number of predictions")
 parser.add_argument("--starting_date", type=str, help="date to begin forecasting")
+parser.add_argument("--output-dir", type=str, help="prediction outputs")
 
 args, _ = parser.parse_known_args()
 
@@ -20,12 +21,8 @@ def run(input_data):
     entry_script = EntryScript()
     logger = entry_script.logger
     logger.info('Making forecasts')
-    streaming_output_root = os.getenv('AZ_BATCHAI_OUTPUT_outputs')
-    output_dir = os.path.join(streaming_output_root, 'predictions')
 
     results = []
-    os.makedirs(output_dir, exist_ok=True)
-
 
     # 2.0 Iterate through input data
     for idx, csv_file_path in enumerate(input_data):
@@ -49,7 +46,7 @@ def run(input_data):
         prediction_list, conf_int = model.predict(args.forecast_horizon, return_conf_int=True)
         prediction_df['Predictions'] = prediction_list
 
-        output_path = os.path.join(output_dir, file_name + '.csv')
+        output_path = os.path.join(args.output_dir, file_name + '.csv')
         prediction_df.to_csv(output_path, index=False)
 
         results.append(True)
