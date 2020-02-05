@@ -3,26 +3,23 @@ import os
 import argparse
 from sklearn.externals import joblib
 from azureml.core.model import Model
-from azureml.core.run import Run
 from entry_script import EntryScript
 
 # 0.0 Parse input arguments
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--forecast_horizon", type=int, help="input number of predictions")
 parser.add_argument("--starting_date", type=str, help="date to begin forecasting")
-parser.add_argument("--output-dir", type=str, help="prediction outputs")
 
 args, _ = parser.parse_known_args()
 
 
 def run(input_data):
-    current_run = Run.get_context()
     # 1.0 Set up Logging
     entry_script = EntryScript()
     logger = entry_script.logger
     logger.info('Making forecasts')
 
-    results = []
+    results = pd.DataFrame()
 
     # 2.0 Iterate through input data
     for idx, csv_file_path in enumerate(input_data):
@@ -46,9 +43,6 @@ def run(input_data):
         prediction_list, conf_int = model.predict(args.forecast_horizon, return_conf_int=True)
         prediction_df['Predictions'] = prediction_list
 
-        output_path = os.path.join(args.output_dir, file_name + '.csv')
-        prediction_df.to_csv(output_path, index=False)
-
-        results.append(True)
+        results = results.append(prediction_df)
 
     return results

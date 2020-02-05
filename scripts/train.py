@@ -19,12 +19,19 @@ parser.add_argument("--stepwise_training", type=str, help="input stepwise traini
 
 args, _ = parser.parse_known_args()
 
+current_run = None
+
+
+def init():
+    global current_run
+    current_run = Run.get_context()
+
+
 def run(input_data):
     # 1.0 Set up logging
     entry_script = EntryScript()
     logger = entry_script.logger
     os.makedirs('./outputs', exist_ok=True)
-    current_run = Run.get_context()
     result_list = []
 
     # 2.0 Read in the data file
