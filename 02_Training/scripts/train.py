@@ -39,11 +39,11 @@ def run(input_data):
     logger.info('Train and score models')
     current_run = Run.get_context()
     resultList = []
+    logs = []
 
     # 2.0 Read in the data file
     for idx, csv_file_path in enumerate(input_data):
         date1 = datetime.datetime.now()
-        logs = []
         logger.info('starting ('+csv_file_path+') ' + str(date1))
 
         file_name = os.path.basename(csv_file_path)[:-4]
