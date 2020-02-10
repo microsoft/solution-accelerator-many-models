@@ -39,11 +39,12 @@ def run(input_data):
     logger.info('Train and score models')
     current_run = Run.get_context()
     resultList = []
+    log_list = []
 
     # 2.0 Read in the data file
     for idx, csv_file_path in enumerate(input_data):
-        date1 = datetime.datetime.now()
         logs = []
+        date1 = datetime.datetime.now()
         logger.info('starting ('+csv_file_path+') ' + str(date1))
 
         file_name = os.path.basename(csv_file_path)[:-4]
@@ -148,6 +149,7 @@ def run(input_data):
             logs.append(len(input_data))
             logs.append(current_run.get_status())
 
+            log_list.append(logs)
             logger.info('ending ('+csv_file_path+') ' + str(date2))
 
         # 10.1 Log the error message if an exception occurs
@@ -172,6 +174,7 @@ def run(input_data):
             logs.append(error_message)
 
             logger.info('ending ('+csv_file_path+') ' + str(date2))
+            log_list.append(logs)
 
-    resultList.append(logs)
+    resultList.extend(log_list)
     return resultList
