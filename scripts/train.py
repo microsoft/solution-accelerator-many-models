@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 from azureml.core import Run
 import pmdarima as pm
 import pandas as pd
