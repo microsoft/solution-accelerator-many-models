@@ -10,6 +10,7 @@ import argparse
 parser = argparse.ArgumentParser("parallel run step results directory")
 parser.add_argument("--parallel_run_step_output", type=str, help="output directory from parallel run step")
 parser.add_argument("--output_dir", type=str, help="output directory")
+# add list for the columns to pull ?
 
 args, _ = parser.parse_known_args()
 
@@ -20,7 +21,7 @@ df_predictions = pd.read_csv(result_file, delimiter=" ", header=None)
 df_predictions.columns = ['PredictedWeek', 'Store', 'Brand', 'PredictedQuantity']
 
 # Save the log file
-output_path = os.path.join(args.output_dir, 'oj_forecasts_' + str(datetime.datetime.now().date()))
+output_path = os.path.join(args.output_dir, 'forecasts_' + str(datetime.datetime.now().date()))
 counter = 0
 while os.path.exists(output_path + '.csv'):
     output_path += '_' + str(counter)
