@@ -42,7 +42,7 @@ def run(input_data):
     for idx, csv_file_path in enumerate(input_data):
         logs = []
         date1 = datetime.datetime.now()
-        logger.info('starting ('+csv_file_path+') '+ str(date1)
+        logger.info('starting ('+csv_file_path+') '+ str(date1))
         
         file_name = os.path.basename(csv_file_path)[:-4]
         model_name = args.model_type + file_name
