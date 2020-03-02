@@ -11,12 +11,13 @@ from datetime import timedelta
 from sklearn.externals import joblib
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from entry_script import EntryScript
-from sklearn import LinearRegression 
+from sklearn.linear_model import LinearRegression 
 
 # 0.0 Parse input arguments
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--target_column", type=str, help="input target column")
 parser.add_argument("--n_test_periods", type=int, help="input number of test periods")
+parser.add_argument("--forecast_granularity", type=int, help="frequency of forecasts daily weekly")
 parser.add_argument("--timestamp_column", type=str, help="input timestamp column")
 parser.add_argument("--model_type", type=str, help="input model type")
 
@@ -51,20 +52,21 @@ def run(input_data):
 
         data = pd.read_csv(csv_file_path, header = 0)
         logger.info(data.head())
+        logger.info(data.dtypes)
 
         # 3.0 Split the data into train and test sets based on dates
         try: 
             data = data.set_index(args.timestamp_column)
             max_date = datetime.datetime.strptime(data.index.max(), '%Y-%m-%d')
-            split_date = max_date - timedelta(days=7 * args.n_test_periods)
+            split_date = max_date - timedelta(days= args.forecast_granularity * args.n_test_periods)
             data.index = pd.to_datetime(data.index)
             train = data[data.index <= split_date]
             test = data[data.index > split_date]
             
-            y_train = train['target']
-            y_test = test['target']
-            X_train = train.drop('target', axis = 1)
-            x_test = test.drop('target', axis = 1)
+            y_train = train[args.target_column]
+            y_test = test[args.target_column]
+            X_train = train.drop(args.target_column, axis = 1)
+            x_test = test.drop(args.target_column, axis = 1)
 
            # 4.0 Train the model
             model = LinearRegression().fit(X_train, y_train)
@@ -114,23 +116,23 @@ def run(input_data):
                         
             # 10.0 Log the run 
             date2 = datetime.datetime.now()
-                logs.append(store_name)
-                logs.append(brand_name)
-                logs.append(args.model_type)
-                logs.append(file_name)
-                logs.append(model_name)
-                logs.append(str(date1))
-                logs.append(str(date2))
-                logs.append(str(date2-date1))
-                logs.append(mse)
-                logs.append(rmse)
-                logs.append(mae)
-                logs.append(mape)
-                logs.append(idx)
-                logs.append(len(input_data))
-                logs.append(current_run.get_status())
+            logs.append(store_name)
+            logs.append(brand_name)
+            logs.append(args.model_type)
+            logs.append(file_name)
+            logs.append(model_name)
+            logs.append(str(date1))
+            logs.append(str(date2))
+            logs.append(str(date2-date1))
+            logs.append(mse)
+            logs.append(rmse)
+            logs.append(mae)
+            logs.append(mape)
+            logs.append(idx)
+            logs.append(len(input_data))
+            logs.append(current_run.get_status())
 
-                log_list.append(logs)
+            log_list.append(logs)
             logger.info('ending (' + csv_file_path + ') ' + str(date2))
 
         # 10.1 Log error if occurred 
@@ -140,7 +142,7 @@ def run(input_data):
 
             logs.append(store_name)
             logs.append(brand_name)
-            logs.append('ARIMA')
+            logs.append(args.model_type)
             logs.append(file_name)
             logs.append(model_name)
             logs.append(str(date1))
