@@ -45,13 +45,11 @@ Start by deploying the resources to Azure using button below:
 
 #### 2. Configure Development Environment
 
-Next you'll need to configure your [development environment](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-configure-environment) for Azure Machine Learning. We recommend using a [Notebook VM](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-configure-environment#compute-instance) as it's the fastest way to get up and running.
-
-Follow the steps in [EnvironmentSetup.md](./EnvironmentSetup.md) to create a Notebook VM and clone the repo onto it.
+Next you'll need to configure your [development environment](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-configure-environment) for Azure Machine Learning. We recommend using a [Notebook VM](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-configure-environment#compute-instance) as it's the fastest way to get up and running. Follow the steps in [EnvironmentSetup.md](./EnvironmentSetup.md) to create a Notebook VM and clone the repo onto it.
 
 #### 3. Run Notebooks
 
-From there, walk through the notebooks sequentially following the steps outlined.
+From there, walk through the notebooks sequentially following the steps outlined. By the end, you'll know how to train, score, and make predictions using the many models pattern on Azure Machine Learning.
 
 ## Contents
 
