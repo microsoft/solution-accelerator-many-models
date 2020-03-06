@@ -8,6 +8,7 @@ description: "Solution Accelerator designed to help get you up and running with 
 urlFragment: "solution-accelerator-many-models"
 ---
 
+![Many Models Solution Accelerator Banner](images/mmsa.png)
 # Many Models Solution Accelerator
 
 <!-- 
@@ -17,15 +18,20 @@ Guidance on onboarding samples to docs.microsoft.com/samples: https://review.doc
 
 Taxonomies for products and languages: https://review.docs.microsoft.com/new-hope/information-architecture/metadata/taxonomies?branch=master
 -->
+
 In the real world, many problems can be too complex to be solved by a single machine learning model. Whether that be predicting sales for each individual store, building a predictive maintanence model for hundreds of oil wells, or tailoring an experience to individual users, building a model for each instance can lead to improved results on many machine learning problems.
 
 Azure Machine Learning makes it easy to train, operate, and manage hundreds or even thousands of models. This repo will walk you through the end to end process of creating a many models solution from training to scoring to monitoring.
 
 ## Prerequisites
 
-To use this solution accelerator, all you need is access to an [Azure subscription](https://azure.microsoft.com/en-us/free/).
+To use this solution accelerator, all you need is access to an [Azure subscription](https://azure.microsoft.com/en-us/free/) and an [Azure Machine Learning Workspace](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-manage-workspace) that you'll create below.
 
-While it's not required, a basic understanding of Azure Machine Learning will be helpful for understanding the solution. The following resources can help introduce you to AML: [overview](https://azure.microsoft.com/en-us/services/machine-learning/), [tutorials](https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-1st-experiment-sdk-setup), [sample notebooks](https://github.com/Azure/MachineLearningNotebooks).
+While it's not required, a basic understanding of Azure Machine Learning will be helpful for understanding the solution. The following resources can help introduce you to AML:
+
+1. [Azure Machine Learning Overview](https://azure.microsoft.com/en-us/services/machine-learning/)
+2. [Azure Machine Learning Tutorials](https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-1st-experiment-sdk-setup)
+3. [Azure Machine Learning Sample Notebooks on Github](https://github.com/Azure/MachineLearningNotebooks).
 
 ## Getting started
 
@@ -39,33 +45,33 @@ Start by deploying the resources to Azure using button below:
 
 #### 2. Configure Development Environment
 
-Next you'll need to configure your [development environment](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-configure-environment) for Azure Machine Learning. We recommend using a [cloud based compute instance](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-configure-environment#compute-instance) as it's the fastest way to get up and running.
+Next you'll need to configure your [development environment](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-configure-environment) for Azure Machine Learning. We recommend using a [Notebook VM](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-configure-environment#compute-instance) as it's the fastest way to get up and running.
 
-The easiest way to get these folders onto a Notebook VM is to upload the repo as a zip file and run ```!unzip solution-accelerator-many-models.zip``` in a Jupyter Notebook or in the terminal.
+Follow the steps in [EnvironmentSetup.md](./EnvironmentSetup.md) to create a Notebook VM and clone the repo onto it.
 
 #### 3. Run Notebooks
 
-From there, walk through the folders chronologically following the steps outlined in each notebook. 
+From there, walk through the notebooks sequentially following the steps outlined.
 
 ## Contents
 
-In this repo, you'll train and score a forecasting model for each orange juice brand and for each store at a (simulated) grocery store. By the end, you'll have forecasted sales by using 11,973 models to predict sales for the next few weeks.
+In this repo, you'll train and score a forecasting model for each orange juice brand and for each store at a (simulated) grocery chain. By the end, you'll have forecasted sales by using up to 11,973 models to predict sales for the next few weeks.
 
 The data used in this sample is simulated based on the [Dominick's Orange Juice Dataset](http://www.cs.unitn.it/~taufer/QMMA/L10-OJ-Data.html#(1)), sales data from a Chicago area grocery store.
 
-The functionality is broken into the following folders designed to be run step by step:
+The functionality is broken into the notebooks folders designed to be run sequentially:
 
 | Folder       | Description                                |
 |-------------------|--------------------------------------------|
-| `00_Environment_Setup`             | Configures your environment including deploying compute for training and configuring your blob storage for logging                         |
-| `01_Training`      | Creates a pipeline to train a model for each store and orange juice brand in the dataset.     |
-| `02_Forecasting`    | Creates a pipeline to forecast future orange juice sales.            |
+| `00_Environment_Setup.ipynb`             | Configures your environment including deploying compute cluster for training and downloading the dataset.                         |
+| `01_Training_Pipeline.ipynb`      | Creates a pipeline to train a model for each store and orange juice brand in the dataset.     |
+| `02_Forecasting_Pipeline.ipynb`    | Creates a pipeline to forecast future orange juice sales.            |
 
 ## Key concepts
 
 ### ParallelRunStep
 
-[ParallelRunStep](https://docs.microsoft.com/en-us/python/api/azureml-contrib-pipeline-steps/azureml.contrib.pipeline.steps.parallel_run_step.parallelrunstep?view=azure-ml-py) enables the parallel training of models.
+[ParallelRunStep](https://docs.microsoft.com/en-us/python/api/azureml-contrib-pipeline-steps/azureml.contrib.pipeline.steps.parallel_run_step.parallelrunstep?view=azure-ml-py) enables the parallel training of models and is commonly used for batch inferencing. This [document](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-use-parallel-run-step) walks through some of the key concepts around ParallelRunStep.
 
 ### Pipelines
 
