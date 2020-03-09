@@ -18,7 +18,7 @@ result_file = os.path.join(args.parallel_run_step_output, 'parallel_run_step.txt
 
 # Read the log file and clean up data
 df_predictions = pd.read_csv(result_file, delimiter=" ", header=None)
-df_predictions.columns = ['PredictedWeek', 'Store', 'Brand', 'PredictedQuantity']
+df_predictions.columns = ['Date', 'Store', 'Brand', 'PredictedQuantity']
 
 # Save the log file
 output_path = os.path.join(args.output_dir, 'forecasts_' + str(datetime.datetime.now().date()))

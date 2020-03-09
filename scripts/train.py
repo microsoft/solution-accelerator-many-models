@@ -50,11 +50,12 @@ def run(input_data):
         # 3.0 Create Features 
         data['Week_Day'] = data[args.timestamp_column].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d').weekday())
           
-        for i in range(0,3):
+        for i in range(1,4):
             data['lag_'+ str(i)] = data[args.target_column].shift(i)
         
-        data = data.drop(['Price', 'Revenue', 'Store', 'Brand'], axis = 1) 
+        data = data.drop(['Price', 'Revenue', 'Store', 'Brand', 'Advert'], axis = 1) 
         data = data.dropna()
+        print(data)
 
 
         # 4.0 Split the data into train and test sets based on dates
@@ -69,6 +70,7 @@ def run(input_data):
         y_test = test[args.target_column]
         X_train = train.drop(args.target_column, axis = 1)
         X_test = test.drop(args.target_column, axis = 1)
+        
 
         # 5.0 Train the model
         model = LinearRegression()
@@ -84,14 +86,13 @@ def run(input_data):
         current_run.register_model(model_path = model_name, model_name = model_name, model_framework = args.model_type, tags = tags_dict)
 
         # 8.0 Make predictions on test set
-        prediction_list = model.predict(X_test)
-        test['Predictions'] = prediction_list
+        test['Predictions'] = model.predict(X_test)
         
         # 9.0 Calculate accuracy metrics
-        mse = mean_squared_error(test['Quantity'], prediction_list)
+        mse = mean_squared_error(test['Quantity'], test['Predictions'])
         rmse = np.sqrt(mse)
-        mae = mean_absolute_error(test['Quantity'], prediction_list)
-        act, pred = np.array(test['Quantity']), np.array(prediction_list)
+        mae = mean_absolute_error(test['Quantity'], test['Predictions'])
+        act, pred = np.array(test['Quantity']), np.array(test['Predictions'])
         mape = np.mean(np.abs((act - pred) / act) * 100)
 
         # 10.0 Log metrics

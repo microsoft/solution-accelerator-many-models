@@ -59,7 +59,7 @@ The data used in this sample is simulated based on the [Dominick's Orange Juice 
 
 The functionality is broken into the notebooks folders designed to be run sequentially:
 
-| Folder       | Description                                |
+| Notebook       | Description                                |
 |-------------------|--------------------------------------------|
 | `00_Environment_Setup.ipynb`             | Configures your environment including deploying compute cluster for training and downloading the dataset.                         |
 | `01_Training_Pipeline.ipynb`      | Creates a pipeline to train a model for each store and orange juice brand in the dataset.     |

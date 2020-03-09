@@ -31,20 +31,17 @@ def run(input_data):
         store_name = file_name.split('_')[0]
         brand_name = file_name.split('_')[1]
 
-        data = pd.read_csv(csv_file_path, header = 0)
-
         # 3.0 Split the data into train and test sets based on dates
         data = pd.read_csv(csv_file_path, header = 0)
+
         data[args.timestamp_column] = data[args.timestamp_column].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'))
-       
+        print(data)
         # 3.0 Set up data to predict on
-        store_list = [store_name] * args.forecast_horizon
-        brand_list = [brand_name] * args.forecast_horizon
         date_list = pd.date_range(args.starting_date, periods=args.forecast_horizon, freq=args.date_freq)
 
         prediction_df = pd.DataFrame()
         prediction_df['Date'] = date_list 
-        prediction_df['Week_Day'] = prediction_df['Date'].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d').weekday())                             
+        prediction_df['Week_Day'] = prediction_df['Date'].apply(lambda x: x.weekday())                             
 
         # 4.0 Unpickle model and make predictions
         model_path = Model.get_model_path(model_name)
@@ -54,26 +51,23 @@ def run(input_data):
         i = 0
         for date in prediction_df['Date']:
        
-            x_pred = prediction_df[prediction_df[args.timestamp_column] == date]
-        
-            #x_test_day['Lag30'] = train_cv[col].iloc[-30+i]
+            x_pred = prediction_df[prediction_df['Date'] == date]
+    
         
             if i >= 1: 
                 x_pred['lag_1'] = prediction_list[i-1]
             else: 
                 x_pred['lag_1'] = data[args.target_column].iloc[-1]
             if i >= 2: 
-                x_pred['lag_2'] = prediction_df[i-2]
+                x_pred['lag_2'] = prediction_list[i-2]
             else: 
                 x_pred['lag_2'] = data[args.target_column].iloc[-2+i]
             if i >= 3: 
-                x_pred['lag_3'] = prediction_df[i-3]
+                x_pred['lag_3'] = prediction_list[i-3]
             else: 
                 x_pred['lag_3'] = data[args.target_column].iloc[-3+i]
 
-            features = [col for col in x_pred if col not in ['Date']]
-            x_pred = x_pred[features].values
-            y_pred = model.predict(x_pred)
+            y_pred = model.predict(x_pred.drop(columns=['Date']))
 
 
             prediction_list.append(y_pred[0])
@@ -82,6 +76,7 @@ def run(input_data):
         prediction_df['Prediction'] = prediction_list
         prediction_df['Store'] = store_name
         prediction_df['Brand'] = brand_name
+        prediction_df.drop(columns=['Week_Day'], inplace=True)
         
 
         results = results.append(prediction_df)
