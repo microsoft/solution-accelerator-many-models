@@ -31,12 +31,9 @@ def run(input_data):
         store_name = file_name.split('_')[0]
         brand_name = file_name.split('_')[1]
 
-        # 3.0 Split the data into train and test sets based on dates
-        data = pd.read_csv(csv_file_path, header = 0)
-
-        data[args.timestamp_column] = data[args.timestamp_column].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'))
-        print(data)
         # 3.0 Set up data to predict on
+        data = pd.read_csv(csv_file_path, header = 0)
+        data[args.timestamp_column] = data[args.timestamp_column].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'))
         date_list = pd.date_range(args.starting_date, periods=args.forecast_horizon, freq=args.date_freq)
 
         prediction_df = pd.DataFrame()
@@ -80,9 +77,5 @@ def run(input_data):
         
 
         results = results.append(prediction_df)
-
-        # 5.0 Log the run 
-        end_datetime = datetime.datetime.now()
-        print(('ending (' + str(csv_file_path) +') ' + str(end_datetime)))
 
     return results

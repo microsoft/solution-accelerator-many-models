@@ -1,16 +1,21 @@
 # Troubleshooting
 
-The Azure ML team provides guidance on [how to debug ParallelRunStep](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-debug-parallel-run-step).
-
-This [doc](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-debug-pipelines#testing-scripts-locally)
+The Azure ML team provides guidance on [how to debug ParallelRunStep](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-debug-parallel-run-step) as well as documentation on [debugging pipelines](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-debug-pipelines#testing-scripts-locally). These are both valuable resources in debugging any issues with the solution accelerator.
 
 ## Logging
 
-When running the pipelines, the quickest way to see if the script is running successfully is to look at the logs. This can be done in [Azure ML Studio](https://ml.azure.com) or via your blob stoage account.
+When running the pipelines, the quickest way to see if the pipeline is running successfully is to look at the logs. This can be done in [Azure ML Studio](https://ml.azure.com) or via your blob storage account.
 
-#### 70_driver_log.txt
+While there's a lot of valuable information in logs, there's a couple of key files to look at first.
 
-#### logs > sys > errors
+- ```70_driver_log.txt``` contains information from the controller that launches parallel run step code. This file will include any print statements that you put into ```train.py``` or ```forecast.py```.
+
+- ```~/logs/sys/error/<ip_address>/Process-*.txt``` is the quickest ways to see errors in your pipeline. If the ```error``` folder doesn't exist, you likely haven't hit errors in your scripts yet. If it does, there's likely a problem.
+
+- ```~/logs/sys/worker/<ip_address>/Process-*.txt``` provides detailed info about each mini-batch as it is picked up or completed by a worker. For each mini-batch, this file includes:
+  - The IP address and the PID of the worker process.
+  - The total number of items, successfully processed items count, and failed item count.
+  - The start time, duration, process time and run method time.
 
 ## Known Issues
 

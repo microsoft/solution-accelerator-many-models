@@ -28,4 +28,4 @@ while os.path.exists(output_path + '.csv'):
     counter += 1
 
 df_predictions.to_csv(output_path + '.csv', index=False)
-print('Saved the forecasting_results.csv')
+print('Saved the forecasting results to a csv')
