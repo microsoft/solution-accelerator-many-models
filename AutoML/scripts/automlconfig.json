@@ -1,0 +1,19 @@
+{
+    "task": "forecasting",
+    "iteration_timeout_minutes": 10,
+    "iterations": 50,
+    "n_cross_validations": 3,
+    "primary_metric": "r2_score",
+    "verbosity": 20,
+    "label_column_name": "Quantity",
+    "debug_log": "automl_oj_sales_errors.log",
+    "time_column_name": "WeekStarting",
+    "max_horizon": 6,
+    "drop_column_names": [
+        "logQuantity"
+    ],
+    "grain_column_names": [
+        "Store",
+        "Brand"
+    ]
+}
