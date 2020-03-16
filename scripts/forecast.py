@@ -6,45 +6,75 @@ import os
 import argparse
 from sklearn.externals import joblib
 from azureml.core.model import Model
-from entry_script import EntryScript
+import datetime
 
 # 0.0 Parse input arguments
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--forecast_horizon", type=int, help="input number of predictions")
-parser.add_argument("--starting_date", type=str, help="date to begin forecasting")
+parser.add_argument("--starting_date", type=str, help="date to begin forecasting") #change this to tak the last date and start from there
+parser.add_argument("--target_column", type=str, help="target colunm to predict on")
+parser.add_argument("--timestamp_column", type=str, help="timestamp column from data")
+parser.add_argument("--model_type", type=str, help="model type")
+parser.add_argument("--date_freq", type=str, help="the step size for predictions, daily, weekly")
 
 args, _ = parser.parse_known_args()
 
 
 def run(input_data):
-    # 1.0 Set up Logging
-    entry_script = EntryScript()
-    logger = entry_script.logger
-    logger.info('Making forecasts')
-
+    # 1.0 Set up results dataframe
     results = pd.DataFrame()
 
     # 2.0 Iterate through input data
     for idx, csv_file_path in enumerate(input_data):
         file_name = os.path.basename(csv_file_path)[:-4]
-        model_name = 'arima_' + file_name
+        model_name = args.model_type + '_' + file_name
         store_name = file_name.split('_')[0]
         brand_name = file_name.split('_')[1]
 
         # 3.0 Set up data to predict on
-        store_list = [store_name] * args.forecast_horizon
-        brand_list = [brand_name] * args.forecast_horizon
-        date_list = pd.date_range(args.starting_date, periods=args.forecast_horizon, freq='W-THU')
+        data = pd.read_csv(csv_file_path, header = 0)
+        data[args.timestamp_column] = data[args.timestamp_column].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'))
+        date_list = pd.date_range(args.starting_date, periods=args.forecast_horizon, freq=args.date_freq)
 
-        prediction_df = pd.DataFrame(list(zip(date_list, store_list, brand_list)),
-                                    columns=['WeekStarting', 'Store', 'Brand'])
+        prediction_df = pd.DataFrame()
+        prediction_df['Date'] = date_list 
+        prediction_df['Week_Day'] = prediction_df['Date'].apply(lambda x: x.weekday())                             
 
         # 4.0 Unpickle model and make predictions
         model_path = Model.get_model_path(model_name)
         model = joblib.load(model_path)
+        
+        prediction_list = []
+        i = 0
+        for date in prediction_df['Date']:
+       
+            x_pred = prediction_df[prediction_df['Date'] == date]
+    
+        
+            if i >= 1: 
+                x_pred['lag_1'] = prediction_list[i-1]
+            else: 
+                x_pred['lag_1'] = data[args.target_column].iloc[-1]
+            if i >= 2: 
+                x_pred['lag_2'] = prediction_list[i-2]
+            else: 
+                x_pred['lag_2'] = data[args.target_column].iloc[-2+i]
+            if i >= 3: 
+                x_pred['lag_3'] = prediction_list[i-3]
+            else: 
+                x_pred['lag_3'] = data[args.target_column].iloc[-3+i]
 
-        prediction_list, conf_int = model.predict(args.forecast_horizon, return_conf_int=True)
-        prediction_df['Predictions'] = prediction_list
+            y_pred = model.predict(x_pred.drop(columns=['Date']))
+
+
+            prediction_list.append(y_pred[0])
+            i += 1
+
+        prediction_df['Prediction'] = prediction_list
+        prediction_df['Store'] = store_name
+        prediction_df['Brand'] = brand_name
+        prediction_df.drop(columns=['Week_Day'], inplace=True)
+        
 
         results = results.append(prediction_df)
 
