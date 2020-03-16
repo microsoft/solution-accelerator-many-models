@@ -31,7 +31,7 @@ While it's not required, a basic understanding of Azure Machine Learning will be
 
 1. [Azure Machine Learning Overview](https://azure.microsoft.com/en-us/services/machine-learning/)
 2. [Azure Machine Learning Tutorials](https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-1st-experiment-sdk-setup)
-3. [Azure Machine Learning Sample Notebooks on Github](https://github.com/Azure/MachineLearningNotebooks).
+3. [Azure Machine Learning Sample Notebooks on Github](https://github.com/Azure/MachineLearningNotebooks)
 
 ## Getting started
 
@@ -49,7 +49,16 @@ Next you'll need to configure your [development environment](https://docs.micros
 
 #### 3. Run Notebooks
 
-From there, walk through the notebooks sequentially following the steps outlined. By the end, you'll know how to train, score, and make predictions using the many models pattern on Azure Machine Learning.
+Once your development environment is set up, run through the Jupyter Notebooks sequentially following the steps outlined.  By the end, you'll know how to train, score, and make predictions using the many models pattern on Azure Machine Learning.
+
+There are two ways to train many models:
+
+1. Using a custom scoring script
+2. Using AutoML
+
+![Sequence of Notebooks](./images/mmsa-overview.png)
+
+If you want to train your models using AutoML, run through 01_Environment_Setup.ipynb and then run through the two notebooks in the AutoML folder.
 
 ## Contents
 
@@ -61,9 +70,11 @@ The functionality is broken into the notebooks folders designed to be run sequen
 
 | Notebook       | Description                                |
 |-------------------|--------------------------------------------|
-| `00_Environment_Setup.ipynb`             | Configures your environment including deploying compute cluster for training and downloading the dataset.                         |
-| `01_Training_Pipeline.ipynb`      | Creates a pipeline to train a model for each store and orange juice brand in the dataset.     |
-| `02_Forecasting_Pipeline.ipynb`    | Creates a pipeline to forecast future orange juice sales.            |
+| `01_Environment_Setup.ipynb`             | Configures your environment including deploying compute cluster for training and downloading the dataset.                         |
+| `02_Training_Pipeline.ipynb`      | Creates a pipeline to train a model for each store and orange juice brand in the dataset using a custom scoring script.     |
+| `03_Forecasting_Pipeline.ipynb`    | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.           |
+| `AutoML\02b_Train_AutoML.ipynb` | Creates a pipeline to train a model for each store and orange juice brand in the dataset using AutoML.  |
+| `AutoML\03b_Forecasting_Pipeline.ipynb` | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.  |
 
 ## Key concepts
 
