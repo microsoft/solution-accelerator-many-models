@@ -37,7 +37,7 @@ While it's not required, a basic understanding of Azure Machine Learning will be
 
 #### 1. Deploy Resources
 
-Start by deploying the resources to Azure using button below:
+Start by deploying the resources to Azure. The button below will deploy Azure Machine Learning and it's related resources:
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdereklegenzoff%2FSampleArmTemplates%2Fmaster%2FAzureML.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
