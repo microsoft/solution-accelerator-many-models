@@ -24,7 +24,7 @@ from sklearn.externals import joblib
 from joblib import dump, load
 import json
 
-RunContext = Run.get_context()
+current_step_run = Run.get_context()
 LOG_NAME = "user_log"
 
 parser = argparse.ArgumentParser("split")
@@ -85,7 +85,7 @@ def train_model(data, file_name):
     train.to_csv("./{}_train.csv".format(file_name), index=None, header=True)
     test.to_csv("./{}_test.csv".format(file_name), index=None, header=True)
 
-    ws = RunContext.experiment.workspace
+    ws = current_step_run.experiment.workspace
     datastore = ws.get_default_datastore()
     datastore.upload_files(files=["./{}_train.csv".format(file_name), "./{}_test.csv".format(file_name)],
                            target_path='dataset/', overwrite=True, show_progress=True)
@@ -94,7 +94,7 @@ def train_model(data, file_name):
     automl_config = AutoMLConfig(training_data=train_dataset,
                                  **automl_settings)
 
-    local_run = RunContext.submit_child(automl_config, show_output=True)
+    local_run = current_step_run.submit_child(automl_config, show_output=True)
     print(local_run)
     best_run, fitted_model = local_run.get_output()
 
@@ -104,7 +104,7 @@ def train_model(data, file_name):
 
 
 def test_model(fitted_model, file_name, model_name):
-    ws = RunContext.experiment.workspace
+    ws = current_step_run.experiment.workspace
     datastore = ws.get_default_datastore()
     test_dataset = Dataset.Tabular.from_delimited_files(path=datastore.path("dataset/{}_test.csv".format(file_name)))
     test = test_dataset.to_pandas_dataframe()
