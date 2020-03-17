@@ -1,10 +1,13 @@
 import sys
+
+from azureml.contrib.pipeline.steps import ParallelRunConfig
+from common.scripts.helper import validate_parallel_run_config
+from common.scripts.helper import get_automl_environment as get_env
+
 sys.path.append("..")
 
 
 def build_parallel_run_config_for_forecasting(train_env, compute, nodecount, workercount, timeout):
-    from azureml.contrib.pipeline.steps import ParallelRunConfig
-    from common.scripts.helper import validate_parallel_run_config
     parallel_run_config = ParallelRunConfig(
         source_directory='./scripts',
         entry_script='forecast.py',
@@ -21,5 +24,4 @@ def build_parallel_run_config_for_forecasting(train_env, compute, nodecount, wor
 
 
 def get_automl_environment():
-    from common.scripts.helper import get_automl_environment as get_env
     return get_env()

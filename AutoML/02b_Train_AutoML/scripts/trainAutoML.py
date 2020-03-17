@@ -34,8 +34,7 @@ args, _ = parser.parse_known_args()
 
 def read_from_json():
     with open('automlconfig.json') as json_file:
-        data = json.load(json_file)
-        return data
+        return json.load(json_file)
 
 
 automl_settings = read_from_json()
@@ -74,7 +73,6 @@ def init():
     output_folder = os.path.join(os.environ.get("AZ_BATCHAI_INPUT_AZUREML", ""), "temp/output")
     logger.info(f"{__file__}.output_folder:{output_folder}")
     logger.info("init()")
-    return
 
 
 def train_model(data, file_name):
