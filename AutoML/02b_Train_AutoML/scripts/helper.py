@@ -2,6 +2,8 @@ import argparse
 import json
 import sys
 
+from azureml.contrib.pipeline.steps import ParallelRunConfig
+
 sys.path.append("..")
 
 
@@ -11,7 +13,6 @@ def write_automl_settings_to_file(automl_settings):
 
 
 def build_parallel_run_config(train_env, compute, nodecount, workercount, timeout):
-    from azureml.contrib.pipeline.steps import ParallelRunConfig
     from common.scripts.helper import validate_parallel_run_config
     parallel_run_config = ParallelRunConfig(
         source_directory='./scripts',

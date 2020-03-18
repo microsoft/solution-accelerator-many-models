@@ -28,7 +28,7 @@ args, _ = parser.parse_known_args()
 print("Argument 3 group_column_names: {}".format(args.group_column_names))
 print("Argument 3 target_column_name: {}".format(args.target_column_name))
 
-RunContext = Run.get_context()
+current_step_run = Run.get_context()
 
 
 def run(input_data):
@@ -54,7 +54,7 @@ def run(input_data):
         print(tags_dict[k])
         logger.info('starting (' + csv_file_path + ') ' + str(date1))
 
-        ws = RunContext.experiment.workspace
+        ws = current_step_run.experiment.workspace
         model_list = Model.list(ws, tags=tags, latest=True)
 
         if not model_list:
