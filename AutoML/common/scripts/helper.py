@@ -19,8 +19,8 @@ def get_automl_environment():
     train_conda_deps = CondaDependencies.create(pip_packages=['azureml-sdk[automl]', 'joblib', 'pyarrow==0.14'])
     train_conda_deps.add_conda_package('pandas==0.23.4')
     train_conda_deps.add_conda_package('numpy==1.16.2')
-    train_conda_deps.add_conda_package('fbprophet')
-    train_conda_deps.add_conda_package('py-xgboost==0.80')
+    train_conda_deps.add_conda_package('fbprophet==0.5')
+    train_conda_deps.add_conda_package('py-xgboost==0.90')
     train_env.python.conda_dependencies = train_conda_deps
     train_env.docker.enabled = True
     train_env.docker.base_image = DEFAULT_CPU_IMAGE

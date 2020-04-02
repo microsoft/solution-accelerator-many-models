@@ -2,6 +2,8 @@ import pandas as pd
 import os
 import uuid
 
+from multiprocessing import current_process
+from pathlib import Path
 from azureml.core.dataset import Dataset
 from azureml.core.model import Model
 from sklearn.linear_model import LogisticRegression
@@ -17,12 +19,16 @@ from automl.client.core.common import constants
 import datetime
 from entry_script_helper import EntryScriptHelper
 import logging
+from azureml.automl.core.shared.exceptions import (AutoMLException,
+                                                   ClientException)
+
 
 from sklearn.externals import joblib
 from joblib import dump, load
 import json
 
 current_step_run = Run.get_context()
+
 LOG_NAME = "user_log"
 
 parser = argparse.ArgumentParser("split")
@@ -59,25 +65,37 @@ def init():
     EntryScriptHelper().config(LOG_NAME)
     logger = logging.getLogger(LOG_NAME)
     output_folder = os.path.join(os.environ.get("AZ_BATCHAI_INPUT_AZUREML", ""), "temp/output")
+    working_dir = os.environ.get("AZ_BATCHAI_OUTPUT_logs", "")
+    ip_addr = os.environ.get("AZ_BATCHAI_WORKER_IP", "")
+    log_dir = os.path.join(working_dir, "user", ip_addr, current_process().name)
+    t_log_dir = Path(log_dir)
+    t_log_dir.mkdir(parents=True, exist_ok=True)
+
+    debug_log = automl_settings.get('debug_log', None)
+    if debug_log is not None:
+        automl_settings['debug_log'] = os.path.join(log_dir, debug_log)
+        print(automl_settings['debug_log'])
+        logger.info(f"{__file__}.AutoML debug log:{debug_log}")
+
     logger.info(f"{__file__}.output_folder:{output_folder}")
     logger.info("init()")
 
 
-def train_model(csv_file_path):
+def train_model(csv_file_path, data, logger):
     file_name = csv_file_path.split('/')[-1][:-4]
     print(file_name)
-    print (csv_file_path)
-    ws = current_step_run.experiment.workspace
-    datastore = ws.get_default_datastore()
-
-    datastore.upload_files(files=[csv_file_path], target_path='dataset/',
-                           overwrite=True, show_progress=True)
-    train_dataset = Dataset.Tabular.from_delimited_files(path=datastore.path("dataset/{}.csv".format(file_name)))
-    automl_config = AutoMLConfig(training_data=train_dataset,
+    logger.info("in train_model")
+    print('data')
+    print(data.head(5))
+    automl_config = AutoMLConfig(training_data=data,
                                  **automl_settings)
 
-    local_run = current_step_run.submit_child(automl_config, show_output=True)
+    logger.info("submit_child")
+    local_run = current_step_run.submit_child(automl_config, show_output=False)
+    logger.info(local_run)
     print(local_run)
+    local_run.wait_for_completion(show_output=True)
+
     fitted_model = local_run.get_output()
 
     u1 = uuid.uuid4()
@@ -91,33 +109,39 @@ def run(input_data):
     resultList = []
     logger.info('2')
     idx = 0
+    model_name = ''
     for file in input_data:
         logs = []
         date1 = datetime.datetime.now()
         logger.info('start (' + file + ') ' + str(datetime.datetime.now()))
-        data = pd.read_csv(file).head(5)
         csv_file_path = file
 
         file_name = csv_file_path.split('/')[-1][:-4]
 
         try:
+            data = pd.read_csv(file, parse_dates=[timestamp_column])
             # train model
-            fitted_model, model_name, current_run = train_model(csv_file_path)
-            logger.info('done training')
-            print('Trained best model ' + model_name)
+            fitted_model, model_name, current_run = train_model(csv_file_path, data, logger)
 
-            logger.info(fitted_model)
-            logger.info(model_name)
+            try:
+                logger.info('done training')
+                print('Trained best model ' + model_name)
 
-            logger.info('register model, skip the outputs prefix')
+                logger.info(fitted_model)
+                logger.info(model_name)
 
-            tags_dict = {'ModelType': 'AutoML'}
-            for column_name in group_column_names:
-                tags_dict.update({column_name: str(data.iat[0, data.columns.get_loc(column_name)])})
-            tags_dict.update({'InputData': csv_file_path})
+                logger.info('register model, skip the outputs prefix')
 
-            current_run.register_model(model_name=model_name, description='AutoML', tags=tags_dict)
-            print('Registered ' + model_name)
+                tags_dict = {'ModelType': 'AutoML'}
+                for column_name in group_column_names:
+                    tags_dict.update({column_name: str(data.iat[0, data.columns.get_loc(column_name)])})
+                tags_dict.update({'InputData': csv_file_path})
+
+                current_run.register_model(model_name=model_name, description='AutoML', tags=tags_dict)
+                print('Registered ' + model_name)
+            except Exception as error:
+                error_message = 'Failed to register the model. ' + 'Error message: ' + str(error)
+                logger.info(error_message)
 
             date2 = datetime.datetime.now()
 
@@ -136,7 +160,7 @@ def run(input_data):
 
         # 10.1 Log the error message if an exception occurs
         except (ValueError, UnboundLocalError, NameError, ModuleNotFoundError, AttributeError, ImportError,
-                FileNotFoundError, KeyError) as error:
+                FileNotFoundError, KeyError, ClientException, AutoMLException) as error:
             date2 = datetime.datetime.now()
             error_message = 'Failed to train the model. ' + 'Error message: ' + str(error)
 
@@ -151,6 +175,7 @@ def run(input_data):
             logs.append(error_message)
             idx += 1
 
+            logger.info(error_message)
             logger.info('ending (' + csv_file_path + ') ' + str(date2))
 
         resultList.append(logs)
