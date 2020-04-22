@@ -25,5 +25,5 @@ To clone this git repository onto the workspace, follow the steps below:
 
 1. In the terminal window clone this repository by typing:
 ```
-        git clone https://github.com/microsoft/solution-accelerator-km-aml.git
+        git clone https://github.com/microsoft/solution-accelerator-many-models.git
 ```
