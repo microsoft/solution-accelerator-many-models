@@ -45,9 +45,15 @@ def run(input_data):
 
     all_predictions = pd.DataFrame()
     # 2.0 Iterate through input data
-    for idx, csv_file_path in enumerate(input_data):
+    for idx, file_path in enumerate(input_data):
         date1 = datetime.datetime.now()
-        data = pd.read_csv(csv_file_path)
+        file_name, file_extension = os.path.splitext(os.path.basename(file_path))
+
+        if file_extension.lower() == ".parquet":
+            data = pd.read_parquet(file_path)
+        else:
+            data = pd.read_csv(file_path)
+
         tags_dict = {}
         for column_name in args.group_column_names:
             tags_dict.update({column_name: str(data.iat[0, data.columns.get_loc(column_name)])})
@@ -56,7 +62,7 @@ def run(input_data):
         for k in tags_dict.keys():
             tags.append([k, tags_dict[k]])
         print(tags)
-        logger.info('starting (' + csv_file_path + ') ' + str(date1))
+        logger.info('starting (' + file_path + ') ' + str(date1))
 
         ws = current_step_run.experiment.workspace
         model_list = Model.list(ws, tags=tags, latest=True)
@@ -104,7 +110,7 @@ def run(input_data):
 
         # 5.0 Log the run
         date2 = datetime.datetime.now()
-        logger.info('ending (' + str(csv_file_path) + ') ' + str(date2))
+        logger.info('ending (' + str(file_path) + ') ' + str(date2))
 
     print(all_predictions.head())
     return all_predictions
