@@ -6,18 +6,18 @@ To disable this, simply remove the following section from [azuredeploy.json](./a
 
 ```json
 {
-            "apiVersion": "2018-02-01",
-            "name": "pid-9408f13f-5d8c-5318-a26c-0d76854a4a23",
-            "type": "Microsoft.Resources/deployments",
-            "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "resources": []
-                }
-            }
-        }
+    "apiVersion": "2018-02-01",
+    "name": "pid-9408f13f-5d8c-5318-a26c-0d76854a4a23",
+    "type": "Microsoft.Resources/deployments",
+    "properties": {
+        "mode": "Incremental",
+        "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "resources": []
+        }
+    }
+}
 ```
 
 You can see more information on this at https://docs.microsoft.com/en-us/azure/marketplace/azure-partner-customer-usage-attribution.
