@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 """
 This module provides helper features for entry script.
 This file should be in Python search paths or in the same folder as the entry script.
