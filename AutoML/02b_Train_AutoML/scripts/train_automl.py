@@ -14,8 +14,7 @@ import pickle
 from azureml.core import Experiment, Workspace, Run
 from azureml.core import ScriptRunConfig
 from azureml.train.automl import AutoMLConfig
-import azureml.automl.core
-from automl.client.core.common import constants
+from azureml.automl.core.shared import constants
 import datetime
 from entry_script_helper import EntryScriptHelper
 import logging
@@ -32,6 +31,7 @@ current_step_run = Run.get_context()
 LOG_NAME = "user_log"
 
 parser = argparse.ArgumentParser("split")
+parser.add_argument("--process_count_per_node", default=1, type=int, help="number of processes per node")
 
 args, _ = parser.parse_known_args()
 
@@ -70,6 +70,8 @@ def init():
     log_dir = os.path.join(working_dir, "user", ip_addr, current_process().name)
     t_log_dir = Path(log_dir)
     t_log_dir.mkdir(parents=True, exist_ok=True)
+    automl_settings['many_models'] = True
+    automl_settings['many_models_process_count_per_node'] = args.process_count_per_node
 
     debug_log = automl_settings.get('debug_log', None)
     if debug_log is not None:

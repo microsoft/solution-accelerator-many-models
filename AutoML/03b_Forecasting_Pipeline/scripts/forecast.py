@@ -15,8 +15,7 @@ import datetime
 from azureml.core.model import Model
 from azureml.core import Experiment, Workspace, Run, Datastore
 from azureml.train.automl import AutoMLConfig
-import azureml.automl.core
-from automl.client.core.common import constants
+from azureml.automl.core.shared import constants
 from entry_script import EntryScript
 
 import json
