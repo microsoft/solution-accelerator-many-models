@@ -6,6 +6,7 @@ import os
 import argparse
 from sklearn.externals import joblib
 from azureml.core.model import Model
+from azureml.core.run import Run
 import datetime
 
 # 0.0 Parse input arguments
@@ -41,8 +42,13 @@ def run(input_data):
         prediction_df['Week_Day'] = prediction_df['Date'].apply(lambda x: x.weekday())                             
 
         # 4.0 Unpickle model and make predictions
-        model_path = Model.get_model_path(model_name)
+        ws = Run.get_context().experiment.workspace
+        models = Model.list(ws, tags=[['Store', store_name], ['Brand', brand_name], ['ModelType', 'lr']], latest=True)
+        if len(models) > 1:
+            raise ValueError("More than one models encountered for store and brand")
+        model_path = models[0].download()
         model = joblib.load(model_path)
+
         
         prediction_list = []
         i = 0
