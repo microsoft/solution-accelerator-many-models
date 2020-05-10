@@ -65,13 +65,19 @@ In this repo, you'll train and score a forecasting model for each orange juice b
 
 The data used in this sample is simulated based on the [Dominick's Orange Juice Dataset](http://www.cs.unitn.it/~taufer/QMMA/L10-OJ-Data.html#(1)), sales data from a Chicago area grocery store.
 
-The functionality is broken into the notebooks folders designed to be run sequentially:
+The functionality is broken into the notebooks folders designed to be run sequentially.
+
+#### Using a custom scoring script to train the models:
 
 | Notebook       | Description                                |
 |-------------------|--------------------------------------------|
 | `Custom_Script\01_Data_Preparation.ipynb`             | Configures your environment including deploying compute cluster for training and downloading the dataset.                         |
 | `Custom_Script\02_Training_Pipeline.ipynb`      | Creates a pipeline to train a model for each store and orange juice brand in the dataset using a custom scoring script.     |
 | `Custom_Script\03_Forecasting_Pipeline.ipynb`    | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.           |
+
+#### Using Automated ML to train the models:
+| Notebook       | Description                                |
+|-------------------|--------------------------------------------|
 | `Automated_ML\01b_Data_Preparation\01b_Data_Preparation.ipynb`             | Register the blob container as a Datastore to the Workspace and register a File Dataset to the workspace.                         |
 | `Automated_ML\02b_Train_AutoML\02b_Train_AutoML.ipynb` | Creates a pipeline to train a model for each store and orange juice brand in the dataset using Automated ML.  |
 | `Automated_ML\03b_Forecasting_Pipeline\03b_Forecasting_Pipeline.ipynb` | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.  |
