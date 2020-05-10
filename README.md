@@ -58,7 +58,6 @@ There are two ways to train many models:
 
 ![Sequence of Notebooks](./images/mmsa-overview.png)
 
-If you want to train your models using AutoML, run through 01_Environment_Setup.ipynb and then run through the two notebooks in the AutoML folder.
 
 ## Contents
 
@@ -70,11 +69,12 @@ The functionality is broken into the notebooks folders designed to be run sequen
 
 | Notebook       | Description                                |
 |-------------------|--------------------------------------------|
-| `01_Environment_Setup.ipynb`             | Configures your environment including deploying compute cluster for training and downloading the dataset.                         |
-| `02_Training_Pipeline.ipynb`      | Creates a pipeline to train a model for each store and orange juice brand in the dataset using a custom scoring script.     |
-| `03_Forecasting_Pipeline.ipynb`    | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.           |
-| `AutoML\02b_Train_AutoML.ipynb` | Creates a pipeline to train a model for each store and orange juice brand in the dataset using AutoML.  |
-| `AutoML\03b_Forecasting_Pipeline.ipynb` | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.  |
+| `Custom_Script\01_Data_Preparation.ipynb`             | Configures your environment including deploying compute cluster for training and downloading the dataset.                         |
+| `Custom_Script\02_Training_Pipeline.ipynb`      | Creates a pipeline to train a model for each store and orange juice brand in the dataset using a custom scoring script.     |
+| `Custom_Script\03_Forecasting_Pipeline.ipynb`    | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.           |
+| `Automated_ML\01b_Data_Preparation\01b_Data_Preparation.ipynb`             | Register the blob container as a Datastore to the Workspace and register a File Dataset to the workspace.                         |
+| `Automated_ML\02b_Train_AutoML\02b_Train_AutoML.ipynb` | Creates a pipeline to train a model for each store and orange juice brand in the dataset using Automated ML.  |
+| `Automated_ML\03b_Forecasting_Pipeline\03b_Forecasting_Pipeline.ipynb` | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.  |
 
 ## Key concepts
 
