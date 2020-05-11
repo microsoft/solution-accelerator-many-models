@@ -25,12 +25,12 @@ Azure Machine Learning makes it easy to train, operate, and manage hundreds or e
 
 ## Prerequisites
 
-To use this solution accelerator, all you need is access to an [Azure subscription](https://azure.microsoft.com/en-us/free/) and an [Azure Machine Learning Workspace](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-manage-workspace) that you'll create below.
+To use this solution accelerator, all you need is access to an [Azure subscription](https://azure.microsoft.com/free/) and an [Azure Machine Learning Workspace](https://docs.microsoft.com/azure/machine-learning/how-to-manage-workspace) that you'll create below.
 
 While it's not required, a basic understanding of Azure Machine Learning will be helpful for understanding the solution. The following resources can help introduce you to AML:
 
-1. [Azure Machine Learning Overview](https://azure.microsoft.com/en-us/services/machine-learning/)
-2. [Azure Machine Learning Tutorials](https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-1st-experiment-sdk-setup)
+1. [Azure Machine Learning Overview](https://azure.microsoft.com/services/machine-learning/)
+2. [Azure Machine Learning Tutorials](https://docs.microsoft.com/azure/machine-learning/tutorial-1st-experiment-sdk-setup)
 3. [Azure Machine Learning Sample Notebooks on Github](https://github.com/Azure/MachineLearningNotebooks)
 
 ## Getting started
@@ -45,7 +45,7 @@ Start by deploying the resources to Azure. The button below will deploy Azure Ma
 
 #### 2. Configure Development Environment
 
-Next you'll need to configure your [development environment](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-configure-environment) for Azure Machine Learning. We recommend using a [Notebook VM](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-configure-environment#compute-instance) as it's the fastest way to get up and running. Follow the steps in [EnvironmentSetup.md](./EnvironmentSetup.md) to create a Notebook VM and clone the repo onto it.
+Next you'll need to configure your [development environment](https://docs.microsoft.com/azure/machine-learning/how-to-configure-environment) for Azure Machine Learning. We recommend using a [Notebook VM](https://docs.microsoft.com/azure/machine-learning/how-to-configure-environment#compute-instance) as it's the fastest way to get up and running. Follow the steps in [EnvironmentSetup.md](./EnvironmentSetup.md) to create a Notebook VM and clone the repo onto it.
 
 #### 3. Run Notebooks
 
@@ -86,15 +86,18 @@ The functionality is broken into the notebooks folders designed to be run sequen
 
 ### ParallelRunStep
 
-[ParallelRunStep](https://docs.microsoft.com/en-us/python/api/azureml-contrib-pipeline-steps/azureml.contrib.pipeline.steps.parallel_run_step.parallelrunstep?view=azure-ml-py) enables the parallel training of models and is commonly used for batch inferencing. This [document](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-use-parallel-run-step) walks through some of the key concepts around ParallelRunStep.
+[ParallelRunStep](https://docs.microsoft.com/python/api/azureml-contrib-pipeline-steps/azureml.contrib.pipeline.steps.parallel_run_step.parallelrunstep?view=azure-ml-py) enables the parallel training of models and is commonly used for batch inferencing. This [document](https://docs.microsoft.com/azure/machine-learning/how-to-use-parallel-run-step) walks through some of the key concepts around ParallelRunStep.
 
 ### Pipelines
 
-[Pipelines](https://docs.microsoft.com/en-us/azure/machine-learning/concept-ml-pipelines) allow you to create workflows in your machine learning projects. These workflows have a number of benefits including speed, simplicity, repeatability, and modularity.
+[Pipelines](https://docs.microsoft.com/azure/machine-learning/concept-ml-pipelines) allow you to create workflows in your machine learning projects. These workflows have a number of benefits including speed, simplicity, repeatability, and modularity.
+
+### Automated Machine Learning
+[Automated Machine Learning](https://docs.microsoft.com/azure/machine-learning/concept-automated-ml) also referred to as automated ML or AutoML, is the process of automating the time consuming, iterative tasks of machine learning model development. It allows data scientists, analysts, and developers to build ML models with high scale, efficiency, and productivity all while sustaining model quality. 
 
 ### Other Concepts
 
-In additional to ParallelRunStep and Pipelines, you'll also be working with the following concepts including [workspace](https://docs.microsoft.com/en-us/azure/machine-learning/concept-workspace), [datasets](https://docs.microsoft.com/en-us/azure/machine-learning/concept-data#datasets), [compute targets](https://docs.microsoft.com/en-us/azure/machine-learning/concept-compute-target#train), [python script steps](https://docs.microsoft.com/en-us/python/api/azureml-pipeline-steps/azureml.pipeline.steps.python_script_step.pythonscriptstep?view=azure-ml-py), and [Azure Open Datasets](https://azure.microsoft.com/en-us/services/open-datasets/).
+In additional to ParallelRunStep, Pipelines and Automated Machine Learning, you'll also be working with the following concepts including [workspace](https://docs.microsoft.com/azure/machine-learning/concept-workspace), [datasets](https://docs.microsoft.com/azure/machine-learning/concept-data#datasets), [compute targets](https://docs.microsoft.com/azure/machine-learning/concept-compute-target#train), [python script steps](https://docs.microsoft.com/python/api/azureml-pipeline-steps/azureml.pipeline.steps.python_script_step.pythonscriptstep?view=azure-ml-py), and [Azure Open Datasets](https://azure.microsoft.com/services/open-datasets/).
 
 ## Contributing
 
