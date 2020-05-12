@@ -23,6 +23,8 @@ In the real world, many problems can be too complex to be solved by a single mac
 
 Azure Machine Learning makes it easy to train, operate, and manage hundreds or even thousands of models. This repo will walk you through the end to end process of creating a many models solution from training to scoring to monitoring.
 
+![Many Models Flow Map](images/Flow_map.png)
+
 ## Prerequisites
 
 To use this solution accelerator, all you need is access to an [Azure subscription](https://azure.microsoft.com/free/) and an [Azure Machine Learning Workspace](https://docs.microsoft.com/azure/machine-learning/how-to-manage-workspace) that you'll create below.
