@@ -17,8 +17,7 @@ import pickle
 from azureml.core import Experiment, Workspace, Run
 from azureml.core import ScriptRunConfig
 from azureml.train.automl import AutoMLConfig
-import azureml.automl.core
-from automl.client.core.common import constants
+from azureml.automl.core.shared import constants
 import datetime
 from entry_script_helper import EntryScriptHelper
 import logging
@@ -35,6 +34,7 @@ current_step_run = Run.get_context()
 LOG_NAME = "user_log"
 
 parser = argparse.ArgumentParser("split")
+parser.add_argument("--process_count_per_node", default=1, type=int, help="number of processes per node")
 
 args, _ = parser.parse_known_args()
 
@@ -73,6 +73,8 @@ def init():
     log_dir = os.path.join(working_dir, "user", ip_addr, current_process().name)
     t_log_dir = Path(log_dir)
     t_log_dir.mkdir(parents=True, exist_ok=True)
+    automl_settings['many_models'] = True
+    automl_settings['many_models_process_count_per_node'] = args.process_count_per_node
 
     debug_log = automl_settings.get('debug_log', None)
     if debug_log is not None:
@@ -84,8 +86,8 @@ def init():
     logger.info("init()")
 
 
-def train_model(csv_file_path, data, logger):
-    file_name = csv_file_path.split('/')[-1][:-4]
+def train_model(file_path, data, logger):
+    file_name = file_path.split('/')[-1][:-4]
     print(file_name)
     logger.info("in train_model")
     print('data')
@@ -117,14 +119,17 @@ def run(input_data):
         logs = []
         date1 = datetime.datetime.now()
         logger.info('start (' + file + ') ' + str(datetime.datetime.now()))
-        csv_file_path = file
+        file_path = file
 
-        file_name = csv_file_path.split('/')[-1][:-4]
+        file_name, file_extension = os.path.splitext(os.path.basename(file_path))
 
         try:
-            data = pd.read_csv(file, parse_dates=[timestamp_column])
+            if file_extension.lower() == ".parquet":
+                data = pd.read_parquet(file_path)
+            else:
+                data = pd.read_csv(file_path, parse_dates=[timestamp_column])
             # train model
-            fitted_model, model_name, current_run = train_model(csv_file_path, data, logger)
+            fitted_model, model_name, current_run = train_model(file_path, data, logger)
 
             try:
                 logger.info('done training')
@@ -138,7 +143,7 @@ def run(input_data):
                 tags_dict = {'ModelType': 'AutoML'}
                 for column_name in group_column_names:
                     tags_dict.update({column_name: str(data.iat[0, data.columns.get_loc(column_name)])})
-                tags_dict.update({'InputData': csv_file_path})
+                tags_dict.update({'InputData': file_path})
 
                 current_run.register_model(model_name=model_name, description='AutoML', tags=tags_dict)
                 print('Registered ' + model_name)
@@ -159,7 +164,7 @@ def run(input_data):
             logs.append(current_run.get_status())
             idx += 1
 
-            logger.info('ending (' + csv_file_path + ') ' + str(date2))
+            logger.info('ending (' + file_path + ') ' + str(date2))
 
         # 10.1 Log the error message if an exception occurs
         except (ValueError, UnboundLocalError, NameError, ModuleNotFoundError, AttributeError, ImportError,
@@ -179,7 +184,7 @@ def run(input_data):
             idx += 1
 
             logger.info(error_message)
-            logger.info('ending (' + csv_file_path + ') ' + str(date2))
+            logger.info('ending (' + file_path + ') ' + str(date2))
 
         resultList.append(logs)
 

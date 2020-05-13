@@ -27,4 +27,7 @@ def get_automl_environment():
     train_env.python.conda_dependencies = train_conda_deps
     train_env.docker.enabled = True
     train_env.docker.base_image = DEFAULT_CPU_IMAGE
+    env = {}
+    env['AZUREML_FLUSH_INGEST_WAIT'] = ''
+    train_env.environment_variables = env
     return train_env

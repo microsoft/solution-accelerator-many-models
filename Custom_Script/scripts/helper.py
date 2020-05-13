@@ -2,7 +2,6 @@
 # Licensed under the MIT License.
 
 import sys
-
 sys.path.append("..")
 
 
@@ -12,7 +11,7 @@ def build_parallel_run_config_for_forecasting(train_env, compute, nodecount, wor
     parallel_run_config = ParallelRunConfig(
         source_directory='./scripts',
         entry_script='forecast.py',
-        mini_batch_size="10",  # do not modify this setting
+        mini_batch_size="1",  # do not modify this setting
         run_invocation_timeout=timeout,
         error_threshold=10,
         output_action="append_row",
