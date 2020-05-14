@@ -86,7 +86,7 @@ The data used in this sample is simulated based on the [Dominick's Orange Juice 
 
 The functionality is broken into the notebooks folders designed to be run sequentially.
 
-#### Using a custom scoring script to train the models:
+#### Using a custom training script to train the models:
 
 | Notebook       | Description                                |
 |-------------------|--------------------------------------------|
