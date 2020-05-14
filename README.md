@@ -56,7 +56,7 @@ Once your development environment is set up, run through the Jupyter Notebooks s
 
 There are two ways to train many models:
 
-1. Using a custom scoring script
+1. Using a custom training script
 2. Using Automated ML
 
 ![Sequence of Notebooks](./images/mmsa-overview.png)
