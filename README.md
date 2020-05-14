@@ -23,7 +23,8 @@ In the real world, many problems can be too complex to be solved by a single mac
 
 Azure Machine Learning makes it easy to train, operate, and manage hundreds or even thousands of models. This repo will walk you through the end to end process of creating a many models solution from training to scoring to monitoring.
 
-![Many Models Flow Map](images/Flow_map.png)
+<img src="images/Flow_map.png" width="650">
+
 
 ## Prerequisites
 
@@ -55,7 +56,7 @@ Once your development environment is set up, run through the Jupyter Notebooks s
 
 There are two ways to train many models:
 
-1. Using a custom scoring script
+1. Using a custom training script
 2. Using Automated ML
 
 ![Sequence of Notebooks](./images/mmsa-overview.png)
