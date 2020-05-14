@@ -8,7 +8,7 @@ import os
 import argparse
 import datetime
 from datetime import timedelta
-from sklearn.externals import joblib
+import joblib
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.linear_model import LinearRegression 
 

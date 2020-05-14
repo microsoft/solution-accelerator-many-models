@@ -4,7 +4,7 @@
 import pandas as pd
 import os
 import argparse
-from sklearn.externals import joblib
+import joblib
 from azureml.core.model import Model
 from azureml.core.run import Run
 import datetime
