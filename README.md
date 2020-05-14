@@ -21,9 +21,23 @@ Taxonomies for products and languages: https://review.docs.microsoft.com/new-hop
 
 In the real world, many problems can be too complex to be solved by a single machine learning model. Whether that be predicting sales for each individual store, building a predictive maintanence model for hundreds of oil wells, or tailoring an experience to individual users, building a model for each instance can lead to improved results on many machine learning problems.
 
+This Pattern is very common across a wide variety of industries and applicable to many real world use cases. Below are some examples we have seen where this pattern is being used.
+
+- Energy and utility companies building predictive maintenance models for thousands of oil wells, hundreds of wind turbines or hundreds of smart meters
+
+- Retail organizations building workforce optimization models for thousands of stores, campaign promotion propensity models, Price optimization models for hundreds of thousands of products they sell
+
+- Restaurant chains building demand forecasting models across thousands of restaurants  
+
+- Banks and financial institutes building models for cash replenishment for ATM Machine and for several ATMs or building personalized models for individuals
+
+- Enterprises building revenue forecasting models at each division level
+
+- Document management companies building text analytics and legal document search models per each state
+
 Azure Machine Learning makes it easy to train, operate, and manage hundreds or even thousands of models. This repo will walk you through the end to end process of creating a many models solution from training to scoring to monitoring.
 
-<img src="images/Flow_map.png" width="1000">
+
 
 
 ## Prerequisites
@@ -67,6 +81,8 @@ There are two ways to train many models:
 In this repo, you'll train and score a forecasting model for each orange juice brand and for each store at a (simulated) grocery chain. By the end, you'll have forecasted sales by using up to 11,973 models to predict sales for the next few weeks.
 
 The data used in this sample is simulated based on the [Dominick's Orange Juice Dataset](http://www.cs.unitn.it/~taufer/QMMA/L10-OJ-Data.html#(1)), sales data from a Chicago area grocery store.
+
+<img src="images/Flow_map.png" width="1000">
 
 The functionality is broken into the notebooks folders designed to be run sequentially.
 
