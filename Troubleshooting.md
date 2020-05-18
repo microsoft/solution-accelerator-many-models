@@ -46,8 +46,8 @@ When training your models using AutoML, all your runs may fail if you don't have
 Incompatible/Missing packages found: azureml-automl-core requires azureml-dataprep<1.6.0a,>=1.4.10a but has azureml-dataprep 1.6.0.;azureml-defaults requires azureml-dataprep[fuse]<1.6.0a,>=1.4.10a but has azureml-dataprep 1.6.0.;azureml-automl-runtime requires azureml-dataprep[fuse,pandas]<1.6.0a,>=1.4.10a but has azureml-dataprep 1.6.0.;azureml-train-automl-runtime requires azureml-dataprep[fuse,pandas]<1.6.0a,>=1.4.10a but has azureml-dataprep 1.6.0.
 ```
 
-This is a known issue and to ensure your runs are successful please upgrade your sdk using: 
+This is a known issue and to ensure your runs are successful please upgrade the azureml-contrib-pipeline-steps: 
 
 ```
-pip install --upgrade azureml-sdk[automl]
+pip install --upgrade azureml-contrib-pipeline-steps
 ```
