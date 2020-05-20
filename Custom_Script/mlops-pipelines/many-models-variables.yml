@@ -1,0 +1,44 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Definition of common runtime environment variables
+
+variables:
+  
+  # General
+  - name: ENVIRONMENT
+    value: DEV
+
+  # Infra
+  - name: AMLWORKSPACE_NAME
+    value: $(NAMESPACE)aml
+  - name: STORAGEACCOUNT_NAME
+    value: $(NAMESPACE)sa
+  - name: KEYVAULT_NAME
+    value: $(NAMESPACE)kv
+  - name: APPINSIGHTS_NAME
+    value: $(NAMESPACE)ai
+  - name: CONTAINERREGISTRY_NAME
+    value: $(NAMESPACE)cr
+
+  # Azure ML workspace
+  - name: AML_COMPUTE_NAME
+    value: cpu-compute
+  - name: AML_AKS_NAME
+    value: manymodels-aks
+  - name: AML_DATASET_NAME
+    value: oj_sales_data_$(DATASET_MAXFILES)
+  - name: AML_MODEL_GROUPING_TAGS
+    value: StoreGroup10
+
+  # Internal
+  - name: AML_TRAINING_PIPELINE_NAME
+    value: many-models-training
+  - name: AML_ROUTING_MODEL_NAME
+    value: deployed_models_endpoints
+  - name: AML_ROUTING_MODEL_TAG_NAME
+    value: ModelType
+  - name: AML_ROUTING_MODEL_TAG_VALUE
+    value: _meta_
+  - name: AML_ROUTING_WEBSERVICE
+    value: routing-manymodels

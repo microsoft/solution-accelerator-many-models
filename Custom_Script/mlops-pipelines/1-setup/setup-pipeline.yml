@@ -1,0 +1,35 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Pipeline that configures the environment for this solution accelerator
+
+trigger:
+  branches:
+    include:
+    - feature/mlops
+  paths:
+    include:
+    - Custom_Script/mlops-pipelines/1-setup/*
+
+variables:
+- template: ../many-models-variables.yml
+- group: manymodels-vg
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: deploy_infra
+  displayName: 'Deploy Infra'
+  jobs:
+  - template: deploy-infra/deploy-infra.template.yml
+    parameters:
+      environment: '$(ENVIRONMENT)'
+      serviceConnection: '$(SERVICECONNECTION_GROUP)'
+      resourceGroup: '$(RESOURCE_GROUP)'
+      resourcesLocation: '$(LOCATION)'
+      storageAccountName: '$(STORAGEACCOUNT_NAME)'
+      keyVaultName: '$(KEYVAULT_NAME)'
+      appInsightsName: '$(APPINSIGHTS_NAME)'
+      containerRegistryName: '$(CONTAINERREGISTRY_NAME)'
+      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
