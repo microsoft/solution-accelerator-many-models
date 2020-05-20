@@ -33,3 +33,17 @@ stages:
       appInsightsName: '$(APPINSIGHTS_NAME)'
       containerRegistryName: '$(CONTAINERREGISTRY_NAME)'
       amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
+
+- stage: environment_setup
+  displayName: 'Environment Setup'
+  jobs:
+  - template: environment-setup/environment-setup.template.yml
+    parameters:
+      serviceConnection: '$(SERVICECONNECTION_GROUP)'
+      resourceGroup: '$(RESOURCE_GROUP)'
+      resourcesLocation: '$(LOCATION)'
+      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
+      amlComputeName: '$(AML_COMPUTE_NAME)'
+      aksName: '$(AKS_NAME)'
+      aksResourceGroup: '$(AKS_RESOURCE_GROUP)'
+      amlAksName: '$(AML_AKS_NAME)'      
