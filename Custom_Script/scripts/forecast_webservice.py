@@ -10,6 +10,29 @@ from azureml.core.model import Model
 from azureml.contrib.services.aml_response import AMLResponse
 
 
+## Input and output sample formats
+
+input_sample = {
+    "store": "Store1000", "brand": "dominicks", "model_type": "lr",
+    "forecast_horizon": 5, "date_freq": "W-THU",
+    "data": {
+        "dates": ["2020-04-30", "2020-05-07", "2020-05-14"],
+        "values": [11450, 12235, 14713]
+    }
+}
+
+output_sample = {
+    "store": "Store1000", "brand": "dominicks", "model_type": "lr",
+    "forecast_horizon": 5, "date_freq": "W-THU",
+    "forecast": {
+        "dates": ["2020-05-21", "2020-05-28", "2020-06-04", "2020-06-11", "2020-06-18"],
+        "values": [14572, 9834, 10512, 12854, 11046]
+    }
+}
+
+
+## Webservice definition
+
 def init(): 
     global model_dict
     models_root_path = os.getenv('AZUREML_MODEL_DIR') 
