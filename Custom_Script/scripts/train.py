@@ -82,7 +82,10 @@ def run(input_data):
         # 7.0 Register the model to the workspace
         current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
                     
-        tags_dict = {'Store': store_name, 'Brand': brand_name, 'ModelType': args.model_type}
+        tags_dict = {
+            'Store': store_name, 'Brand': brand_name, 'ModelType': args.model_type,
+            'StoreGroup10': store_name[:-1] + 'X', 'StoreGroup100': store_name[:-2] + 'XX'
+        }
         current_run.register_model(model_path = model_name, model_name = model_name, model_framework = args.model_type, tags = tags_dict)
 
         # 8.0 Make predictions on test set
