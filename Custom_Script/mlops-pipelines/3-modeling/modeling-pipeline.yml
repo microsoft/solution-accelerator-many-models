@@ -6,7 +6,7 @@
 trigger:
   branches:
     include:
-    - feature/mlops
+    - v2-preview
   paths:
     include:
     - Custom_Script/mlops-pipelines/3-modeling/*
@@ -20,7 +20,7 @@ schedules:
   displayName: 'Daily training at midnight'
   branches:
     include:
-    - feature/mlops
+    - v2-preview
   always: true
 
 variables:

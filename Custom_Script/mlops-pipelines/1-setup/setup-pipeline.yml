@@ -6,7 +6,7 @@
 trigger:
   branches:
     include:
-    - feature/mlops
+    - v2-preview
   paths:
     include:
     - Custom_Script/mlops-pipelines/1-setup/*

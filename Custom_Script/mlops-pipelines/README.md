@@ -28,7 +28,7 @@ The setup pipeline will:
 
 - Download as many files as you specified in the DATASET_MAXFILES variable and register them as a dataset in AML.
 
-Create the pipeline as in [here](https://github.com/microsoft/MLOpsPython/blob/master/docs/getting_started.md#create-the-iac-pipeline), selecting branch **``feature/mlops``** and setting the path to [/Custom_Script/mlops-pipelines/1-setup/setup-pipeline.yml](1-setup/setup-pipeline.yml).
+Create the pipeline as in [here](https://github.com/microsoft/MLOpsPython/blob/master/docs/getting_started.md#create-the-iac-pipeline), selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/1-setup/setup-pipeline.yml](1-setup/setup-pipeline.yml).
 
 ## 2. Training Code Build Pipeline
 
@@ -50,7 +50,7 @@ Before creating the Azure DevOps pipeline:
 | --------------------------- | ----------------- |
 | SERVICECONNECTION_WORKSPACE | Name of the connection to the AML Workspace you have just created |
 
-Then, create the pipeline as you did before, selecting branch **``feature/mlops``** and setting the path to [/Custom_Script/mlops-pipelines/2-training-code-build/training-code-build-pipeline.yml](2-training-code-build/training-code-build-pipeline.yml).
+Then, create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/2-training-code-build/training-code-build-pipeline.yml](2-training-code-build/training-code-build-pipeline.yml).
 
 ## 3. Modeling Pipeline
 
@@ -64,4 +64,4 @@ The modeling pipeline will:
 
 - Deploy the entry point that will route the requests to the corresponding model webservice.
 
-Create the pipeline as you did before, selecting branch **``feature/mlops``** and setting the path to [/Custom_Script/mlops-pipelines/3-modeling/modeling-pipeline.yml](3-modeling/modeling-pipeline.yml).
+Create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/3-modeling/modeling-pipeline.yml](3-modeling/modeling-pipeline.yml).
