@@ -20,6 +20,10 @@ parameters:
   type: string
 - name: amlAksName
   type: string
+- name: amlDatasetName
+  type: string
+- name: maxFiles
+  type: string
 
 
 jobs:
@@ -58,3 +62,70 @@ jobs:
           # Attach AKS
           az ml computetarget attach aks --name ${{parameters.amlAksName}} --compute-resource-id $aks_id $workspace_params
         fi
+
+
+- job: sample_files
+  displayName: 'Sample Files Setup'
+  steps:
+
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.7'
+      inputs:
+        versionSpec: 3.7
+    
+    - bash: |
+        # Install dependencies
+        python -m pip install --upgrade pip && python -m pip install azureml-opendatasets
+        # Download sample files
+        datapath=$(python Custom_Script/mlops-pipelines/scripts/download_data.py --maxfiles ${{parameters.maxFiles}})
+        echo "##vso[task.setvariable variable=datapath;isOutput=true;]$datapath"
+      name: download_files
+      displayName: 'Download Sample Files'
+      failOnStderr: true
+    
+    - task: AzureCLI@1
+      displayName: 'Upload files to AML datastore'
+      inputs:
+        azureSubscription: ${{parameters.serviceConnection}}
+        scriptLocation: inlineScript
+        inlineScript: |
+          workspace_params="--workspace-name ${{parameters.amlWorkspaceName}} --resource-group ${{parameters.resourceGroup}}"
+          # Install ML extension
+          az extension add -n azure-cli-ml
+          # Get default datastore
+          datastore=$(az ml datastore show-default $workspace_params --query name -o tsv)
+          # Upload files
+          az ml datastore upload --name $datastore \
+                                 --src-path $(download_files.datapath) \
+                                 --target-path $(download_files.datapath) \
+                                 --overwrite true \
+                                 $workspace_params                               
+
+
+- job: register_dataset
+  displayName: 'Register Dataset'
+  dependsOn: sample_files
+  variables: 
+    datapath: $[ dependencies.sample_files.outputs['download_files.datapath'] ]
+  steps:
+
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.7'
+      inputs:
+        versionSpec: 3.7
+
+    - task: AzureCLI@1
+      displayName: 'Register dataset'
+      inputs:
+        azureSubscription: ${{parameters.serviceConnection}}
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Install dependencies
+          python -m pip install --upgrade pip && python -m pip install azureml-sdk
+          # Register dataset
+          register_dataset_script=Custom_Script/mlops-pipelines/scripts/register_dataset.py
+          python $register_dataset_script --path $DATAPATH \
+                                          --name ${{parameters.amlDatasetName}} \
+                                          --subscription-id $(az account show --query id -o tsv) \
+                                          --resource-group ${{parameters.resourceGroup}} \
+                                          --workspace-name ${{parameters.amlWorkspaceName}}

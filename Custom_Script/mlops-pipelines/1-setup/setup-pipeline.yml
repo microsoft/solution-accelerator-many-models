@@ -10,6 +10,8 @@ trigger:
   paths:
     include:
     - Custom_Script/mlops-pipelines/1-setup/*
+    - Custom_Script/mlops-pipelines/scripts/download_data.py
+    - Custom_Script/mlops-pipelines/scripts/register_dataset.py
 
 variables:
 - template: ../many-models-variables.yml
@@ -46,4 +48,6 @@ stages:
       amlComputeName: '$(AML_COMPUTE_NAME)'
       aksName: '$(AKS_NAME)'
       aksResourceGroup: '$(AKS_RESOURCE_GROUP)'
-      amlAksName: '$(AML_AKS_NAME)'      
+      amlAksName: '$(AML_AKS_NAME)'    
+      amlDatasetName: '$(AML_DATASET_NAME)'
+      maxFiles: '$(DATASET_MAXFILES)'  
