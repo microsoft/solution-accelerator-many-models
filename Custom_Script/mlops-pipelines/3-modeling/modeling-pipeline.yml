@@ -10,6 +10,10 @@ trigger:
   paths:
     include:
     - Custom_Script/mlops-pipelines/3-modeling/*
+    - Custom_Script/mlops-pipelines/scripts/deploy_grouped_models.py
+    - Custom_Script/scripts/forecast_webservice.py
+    - Custom_Script/scripts/routing_webservice.py
+    - Custom_Script/scripts/routing_webservice.conda.yml
 
 schedules:
 - cron: "0 0 * * *"
@@ -28,6 +32,8 @@ pool:
 
 stages:
 
+# There is no data to update in this example, but in the general case 
+# the registered dataset should be updated before retraining.
 # - stage: update_data
 #   displayName: 'Update Data for Training'
 #   jobs:
@@ -42,3 +48,38 @@ stages:
       resourceGroup: '$(RESOURCE_GROUP)'
       amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
       trainingPipelineName: '$(AML_TRAINING_PIPELINE_NAME)'
+
+- stage: deploy_models_aci
+  displayName: 'Deploy Models to ACI'
+  dependsOn: run_training
+  jobs:
+  - template: deploy-models/deploy-models.template.yml
+    parameters:
+      serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
+      resourceGroup: '$(RESOURCE_GROUP)'
+      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
+      deploymentType: aci
+      amlAksName: ''
+      groupingTags: '$(AML_MODEL_GROUPING_TAGS)'
+      routingModelName: '$(AML_ROUTING_MODEL_NAME)'
+      routingModelTagName: '$(AML_ROUTING_MODEL_TAG_NAME)'
+      routingModelTagValue: '$(AML_ROUTING_MODEL_TAG_VALUE)'
+      routingServiceName: '$(AML_ROUTING_WEBSERVICE)'
+
+- stage: deploy_models_aks
+  displayName: 'Deploy Models to AKS'
+  dependsOn: run_training
+  condition: variables['AML_AKS_NAME']
+  jobs:
+  - template: deploy-models/deploy-models.template.yml
+    parameters:
+      serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
+      resourceGroup: '$(RESOURCE_GROUP)'
+      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
+      deploymentType: aks
+      amlAksName: '$(AML_AKS_NAME)'
+      groupingTags: '$(AML_MODEL_GROUPING_TAGS)'
+      routingModelName: '$(AML_ROUTING_MODEL_NAME)'
+      routingModelTagName: '$(AML_ROUTING_MODEL_TAG_NAME)'
+      routingModelTagValue: '$(AML_ROUTING_MODEL_TAG_VALUE)'
+      routingServiceName: '$(AML_ROUTING_WEBSERVICE)'

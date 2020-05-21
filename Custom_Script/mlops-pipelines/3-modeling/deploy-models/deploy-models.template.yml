@@ -1,0 +1,129 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Azure Pipeline Template for deploying models to ACI
+
+parameters:
+- name: serviceConnection
+  type: string
+- name: resourceGroup
+  type: string
+- name: amlWorkspaceName
+  type: string
+- name: deploymentType
+  type: string
+- name: amlAksName
+  type: string
+- name: groupingTags
+  type: string
+- name: routingModelName
+  type: string
+- name: routingModelTagName
+  type: string
+- name: routingModelTagValue
+  type: string
+- name: routingServiceName
+  type: string
+
+
+jobs:
+
+- job: deploy_models
+  displayName: 'Deploy Models'
+  timeoutInMinutes: 0
+  steps:
+
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.7'
+      inputs:
+        versionSpec: 3.7
+
+    - task: AzureCLI@1
+      displayName: 'Deploy Models in Groups'
+      inputs:
+        azureSubscription: ${{parameters.serviceConnection}}
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Install dependencies
+          python -m pip install --upgrade pip && python -m pip install joblib azureml-sdk
+          # Create/update training pipeline
+          deploy_script="Custom_Script/mlops-pipelines/scripts/deploy_grouped_models.py"
+          python $deploy_script --grouping-tags '${{parameters.groupingTags}}' \
+                                --endpoints-path 'endpoints.pkl' \
+                                --nmodels $(DATASET_MAXFILES) \
+                                --routing-model-tag-name '${{parameters.routingModelTagName}}' \
+                                --routing-model-tag-value '${{parameters.routingModelTagValue}}' \
+                                --aks-target '${{parameters.amlAksName}}' \
+                                --subscription-id $(az account show --query id -o tsv) \
+                                --resource-group ${{parameters.resourceGroup}} \
+                                --workspace-name ${{parameters.amlWorkspaceName}}
+
+    - publish: 'endpoints.pkl'
+      artifact: endpointsartifact-${{parameters.deploymentType}}
+      displayName: 'Publish Endpoints Artifact'
+
+
+- job: routing_model
+  displayName: 'Register Routing Model'
+  dependsOn: deploy_models
+  steps:
+
+    - download: current
+      artifact: endpointsartifact-${{parameters.deploymentType}}
+
+    - task: AzureCLI@1
+      displayName: 'Register Routing Model'
+      inputs:
+        azureSubscription: ${{parameters.serviceConnection}}
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Install ML extension
+          az extension add -n azure-cli-ml
+          # Register model
+          az ml model register --name ${{parameters.routingModelName}} \
+                               --model-path '$(Pipeline.Workspace)/endpointsartifact-${{parameters.deploymentType}}/endpoints.pkl' \
+                               --tag '${{parameters.routingModelTagName}}=${{parameters.routingModelTagValue}}' \
+                               --output-metadata-file routing_model.json \
+                               --workspace-name ${{parameters.amlWorkspaceName}} \
+                               --resource-group ${{parameters.resourceGroup}}
+
+    - publish: 'routing_model.json'
+      artifact: routingmodelartifact-${{parameters.deploymentType}}
+      displayName: 'Publish Routing Model Artifact'
+
+
+- job: routing_webservice
+  displayName: 'Deploy Routing Webservice'
+  dependsOn: routing_model
+  steps:
+
+    - download: current
+      artifact: routingmodelartifact-${{parameters.deploymentType}}
+
+    - task: AzureCLI@1
+      displayName: 'Deploy Routing Webservice'
+      inputs:
+        azureSubscription: ${{parameters.serviceConnection}}
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Install ML extension
+          az extension add -n azure-cli-ml
+          # Deployment config
+          deployment_config_path="Custom_Script/mlops-pipelines/3-modeling/deploy-models/"
+          if [ "${{parameters.deploymentType}}" == "aci" ]; then
+            service_name="test-${{parameters.routingServiceName}}"
+            deployment_params="--deploy-config-file $deployment_config_path/deployment-config-aci.yml"
+          elif [ "${{parameters.deploymentType}}" == "aks" ]; then
+            service_name=${{parameters.routingServiceName}}
+            deployment_params="--compute-target ${{parameters.amlAksName}} --deploy-config-file $deployment_config_path/deployment-config-aks.yml"
+          fi
+          # Deploy model
+          az ml model deploy $deployment_params \
+                             --name $service_name \
+                             --model-metadata-file '$(Pipeline.Workspace)/routingmodelartifact-${{parameters.deploymentType}}/routing_model.json' \
+                             --rt python \
+                             --es Custom_Script/scripts/routing_webservice.py \
+                             --cf Custom_Script/scripts/routing_webservice.conda.yml \
+                             --overwrite \
+                             --workspace-name ${{parameters.amlWorkspaceName}} \
+                             --resource-group ${{parameters.resourceGroup}}
