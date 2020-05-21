@@ -129,3 +129,6 @@ dmypy.json
 .pyre/.DS_Store
 =======
 .pyre/
+
+# Azure Machine Learning
+config.json

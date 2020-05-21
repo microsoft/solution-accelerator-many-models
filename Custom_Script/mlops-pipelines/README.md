@@ -21,17 +21,22 @@ You'll use Azure DevOps for running the MLOps pipelines. Create an [organization
 ## 1. Setup Pipeline
 
 The setup pipeline will:
-    - Deploy Azure Machine Learning and the other necessary resources into the resource group you specified.
-    - Set up the Azure Machine Learning worskpace, creating a compute target and attaching the AKS cluster.
-    - Download as many files as you specified in the DATASET_MAXFILES variable and register them as a dataset in AML.
+
+- Deploy Azure Machine Learning and the other necessary resources into the resource group you specified.
+
+- Set up the Azure Machine Learning worskpace, creating a compute target and attaching the AKS cluster.
+
+- Download as many files as you specified in the DATASET_MAXFILES variable and register them as a dataset in AML.
 
 Create the pipeline as in [here](https://github.com/microsoft/MLOpsPython/blob/master/docs/getting_started.md#create-the-iac-pipeline), selecting branch **``feature/mlops``** and setting the path to [/Custom_Script/mlops-pipelines/1-setup/setup-pipeline.yml](1-setup/setup-pipeline.yml).
 
 ## 2. Training Code Build Pipeline
 
 The training code build pipeline will:
-    - Create an Azure Machine Learning Pipeline that will train many models in parallel using the [train script](../scripts/train.py).
-    - Publish the AML Pipeline into the AML workspace so it's ready to use whenever we want to retrain.
+
+- Create an Azure Machine Learning Pipeline that will train many models in parallel using the [train script](../scripts/train.py).
+
+- Publish the AML Pipeline into the AML workspace so it's ready to use whenever we want to retrain.
 
 Before creating the Azure DevOps pipeline:
 
@@ -50,9 +55,13 @@ Then, create the pipeline as you did before, selecting branch **``feature/mlops`
 ## 3. Modeling Pipeline
 
 The modeling pipeline will:
-    - Trigger the many models training by invoking the training AML Pipeline previously published.
-    - Group the registered models according to specified tags.
-    - Deploy each group into a different webservice hosted in ACI and/or AKS. These webservices will all use the same [forecast script](../scripts/forecast_webservice.py).
-    - Deploy the entry point that will route the requests to the corresponding model webservice.
+
+- Trigger the many models training by invoking the training AML Pipeline previously published.
+
+- Group the registered models according to specified tags.
+
+- Deploy each group into a different webservice hosted in ACI and/or AKS. These webservices will all use the same [forecast script](../scripts/forecast_webservice.py).
+
+- Deploy the entry point that will route the requests to the corresponding model webservice.
 
 Create the pipeline as you did before, selecting branch **``feature/mlops``** and setting the path to [/Custom_Script/mlops-pipelines/3-modeling/modeling-pipeline.yml](3-modeling/modeling-pipeline.yml).
