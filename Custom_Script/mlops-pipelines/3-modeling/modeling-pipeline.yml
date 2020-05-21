@@ -1,0 +1,44 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Pipeline that runs AML Pipeline for model training
+
+trigger:
+  branches:
+    include:
+    - feature/mlops
+  paths:
+    include:
+    - Custom_Script/mlops-pipelines/3-modeling/*
+
+schedules:
+- cron: "0 0 * * *"
+  displayName: 'Daily training at midnight'
+  branches:
+    include:
+    - feature/mlops
+  always: true
+
+variables:
+- template: ../many-models-variables.yml
+- group: manymodels-vg
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+# - stage: update_data
+#   displayName: 'Update Data for Training'
+#   jobs:
+#   - template: update-data/update-data.template.yml
+
+- stage: run_training
+  displayName: 'Run Model Training'
+  jobs:
+  - template: run-training/run-training.template.yml
+    parameters:
+      serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
+      resourceGroup: '$(RESOURCE_GROUP)'
+      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
+      trainingPipelineName: '$(AML_TRAINING_PIPELINE_NAME)'
