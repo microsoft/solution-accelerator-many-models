@@ -1,6 +1,3 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License.
-
 """
 This module provides helper features for entry script.
 This file should be in Python search paths or in the same folder as the entry script.
@@ -49,7 +46,7 @@ class EntryScriptHelper:
         """ Get the log file path for users.
             Each process has its own log file, so there is not race issue among multiple processes.
         """
-        ip_address = socket.gethostbyname(socket.gethostname())
+        ip_address = os.environ.get("AZ_BATCHAI_WORKER_IP", "")
         log_dir = os.path.join(self.get_log_dir(), "user", ip_address)
         os.makedirs(log_dir, exist_ok=True)
         return os.path.join(log_dir, f"{current_process().name}.txt")
