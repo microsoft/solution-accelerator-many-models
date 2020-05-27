@@ -17,6 +17,10 @@ def get_automl_environment():
 
     train_env = Environment(name="many_models_environment_automl")
     train_conda_deps = CondaDependencies.create(pip_packages=['azureml-sdk[automl]', 'pyarrow==0.14'])
+    train_conda_deps.add_pip_package('azure-storage-queue~=2.1')
+    train_conda_deps.add_pip_package('azure-storage-common~=2.1')
+    train_conda_deps.add_pip_package('filelock~=3.0')
+    train_conda_deps.add_pip_package('psutil')
     train_conda_deps.add_conda_package('pandas==0.23.4')
     train_conda_deps.add_conda_package('numpy==1.16.2')
     train_conda_deps.add_conda_package('fbprophet==0.5')
