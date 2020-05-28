@@ -5,76 +5,74 @@ import os
 import json
 import joblib
 import requests
+from requests.exceptions import HTTPError
+from collections import defaultdict
 from azureml.core.model import Model
 from azureml.contrib.services.aml_response import AMLResponse
 
+from utils.webservices import read_input
+from utils.models import get_model_name
 
-## Input and output sample formats
-
-input_sample = {
-    "store": "Store1000", "brand": "dominicks", "model_type": "lr",
-    "forecast_horizon": 5, "date_freq": "W-THU",
-    "data": {
-        "dates": ["2020-04-30", "2020-05-07", "2020-05-14"],
-        "values": [11450, 12235, 14713]
-    }
-}
-
-output_sample = {
-    "store": "Store1000", "brand": "dominicks", "model_type": "lr",
-    "forecast_horizon": 5, "date_freq": "W-THU",
-    "forecast": {
-        "dates": ["2020-05-21", "2020-05-28", "2020-06-04", "2020-06-11", "2020-06-18"],
-        "values": [14572, 9834, 10512, 12854, 11046]
-    }
-}
-
-
-## Webservice definition
 
 def init(): 
-    global service_dict
+    global service_mapping
+    global service_keys
     
     models_root_path = os.getenv('AZUREML_MODEL_DIR') 
     models_files = [os.path.join(path, f) for path,dirs,files in os.walk(models_root_path) for f in files]
     if len(models_files) > 1:
         raise RuntimeError('Found more than one model')
+    routing_model = joblib.load(models_files[0])
 
-    service_dict = joblib.load(models_files[0])
+    service_mapping = { model:service['endpoint'] for model,service in routing_model.items()}
+    service_keys = { service['endpoint']:service['key'] for service in routing_model.values()}
 
 
 def run(rawdata):
 
-    metadata = format_input_data(json.loads(rawdata))
+    batch = read_input(rawdata, format=False)
 
-    # Get model forecasting endpoint
-    try:
-        model_name = '{t}_{s}_{b}'.format(t=metadata['model_type'], s=metadata['store'], b=metadata['brand'])
-        service_info = service_dict[model_name]
-    except KeyError:
-        return AMLResponse('Model not found for store {s} and brand {b} of type {t}'.format(
-            s=metadata['store'], b=metadata['brand'], t=metadata['model_type']
-        ), 400)
 
-    # Call endpoint to get forecasting
-    response, status = call_model_webservice(service_info, rawdata)
+    ## Get forecasting endpoints for all the models in the batch
+    services_tocall = defaultdict(list)
+    for model_data in batch:
+        
+        # Find model in mapping table
+        try:
+            model_name = get_model_name(model_data['store'], model_data['brand'], model_data['model_type'])
+            model_service = service_mapping[model_name]
+        except KeyError:
+            return AMLResponse('Model not found for store {s} and brand {b} of type {t}'.format(
+                s=model_data['store'], b=model_data['brand'], t=model_data['model_type']
+            ), 400)
+        
+        # Append data to service minibatch
+        services_tocall[model_service].append(model_data)
+
+
+    ## Call endpoints and store result
+    result = []
+    for service, minibatch in services_tocall.items():     
+        
+        try:
+            response = call_model_webservice(service, minibatch, service_key=service_keys[service])      
+            response.raise_for_status()
+        except HTTPError:
+            return AMLResponse(response.text, response.status_code)
+
+        result += response.json()
+
     
-    return AMLResponse(response, status)
+    return result
 
 
-def call_model_webservice(service_info, rawdata): 
+def call_model_webservice(service_endpoint, data, service_key=None): 
     ''' Call the model webservice to get the forecasting '''
-    
+
     request_headers = {'Content-Type': 'application/json'}
-    url = service_info['endpoint']
-    if service_info['key']:
-        request_headers['Authorization'] = 'Bearer {}'.format(service_info['key'])
+    if service_key:
+        request_headers['Authorization'] = 'Bearer f{service_key}'
     
-    response = requests.post(url, data=rawdata, headers=request_headers)
-    return response.text, response.status_code
+    response = requests.post(service_endpoint, json=data, headers=request_headers)
 
-
-def format_input_data(input_data):
-    ''' Format data received as input '''
-    metadata = {k:v for k,v in input_data.items() if k != 'data'}
-    return metadata
+    return response
