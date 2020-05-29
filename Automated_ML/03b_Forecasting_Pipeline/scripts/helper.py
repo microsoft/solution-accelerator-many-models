@@ -6,7 +6,7 @@ sys.path.append("..")
 
 
 def build_parallel_run_config_for_forecasting(train_env, compute, nodecount, workercount, timeout):
-    from azureml.contrib.pipeline.steps import ParallelRunConfig
+    from azureml.pipeline.steps import ParallelRunConfig
     from common.scripts.helper import validate_parallel_run_config
     parallel_run_config = ParallelRunConfig(
         source_directory='./scripts',
