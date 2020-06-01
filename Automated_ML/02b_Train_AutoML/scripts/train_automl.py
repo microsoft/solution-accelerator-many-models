@@ -1,6 +1,3 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License.
-
 import pandas as pd
 import os
 import uuid
@@ -40,7 +37,8 @@ args, _ = parser.parse_known_args()
 
 
 def read_from_json():
-    with open('automlconfig.json') as json_file:
+    full_path = Path(__file__).absolute().parent
+    with open(str(full_path) + "/automlconfig.json") as json_file:
         return json.load(json_file)
 
 
@@ -67,6 +65,7 @@ print("grain_column_names: {}".format(grain_column_names))
 def init():
     EntryScriptHelper().config(LOG_NAME)
     logger = logging.getLogger(LOG_NAME)
+
     output_folder = os.path.join(os.environ.get("AZ_BATCHAI_INPUT_AZUREML", ""), "temp/output")
     working_dir = os.environ.get("AZ_BATCHAI_OUTPUT_logs", "")
     ip_addr = os.environ.get("AZ_BATCHAI_WORKER_IP", "")
@@ -112,9 +111,9 @@ def run(input_data):
     logger = logging.getLogger(LOG_NAME)
     os.makedirs('./outputs', exist_ok=True)
     resultList = []
-    logger.info('2')
     idx = 0
     model_name = ''
+    current_run = ''
     for file in input_data:
         logs = []
         date1 = datetime.datetime.now()
@@ -138,11 +137,12 @@ def run(input_data):
                 logger.info(fitted_model)
                 logger.info(model_name)
 
-                logger.info('register model, skip the outputs prefix')
+                logger.info('register model')
 
                 tags_dict = {'ModelType': 'AutoML'}
                 for column_name in group_column_names:
                     tags_dict.update({column_name: str(data.iat[0, data.columns.get_loc(column_name)])})
+
                 tags_dict.update({'InputData': file_path})
 
                 current_run.register_model(model_name=model_name, description='AutoML', tags=tags_dict)
@@ -155,12 +155,10 @@ def run(input_data):
 
             logs.append('AutoML')
             logs.append(file_name)
+            logs.append(current_run)
             logs.append(model_name)
             logs.append(str(date1))
             logs.append(str(date2))
-            logs.append(str(date2 - date1))
-            logs.append(idx)
-            logs.append(len(input_data))
             logs.append(current_run.get_status())
             idx += 1
 
@@ -174,12 +172,10 @@ def run(input_data):
 
             logs.append('AutoML')
             logs.append(file_name)
+            logs.append(current_run)
             logs.append(model_name)
             logs.append(str(date1))
             logs.append(str(date2))
-            logs.append(str(date2 - date1))
-            logs.append(idx)
-            logs.append(len(input_data))
             logs.append(error_message)
             idx += 1
 
