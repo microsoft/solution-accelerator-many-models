@@ -1,5 +1,8 @@
 import argparse
+import os
 import json
+import shutil
+import sys
 
 
 def validate_parallel_run_config(parallel_run_config):
@@ -32,3 +35,39 @@ def get_automl_environment():
     env['AZUREML_FLUSH_INGEST_WAIT'] = ''
     train_env.environment_variables = env
     return train_env
+
+
+def get_output(run, results_name, output_name):
+    # remove previous run results, if present
+    shutil.rmtree(results_name, ignore_errors=True)
+
+    parallel_run_output_file_name = "parallel_run_step.txt"
+
+    # download the contents of the output folder
+    batch_run = next(run.get_children())
+    batch_output = batch_run.get_output_data(output_name)
+    batch_output.download(local_path=results_name)
+
+    keep_root_folder(results_name, results_name)
+    for root, dirs, files in os.walk(results_name):
+        for file in files:
+            if file.endswith(parallel_run_output_file_name):
+                result_file = os.path.join(root, file)
+                break
+
+    return result_file
+
+
+def keep_root_folder(root_path, cur_path):
+    for filename in os.listdir(cur_path):
+        if os.path.isfile(os.path.join(cur_path, filename)):
+            shutil.move(os.path.join(cur_path, filename), os.path.join(root_path, filename))
+        elif os.path.isdir(os.path.join(cur_path, filename)):
+            keep_root_folder(root_path, os.path.join(cur_path, filename))
+        else:
+            sys.exit("No files found.")
+
+    # remove empty folders
+    if root_path != cur_path:
+        os.rmdir(cur_path)
+    return
