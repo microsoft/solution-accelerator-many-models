@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+
 import pandas as pd
 import os
 import uuid
@@ -6,6 +10,7 @@ from multiprocessing import current_process
 from pathlib import Path
 from azureml.core.dataset import Dataset
 from azureml.core.model import Model
+from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
@@ -19,12 +24,15 @@ import datetime
 from entry_script_helper import EntryScriptHelper
 import logging
 from azureml.automl.core.shared.exceptions import (AutoMLException,
-                                                   ClientException)
+                                                   ClientException, ErrorTypes)
+from azureml.automl.core.shared.utilities import get_error_code
 
 
-from sklearn.externals import joblib
 from joblib import dump, load
+from random import randint
+from time import sleep
 import json
+
 
 current_step_run = Run.get_context()
 
@@ -83,6 +91,7 @@ def init():
 
     logger.info(f"{__file__}.output_folder:{output_folder}")
     logger.info("init()")
+    sleep(randint(1, 60))
 
 
 def train_model(file_path, data, logger):
@@ -111,9 +120,12 @@ def run(input_data):
     logger = logging.getLogger(LOG_NAME)
     os.makedirs('./outputs', exist_ok=True)
     resultList = []
-    idx = 0
-    model_name = ''
-    current_run = ''
+    model_name = None
+    current_run = None
+    error_message = None
+    error_code = None
+    error_type = None
+    tags_dict = None
     for file in input_data:
         logs = []
         date1 = datetime.datetime.now()
@@ -148,6 +160,7 @@ def run(input_data):
                 current_run.register_model(model_name=model_name, description='AutoML', tags=tags_dict)
                 print('Registered ' + model_name)
             except Exception as error:
+                error_type = ErrorTypes.Unclassified
                 error_message = 'Failed to register the model. ' + 'Error message: ' + str(error)
                 logger.info(error_message)
 
@@ -155,33 +168,48 @@ def run(input_data):
 
             logs.append('AutoML')
             logs.append(file_name)
-            logs.append(current_run)
+            logs.append(current_run.id)
+            logs.append(current_run.get_status())
             logs.append(model_name)
+            logs.append(tags_dict)
             logs.append(str(date1))
             logs.append(str(date2))
-            logs.append(current_run.get_status())
-            idx += 1
+            logs.append(error_type)
+            logs.append(error_code)
+            logs.append(error_message)
 
             logger.info('ending (' + file_path + ') ' + str(date2))
 
         # 10.1 Log the error message if an exception occurs
-        except (ValueError, UnboundLocalError, NameError, ModuleNotFoundError, AttributeError, ImportError,
-                FileNotFoundError, KeyError, ClientException, AutoMLException) as error:
+        except (ClientException, AutoMLException) as error:
             date2 = datetime.datetime.now()
-            error_message = 'Failed to train the model. ' + 'Error message: ' + str(error)
+            error_message = 'Failed to train the model. ' + 'Error : ' + str(error)
 
             logs.append('AutoML')
             logs.append(file_name)
-            logs.append(current_run)
+
+            if current_run:
+                logs.append(current_run.id)
+                logs.append(current_run.get_status())
+            else:
+                logs.append(current_run)
+                logs.append('Failed')
+
             logs.append(model_name)
+            logs.append(tags_dict)
             logs.append(str(date1))
             logs.append(str(date2))
+            if isinstance(error, AutoMLException):
+                logs.append(error.error_type)
+            else:
+                logs.append(None)
+            logs.append(get_error_code(error))
             logs.append(error_message)
-            idx += 1
 
             logger.info(error_message)
             logger.info('ending (' + file_path + ') ' + str(date2))
 
         resultList.append(logs)
 
-    return resultList
+    result = pd.DataFrame(data=resultList)
+    return result
