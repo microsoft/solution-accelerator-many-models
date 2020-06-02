@@ -6,7 +6,8 @@ import pandas as pd
 
 def format_prediction_data(data, forecast_horizon, date_freq, nlags=3):
     ''' Format data into the dataset that will be used for prediction '''
-        
+    
+    # Make sure dataset contains all the dates needed and is sorted
     dates_past = pd.date_range(end=data.dates.max(), periods=nlags, freq=date_freq)
     if dates_past.isin(data.dates).all():
         data = data.set_index('dates')
@@ -14,14 +15,20 @@ def format_prediction_data(data, forecast_horizon, date_freq, nlags=3):
     else:
         raise ValueError('Expected dates {}'.format(dates_past.strftime("%Y-%m-%d").tolist()))
     
+    # Calculate forecasting dates
     dates_forecast = pd.date_range(dates_past.max(), periods=forecast_horizon+1, freq=date_freq)[1:]
-        
+    
+    # Create prediction dataset
     prediction_df = pd.DataFrame()
     prediction_df['Date'] = dates_forecast
     prediction_df['Prediction'] = None
     prediction_df['Week_Day'] = prediction_df.Date.apply(lambda x: x.weekday())
-    for i in range(1, nlags+1):
-        prediction_df.loc[0:nlags-1, 'lag_{}'.format(i)] = data.shift(i-nlags).values
+    
+    # Fill prediction dataset with known lag values
+    nrows_tofill = min(forecast_horizon, nlags)
+    for i in range(nlags):
+        values_lagged = data.shift(-nlags+i+1).values
+        prediction_df.loc[:nrows_tofill-1, 'lag_{}'.format(i+1)] = values_lagged[:nrows_tofill]
     
     return prediction_df
 
@@ -32,10 +39,13 @@ def update_prediction_data(prediction_df, prediction_index, prediction_value, nl
     if prediction_index >= len(prediction_df):
         raise ValueError('prediction_index')
     
+    # Fill prediction cell
     prediction_df.loc[prediction_index, 'Prediction'] = prediction_value
     
-    total_rows_to_update = min(nlags, len(prediction_df) - prediction_index - 1)
-    for i in range(1, total_rows_to_update+1):
-        prediction_df.loc[prediction_index+i, 'lag_{}'.format(i)] = prediction_value
+    # Fill corresponding lags with prediction value
+    index_firstupdate = prediction_index + 1
+    nrows_toupdate = min(nlags, len(prediction_df) - index_firstupdate)
+    for i in range(nrows_toupdate):
+        prediction_df.loc[index_firstupdate+i, 'lag_{}'.format(i+1)] = prediction_value
     
     return prediction_df
