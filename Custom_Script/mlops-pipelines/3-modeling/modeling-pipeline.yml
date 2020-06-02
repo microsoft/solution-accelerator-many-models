@@ -3,25 +3,25 @@
 
 # Pipeline that runs AML Pipeline for model training
 
-trigger:
-  branches:
-    include:
-    - v2-preview
-  paths:
-    include:
-    - Custom_Script/mlops-pipelines/3-modeling/*
-    - Custom_Script/mlops-pipelines/scripts/deploy_grouped_models.py
-    - Custom_Script/scripts/forecast_webservice.py
-    - Custom_Script/scripts/routing_webservice.py
-    - Custom_Script/scripts/routing_webservice.conda.yml
+# trigger:
+#   branches:
+#     include:
+#     - v2-preview
+#   paths:
+#     include:
+#     - Custom_Script/mlops-pipelines/3-modeling/*
+#     - Custom_Script/mlops-pipelines/scripts/deploy_grouped_models.py
+#     - Custom_Script/scripts/forecast_webservice.py
+#     - Custom_Script/scripts/routing_webservice.py
+#     - Custom_Script/scripts/routing_webservice.conda.yml
 
-schedules:
-- cron: "0 0 * * *"
-  displayName: 'Daily training at midnight'
-  branches:
-    include:
-    - v2-preview
-  always: true
+# schedules:
+# - cron: "0 0 * * *"
+#   displayName: 'Daily training at midnight'
+#   branches:
+#     include:
+#     - v2-preview
+#   always: true
 
 variables:
 - template: ../many-models-variables.yml

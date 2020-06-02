@@ -3,15 +3,15 @@
 
 # Pipeline that configures the environment for this solution accelerator
 
-trigger:
-  branches:
-    include:
-    - v2-preview
-  paths:
-    include:
-    - Custom_Script/mlops-pipelines/1-setup/*
-    - Custom_Script/mlops-pipelines/scripts/download_data.py
-    - Custom_Script/mlops-pipelines/scripts/register_dataset.py
+# trigger:
+#   branches:
+#     include:
+#     - v2-preview
+#   paths:
+#     include:
+#     - Custom_Script/mlops-pipelines/1-setup/*
+#     - Custom_Script/mlops-pipelines/scripts/download_data.py
+#     - Custom_Script/mlops-pipelines/scripts/register_dataset.py
 
 variables:
 - template: ../many-models-variables.yml
