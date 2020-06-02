@@ -4,23 +4,24 @@
 import pandas as pd
 
 
-def format_prediction_data(data, forecast_horizon, date_freq, nlags=3):
+def format_prediction_data(data, forecast_horizon, date_freq, timestamp_column='dates', value_column='values', nlags=3):
     ''' Format data into the dataset that will be used for prediction '''
     
-    # Make sure dataset contains all the dates needed and is sorted
-    dates_past = pd.date_range(end=data.dates.max(), periods=nlags, freq=date_freq)
-    if dates_past.isin(data.dates).all():
-        data = data.set_index('dates')
-        data = data.loc[dates_past]
+    # Make sure dataset contains all the timestamps needed and is sorted
+    timestamps_past = pd.date_range(end=data[timestamp_column].max(), periods=nlags, freq=date_freq)
+    if timestamps_past.isin(data[timestamp_column]).all():
+        data = data[[timestamp_column, value_column]]
+        data = data.set_index(timestamp_column)
+        data = data.loc[timestamps_past]
     else:
-        raise ValueError('Expected dates {}'.format(dates_past.strftime("%Y-%m-%d").tolist()))
+        raise ValueError('Expected timestamps: {}'.format(timestamps_past.tolist()))
     
-    # Calculate forecasting dates
-    dates_forecast = pd.date_range(dates_past.max(), periods=forecast_horizon+1, freq=date_freq)[1:]
+    # Calculate forecasting timestamps
+    timestamps_forecast = pd.date_range(timestamps_past.max(), periods=forecast_horizon+1, freq=date_freq)[1:]
     
     # Create prediction dataset
     prediction_df = pd.DataFrame()
-    prediction_df['Date'] = dates_forecast
+    prediction_df['Date'] = timestamps_forecast
     prediction_df['Prediction'] = None
     prediction_df['Week_Day'] = prediction_df.Date.apply(lambda x: x.weekday())
     
