@@ -52,6 +52,7 @@ stages:
 - stage: deploy_models_aci
   displayName: 'Deploy Models to ACI'
   dependsOn: run_training
+  condition: eq(variables['DEPLOY_ACI'], 'true')
   jobs:
   - template: deploy-models/deploy-models.template.yml
     parameters:
@@ -69,7 +70,7 @@ stages:
 - stage: deploy_models_aks
   displayName: 'Deploy Models to AKS'
   dependsOn: run_training
-  condition: variables['AML_AKS_NAME']
+  condition: and(eq(variables['DEPLOY_AKS'], 'true'), variables['AML_AKS_NAME'])
   jobs:
   - template: deploy-models/deploy-models.template.yml
     parameters:

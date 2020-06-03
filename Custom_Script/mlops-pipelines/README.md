@@ -14,9 +14,11 @@ You'll use Azure DevOps for running the MLOps pipelines. Create an [organization
 | NAMESPACE                   | Unique naming prefix for created resources |
 | LOCATION                    | [Azure location](https://azure.microsoft.com/en-us/global-infrastructure/locations/), no spaces |
 | RESOURCE_GROUP              | Name of the Azure Resource Group that you'll be using (should be already created) |
-| AKS_NAME                    | Name of the AKS resource you'll use for deploying the models |
-| AKS_RESOURCE_GROUP          | Name of the resource group where the AKS resource is located |
 | SERVICECONNECTION_GROUP     | Name of the connection you created in the last step |
+| DEPLOY_ACI                  | Whether to deploy in ACI (true/false, default false) |
+| DEPLOY_AKS                  | Whether to deploy in AKS (true/false, default false) |
+| AKS_NAME                    | [Optional] Name of the AKS resource you'll use for deploying the models |
+| AKS_RESOURCE_GROUP          | [Optional] Name of the resource group where the AKS resource is located |
 
 ## 1. Setup Pipeline
 
