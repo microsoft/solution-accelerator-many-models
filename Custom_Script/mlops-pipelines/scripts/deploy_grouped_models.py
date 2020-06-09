@@ -14,12 +14,12 @@ from azureml.core.webservice import AciWebservice, AksWebservice
 DEPLOYMENT_TYPES = ['aci', 'aks']
 
 
-def deploy_model_groups(ws, deployment_type, nmodels, grouping_tags=None, exclude=[], aks_target=None):
+def main(ws, deployment_type, grouping_tags=None, exclude=[], aks_target=None):
 
     if deployment_type not in DEPLOYMENT_TYPES:
         raise ValueError('Wrong deployment type. Expected: {}'.format(', '.join(DEPLOYMENT_TYPES)))
 
-    grouped_models = get_grouped_models(nmodels, grouping_tags, exclude=exclude)
+    grouped_models = get_grouped_models(grouping_tags, exclude=exclude)
     deployment_config = get_deployment_config(deployment_type, aks_target)
 
     # Deploy groups
@@ -34,7 +34,7 @@ def deploy_model_groups(ws, deployment_type, nmodels, grouping_tags=None, exclud
     return endpoints
 
 
-def get_grouped_models(nmodels, grouping_tags=None, exclude=[]):
+def get_grouped_models(grouping_tags=None, exclude=[]):
     
     # Get all models registered in the workspace
     all_models = Model.list(ws, latest=True)
@@ -114,7 +114,6 @@ def parse_args(args=None):
     parser.add_argument('--subscription-id', required=True, type=str)
     parser.add_argument('--resource-group', required=True, type=str)
     parser.add_argument('--workspace-name', required=True, type=str)
-    parser.add_argument('--nmodels', required=True, type=int)
     parser.add_argument("--grouping-tags", type=lambda str: [t for t in str.split(',') if t])
     parser.add_argument("--routing-model-tag-name", type=str, default='ModelType')
     parser.add_argument("--routing-model-tag-value", type=str, default='_meta_')
@@ -142,8 +141,12 @@ if __name__ == "__main__":
 
     deployment_type = 'aks' if args.aks_target else 'aci'
 
-    endpoints = deploy_model_groups(ws, deployment_type=deployment_type, nmodels=args.nmodels, 
-                                    grouping_tags=args.grouping_tags, exclude=routing_model_tags,
-                                    aks_target=args.aks_target)
+    endpoints = main(
+        ws, 
+        deployment_type=deployment_type,
+        grouping_tags=args.grouping_tags, 
+        exclude=routing_model_tags,
+        aks_target=args.aks_target
+    )
     
     joblib.dump(endpoints, args.endpoints_path)

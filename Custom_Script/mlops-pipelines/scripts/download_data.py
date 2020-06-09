@@ -6,7 +6,7 @@ import argparse
 from azureml.opendatasets import OjSalesSimulated
 
 
-def download_data(target_path, maxfiles=None):
+def main(target_path, maxfiles=None):
 
     # Pull all of the data
     oj_sales_files = OjSalesSimulated.get_file_dataset()
@@ -43,5 +43,5 @@ def parse_args(args=None):
 
 if __name__ == "__main__":
     args = parse_args()
-    datapath = download_data(target_path=args.path, maxfiles=args.maxfiles)
+    datapath = main(target_path=args.path, maxfiles=args.maxfiles)
     print(datapath)

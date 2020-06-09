@@ -10,7 +10,7 @@ from azureml.pipeline.core import Pipeline, PipelineData, PublishedPipeline
 from azureml.contrib.pipeline.steps import ParallelRunConfig, ParallelRunStep
 
 
-def create_training_pipeline(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
+def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
 
     # Get input dataset
     dataset = Dataset.get_by_name(ws, name=dataset_name)
@@ -109,11 +109,12 @@ if __name__ == "__main__":
         resource_group=args.resource_group
     )
 
-    pipeline_id = create_training_pipeline(
+    pipeline_id = main(
         ws, 
         pipeline_name=args.name, 
         pipeline_version=args.version, 
         dataset_name=args.dataset,
         compute_name=args.compute
     )
+    
     print('Training pipeline {} version {} published with ID {}'.format(args.name, args.version, pipeline_id))

@@ -52,7 +52,6 @@ jobs:
           deploy_script="Custom_Script/mlops-pipelines/scripts/deploy_grouped_models.py"
           python $deploy_script --grouping-tags '${{parameters.groupingTags}}' \
                                 --endpoints-path 'endpoints.pkl' \
-                                --nmodels $(DATASET_MAXFILES) \
                                 --routing-model-tag-name '${{parameters.routingModelTagName}}' \
                                 --routing-model-tag-value '${{parameters.routingModelTagValue}}' \
                                 --aks-target '${{parameters.amlAksName}}' \

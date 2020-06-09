@@ -5,7 +5,7 @@ import argparse
 from azureml.core import Workspace, Dataset
 
 
-def register_dataset(ws, dataset_path, dataset_name):
+def main(ws, dataset_path, dataset_name):
 
     # Connect to default datastore
     datastore = ws.get_default_datastore()
@@ -42,5 +42,5 @@ if __name__ == "__main__":
         resource_group=args.resource_group
     )
 
-    dataset_name = register_dataset(ws, dataset_path=args.path, dataset_name=args.name)
+    dataset_name = main(ws, dataset_path=args.path, dataset_name=args.name)
     print(dataset_name)
