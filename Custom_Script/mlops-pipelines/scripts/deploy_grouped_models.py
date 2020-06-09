@@ -29,7 +29,10 @@ def main(ws, deployment_type, grouping_tags=None, exclude=[], aks_target=None):
         
         # Store pairs model - endpoint where the model is deployed
         for m in group_models:
-            endpoints[m.name] = service.scoring_uri
+            endpoints[m.name] = { 
+                'endpoint': service.scoring_uri, 
+                'key': service.get_keys()[0] if service.auth_enabled else None
+            }
 
     return endpoints
 
