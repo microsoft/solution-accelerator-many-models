@@ -8,6 +8,8 @@ variables:
   # General
   - name: ENVIRONMENT
     value: DEV
+  - name: SDK_VERSION
+    value: 1.6.0
 
   # Infra
   - name: AMLWORKSPACE_NAME

@@ -4,6 +4,8 @@
 # Azure Pipeline Template for deploying models to ACI
 
 parameters:
+- name: sdkVersion
+  type: string
 - name: serviceConnection
   type: string
 - name: resourceGroup
@@ -45,7 +47,7 @@ jobs:
         scriptLocation: inlineScript
         inlineScript: |
           # Install dependencies
-          python -m pip install --upgrade pip && python -m pip install joblib azureml-sdk
+          python -m pip install --upgrade pip && python -m pip install joblib azureml-sdk==${{parameters.sdkVersion}}
           # Create/update training pipeline
           deploy_script="Custom_Script/mlops-pipelines/scripts/deploy_grouped_models.py"
           python $deploy_script --grouping-tags '${{parameters.groupingTags}}' \

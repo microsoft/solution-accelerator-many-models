@@ -40,7 +40,7 @@ stages:
             scriptLocation: inlineScript
             inlineScript: |
               # Install dependencies
-              python -m pip install --upgrade pip && python -m pip install azureml-sdk[contrib]
+              python -m pip install --upgrade pip && python -m pip install azureml-sdk[contrib]==$SDK_VERSION
               # Create/update training pipeline
               trainingbuild_script=Custom_Script/mlops-pipelines/scripts/create_training_pipeline.py
               python $trainingbuild_script --name $(AML_TRAINING_PIPELINE_NAME) \

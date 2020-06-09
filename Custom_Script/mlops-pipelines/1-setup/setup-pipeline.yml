@@ -41,6 +41,7 @@ stages:
   jobs:
   - template: environment-setup/environment-setup.template.yml
     parameters:
+      sdkVersion: '$(SDK_VERSION)'
       serviceConnection: '$(SERVICECONNECTION_GROUP)'
       resourceGroup: '$(RESOURCE_GROUP)'
       resourcesLocation: '$(LOCATION)'
