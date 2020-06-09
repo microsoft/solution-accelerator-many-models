@@ -122,9 +122,10 @@ jobs:
           az ml model deploy $deployment_params \
                              --name $service_name \
                              --model-metadata-file '$(Pipeline.Workspace)/routingmodelartifact-${{parameters.deploymentType}}/routing_model.json' \
-                             --rt python \
-                             --es Custom_Script/scripts/routing_webservice.py \
-                             --cf Custom_Script/scripts/routing_webservice.conda.yml \
+                             --runtime python \
+                             --source-directory Custom_Script/scripts \
+                             --entry-script routing_webservice.py \
+                             --conda-file routing_webservice.conda.yml \
                              --overwrite \
                              --workspace-name ${{parameters.amlWorkspaceName}} \
                              --resource-group ${{parameters.resourceGroup}}
