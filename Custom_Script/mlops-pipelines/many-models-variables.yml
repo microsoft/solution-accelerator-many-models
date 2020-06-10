@@ -37,7 +37,7 @@ variables:
   - name: AML_TRAINING_PIPELINE_NAME
     value: many-models-training
   - name: AML_ROUTING_MODEL_NAME
-    value: deployed_models_endpoints
+    value: deployed_models_info
   - name: AML_ROUTING_MODEL_TAG_NAME
     value: ModelType
   - name: AML_ROUTING_MODEL_TAG_VALUE

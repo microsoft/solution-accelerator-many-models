@@ -23,18 +23,21 @@ def main(ws, deployment_type, grouping_tags=None, exclude=[], aks_target=None):
     deployment_config = get_deployment_config(deployment_type, aks_target)
 
     # Deploy groups
-    endpoints = {}
+    models_deployed = {}
     for group_name, group_models in grouped_models.items():
         service = deploy_model_group(ws, deployment_type, group_name, group_models, deployment_config)
         
-        # Store pairs model - endpoint where the model is deployed
+        # Store deployment info for each deployed model
         for m in group_models:
-            endpoints[m.name] = { 
-                'endpoint': service.scoring_uri, 
+            models_deployed[m.name] = {
+                'version': m.version,
+                'group': group_name,
+                'webservice': service.name,
+                'endpoint': service.scoring_uri,
                 'key': service.get_keys()[0] if service.auth_enabled else None
             }
 
-    return endpoints
+    return models_deployed
 
 
 def get_grouped_models(grouping_tags=None, exclude=[]):
@@ -120,7 +123,7 @@ def parse_args(args=None):
     parser.add_argument("--grouping-tags", type=lambda str: [t for t in str.split(',') if t])
     parser.add_argument("--routing-model-tag-name", type=str, default='ModelType')
     parser.add_argument("--routing-model-tag-value", type=str, default='_meta_')
-    parser.add_argument("--endpoints-path", type=str, default='endpoints.pkl')
+    parser.add_argument("--output", type=str, default='models_deployed.pkl')
     parser.add_argument("--aks-target", type=str)
     args_parsed = parser.parse_args(args)
 
@@ -144,7 +147,7 @@ if __name__ == "__main__":
 
     deployment_type = 'aks' if args.aks_target else 'aci'
 
-    endpoints = main(
+    models_deployed = main(
         ws, 
         deployment_type=deployment_type,
         grouping_tags=args.grouping_tags, 
@@ -152,4 +155,4 @@ if __name__ == "__main__":
         aks_target=args.aks_target
     )
     
-    joblib.dump(endpoints, args.endpoints_path)
+    joblib.dump(models_deployed, args.output)

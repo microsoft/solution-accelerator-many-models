@@ -51,7 +51,7 @@ jobs:
           # Create/update training pipeline
           deploy_script="Custom_Script/mlops-pipelines/scripts/deploy_grouped_models.py"
           python $deploy_script --grouping-tags '${{parameters.groupingTags}}' \
-                                --endpoints-path 'endpoints.pkl' \
+                                --output 'models_deployed.pkl' \
                                 --routing-model-tag-name '${{parameters.routingModelTagName}}' \
                                 --routing-model-tag-value '${{parameters.routingModelTagValue}}' \
                                 --aks-target '${{parameters.amlAksName}}' \
@@ -59,9 +59,9 @@ jobs:
                                 --resource-group ${{parameters.resourceGroup}} \
                                 --workspace-name ${{parameters.amlWorkspaceName}}
 
-    - publish: 'endpoints.pkl'
-      artifact: endpointsartifact-${{parameters.deploymentType}}
-      displayName: 'Publish Endpoints Artifact'
+    - publish: 'models_deployed.pkl'
+      artifact: modelsdeployed-${{parameters.deploymentType}}
+      displayName: 'Publish Models Deployed Artifact'
 
 
 - job: routing_model
@@ -70,7 +70,7 @@ jobs:
   steps:
 
     - download: current
-      artifact: endpointsartifact-${{parameters.deploymentType}}
+      artifact: modelsdeployed-${{parameters.deploymentType}}
 
     - task: AzureCLI@1
       displayName: 'Register Routing Model'
@@ -82,14 +82,14 @@ jobs:
           az extension add -n azure-cli-ml
           # Register model
           az ml model register --name ${{parameters.routingModelName}} \
-                               --model-path '$(Pipeline.Workspace)/endpointsartifact-${{parameters.deploymentType}}/endpoints.pkl' \
+                               --model-path '$(Pipeline.Workspace)/modelsdeployed-${{parameters.deploymentType}}/models_deployed.pkl' \
                                --tag '${{parameters.routingModelTagName}}=${{parameters.routingModelTagValue}}' \
                                --output-metadata-file routing_model.json \
                                --workspace-name ${{parameters.amlWorkspaceName}} \
                                --resource-group ${{parameters.resourceGroup}}
 
     - publish: 'routing_model.json'
-      artifact: routingmodelartifact-${{parameters.deploymentType}}
+      artifact: routingmodel-${{parameters.deploymentType}}
       displayName: 'Publish Routing Model Artifact'
 
 
@@ -99,7 +99,7 @@ jobs:
   steps:
 
     - download: current
-      artifact: routingmodelartifact-${{parameters.deploymentType}}
+      artifact: routingmodel-${{parameters.deploymentType}}
 
     - task: AzureCLI@1
       displayName: 'Deploy Routing Webservice'
@@ -121,7 +121,7 @@ jobs:
           # Deploy model
           az ml model deploy $deployment_params \
                              --name $service_name \
-                             --model-metadata-file '$(Pipeline.Workspace)/routingmodelartifact-${{parameters.deploymentType}}/routing_model.json' \
+                             --model-metadata-file '$(Pipeline.Workspace)/routingmodel-${{parameters.deploymentType}}/routing_model.json' \
                              --runtime python \
                              --source-directory Custom_Script/scripts \
                              --entry-script routing_webservice.py \
