@@ -7,10 +7,12 @@ import numpy as np
 import os
 import argparse
 import datetime
-from datetime import timedelta
 import joblib
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from sklearn.linear_model import LinearRegression 
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from simple_lagger import SimpleLagger
+
 
 # 0.0 Parse input arguments
 parser = argparse.ArgumentParser("split")
@@ -50,8 +52,10 @@ def run(input_data):
         # Make a feature for day of the week and lagged values of the target up to order 4
         data['Week_Day'] = data[args.timestamp_column].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d').weekday())
 
-        for i in range(1, 4):
-            data['lag_' + str(i)] = data[args.target_column].shift(i)
+        # Add a lag transform for making lagged features from the target
+        # Make lags of orders 1 - 4
+        lagger = SimpleLagger(args.target_column_name, args.time_column_name,
+                              lag_orders=list(range(1, 4)))
 
         # For simplicity, drop the other features besides the day of week and lags  
         data = data.drop(['Price', 'Revenue', 'Store', 'Brand', 'Advert'], axis=1) 
@@ -62,12 +66,12 @@ def run(input_data):
         X_train = data.drop(columns=[args.timestamp_column])
         y_train = X_train.pop(args.target_column)
 
-        # 5.0 Train the model
-        model = LinearRegression()
-        model.fit(X_train.values, y_train.values)
+        # 5.0 Make a Pipeline and train the model
+        pipeline = Pipeline(steps=[('lagger', lagger), ('est', LinearRegression())])
+        pipeline.fit(X_train, y_train)
 
-        # 6.0 Save the model
-        joblib.dump(model, filename=os.path.join('./outputs/', model_name))
+        # 6.0 Save the modeling pipeline
+        joblib.dump(pipeline, filename=os.path.join('./outputs/', model_name))
 
         # 7.0 Register the model to the workspace
         current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
@@ -77,7 +81,7 @@ def run(input_data):
                                    model_framework=args.model_type, tags=tags_dict)
 
         # 8.0 Get in-sample predictions
-        predictions = model.predict(X_train.values)
+        predictions = pipeline.predict(X_train)
 
         # 9.0 Calculate accuracy metrics
         mse = mean_squared_error(X_train[args.target_column], predictions)
