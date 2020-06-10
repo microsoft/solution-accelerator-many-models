@@ -15,7 +15,6 @@ from sklearn.linear_model import LinearRegression
 # 0.0 Parse input arguments
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--target_column", type=str, help="input target column")
-parser.add_argument("--n_test_periods", type=int, help="input number of test periods")
 parser.add_argument("--forecast_granularity", type=int, help="frequency of forecasts daily weekly")
 parser.add_argument("--timestamp_column", type=str, help="input timestamp column")
 parser.add_argument("--model_type", type=str, help="input model type")
@@ -39,68 +38,60 @@ def run(input_data):
     for idx, csv_file_path in enumerate(input_data):
         result = {}
         start_datetime = datetime.datetime.now()
-        
+
         file_name = os.path.basename(csv_file_path)[:-4]
         model_name = args.model_type + '_' + file_name
         store_name = file_name.split('_')[0]
         brand_name = file_name.split('_')[1]
 
-        data = pd.read_csv(csv_file_path, header = 0)
+        data = pd.read_csv(csv_file_path, header=0)
 
-        # 3.0 Create Features 
+        # 3.0 Create Features
+        # Make a feature for day of the week and lagged values of the target up to order 4
         data['Week_Day'] = data[args.timestamp_column].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d').weekday())
-          
-        for i in range(1,4):
-            data['lag_'+ str(i)] = data[args.target_column].shift(i)
-        
-        data = data.drop(['Price', 'Revenue', 'Store', 'Brand', 'Advert'], axis = 1) 
+
+        for i in range(1, 4):
+            data['lag_' + str(i)] = data[args.target_column].shift(i)
+
+        # For simplicity, drop the other features besides the day of week and lags  
+        data = data.drop(['Price', 'Revenue', 'Store', 'Brand', 'Advert'], axis=1) 
         data = data.dropna()
         print(data)
 
-
-        # 4.0 Split the data into train and test sets based on dates
-        data = data.set_index(args.timestamp_column)
-        max_date = datetime.datetime.strptime(data.index.max(), '%Y-%m-%d')
-        split_date = max_date - timedelta(days= args.forecast_granularity * args.n_test_periods)
-        data.index = pd.to_datetime(data.index)
-        train = data[data.index <= split_date]
-        test = data[data.index > split_date]
-        
-        y_train = train[args.target_column]
-        y_test = test[args.target_column]
-        X_train = train.drop(args.target_column, axis = 1)
-        X_test = test.drop(args.target_column, axis = 1)
-        
+        # 4.0 Prepare data for training
+        X_train = data.drop(columns=[args.timestamp_column])
+        y_train = X_train.pop(args.target_column)
 
         # 5.0 Train the model
         model = LinearRegression()
-        model.fit(X_train, y_train)
+        model.fit(X_train.values, y_train.values)
 
         # 6.0 Save the model
         joblib.dump(model, filename=os.path.join('./outputs/', model_name))
 
         # 7.0 Register the model to the workspace
         current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
-                    
-        tags_dict = {'Store': store_name, 'Brand': brand_name, 'ModelType': args.model_type}
-        current_run.register_model(model_path = model_name, model_name = model_name, model_framework = args.model_type, tags = tags_dict)
 
-        # 8.0 Make predictions on test set
-        test['Predictions'] = model.predict(X_test)
-        
+        tags_dict = {'Store': store_name, 'Brand': brand_name, 'ModelType': args.model_type}
+        current_run.register_model(model_path=model_name, model_name=model_name,
+                                   model_framework=args.model_type, tags=tags_dict)
+
+        # 8.0 Get in-sample predictions
+        predictions = model.predict(X_train.values)
+
         # 9.0 Calculate accuracy metrics
-        mse = mean_squared_error(test['Quantity'], test['Predictions'])
+        mse = mean_squared_error(X_train[args.target_column], predictions)
         rmse = np.sqrt(mse)
-        mae = mean_absolute_error(test['Quantity'], test['Predictions'])
-        act, pred = np.array(test['Quantity']), np.array(test['Predictions'])
-        mape = np.mean(np.abs((act - pred) / act) * 100)
+        mae = mean_absolute_error(X_train[args.target_column], predictions)
+        actuals = np.array(X_train[args.target_column])
+        mape = np.mean(np.abs((actuals - predictions) / actuals) * 100)
 
         # 10.0 Log metrics
         current_run.log(model_name + '_mse', mse)
         current_run.log(model_name + '_rmse', rmse)
         current_run.log(model_name + '_mae', mae)
-        current_run.log(model_name + '_mape', mape)                
-                    
+        current_run.log(model_name + '_mape', mape)
+
         # 11.0 Add data to output
         end_datetime = datetime.datetime.now()
         result['store'] = store_name
