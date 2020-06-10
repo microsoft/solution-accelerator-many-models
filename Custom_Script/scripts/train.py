@@ -11,7 +11,7 @@ import joblib
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
-from simple_lagger import SimpleLagger
+from timeseries_utilities import SimpleLagger, SklearnForecaster
 
 
 # 0.0 Parse input arguments
@@ -36,7 +36,7 @@ def run(input_data):
     result_list = []
 
     # 2.0 Loop through each file in the batch
-        # The number of files in each batch is controlled by the mini_batch_size parameter of ParallelRunConfig
+    # The number of files in each batch is controlled by the mini_batch_size parameter of ParallelRunConfig
     for idx, csv_file_path in enumerate(input_data):
         result = {}
         start_datetime = datetime.datetime.now()
@@ -46,57 +46,61 @@ def run(input_data):
         store_name = file_name.split('_')[0]
         brand_name = file_name.split('_')[1]
 
-        data = pd.read_csv(csv_file_path, header=0)
+        # Read the data from CSV - parse timestamps as datetime type and put the time in the index
+        data = (pd.read_csv(csv_file_path, parse_dates=[args.timestamp_column], header=0)
+                .set_index(args.timestamp_column))
 
         # 3.0 Create Features
-        # Make a feature for day of the week and lagged values of the target up to order 4
-        data['Week_Day'] = data[args.timestamp_column].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d').weekday())
+        # Make a feature for day of the week
+        data['Week_Day'] = data.index.weekday.values
 
+        # Drop columns that aren't helpful for modeling
+        X_train = data.drop(columns=['Revenue', 'Store', 'Brand'])
+        print(X_train)
+
+        # 4.0 Make a Pipeline and train the model
         # Add a lag transform for making lagged features from the target
         # Make lags of orders 1 - 4
-        lagger = SimpleLagger(args.target_column_name, args.time_column_name,
+        lagger = SimpleLagger(args.target_column, args.timestamp_column,
                               lag_orders=list(range(1, 4)))
 
-        # For simplicity, drop the other features besides the day of week and lags  
-        data = data.drop(['Price', 'Revenue', 'Store', 'Brand', 'Advert'], axis=1) 
-        data = data.dropna()
-        print(data)
+        # Wrap a linear regression model and make the pipeline
+        estimator = SklearnForecaster(LinearRegression(), args.target_column)
+        pipeline = Pipeline(steps=[('lagger', lagger), ('est', estimator)])
+        pipeline.fit(X_train)
 
-        # 4.0 Prepare data for training
-        X_train = data.drop(columns=[args.timestamp_column])
-        y_train = X_train.pop(args.target_column)
-
-        # 5.0 Make a Pipeline and train the model
-        pipeline = Pipeline(steps=[('lagger', lagger), ('est', LinearRegression())])
-        pipeline.fit(X_train, y_train)
-
-        # 6.0 Save the modeling pipeline
+        # 5.0 Save the modeling pipeline
         joblib.dump(pipeline, filename=os.path.join('./outputs/', model_name))
 
-        # 7.0 Register the model to the workspace
+        # 6.0 Register the model to the workspace
         current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
 
         tags_dict = {'Store': store_name, 'Brand': brand_name, 'ModelType': args.model_type}
         current_run.register_model(model_path=model_name, model_name=model_name,
                                    model_framework=args.model_type, tags=tags_dict)
 
-        # 8.0 Get in-sample predictions
+        # 7.0 Get in-sample predictions and merge with actuals for later comparison
         predictions = pipeline.predict(X_train)
+        pred_column = 'predictions'
+        compare_data = X_train.merge(predictions.to_frame(name=pred_column), how='left',
+                                     left_index=True, right_index=True)
+        compare_data.dropna(inplace=True)
 
-        # 9.0 Calculate accuracy metrics
-        mse = mean_squared_error(X_train[args.target_column], predictions)
+        # 8.0 Calculate accuracy metrics
+        mse = mean_squared_error(compare_data[args.target_column], compare_data[pred_column])
         rmse = np.sqrt(mse)
-        mae = mean_absolute_error(X_train[args.target_column], predictions)
-        actuals = np.array(X_train[args.target_column])
-        mape = np.mean(np.abs((actuals - predictions) / actuals) * 100)
+        mae = mean_absolute_error(compare_data[args.target_column], compare_data[pred_column])
+        actuals = compare_data[args.target_column].values
+        preds = compare_data[pred_column].values
+        mape = np.mean(np.abs((actuals - preds) / actuals) * 100)
 
-        # 10.0 Log metrics
+        # 9.0 Log metrics
         current_run.log(model_name + '_mse', mse)
         current_run.log(model_name + '_rmse', rmse)
         current_run.log(model_name + '_mae', mae)
         current_run.log(model_name + '_mape', mape)
 
-        # 11.0 Add data to output
+        # 10.0 Add data to output
         end_datetime = datetime.datetime.now()
         result['store'] = store_name
         result['brand'] = brand_name
