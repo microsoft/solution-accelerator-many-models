@@ -120,9 +120,10 @@ def get_deployment_config(deployment_type, aks_target=None, cores=1, memory=1):
         raise ValueError('AKS target name needs to be set in AKS deployments')
 
     # Define inference environment
-    forecast_env = Environment(name="many_models_environment")
-    forecast_conda_deps = CondaDependencies.create(pip_packages=['azureml-defaults', 'sklearn']) #TODO
-    forecast_env.python.conda_dependencies = forecast_conda_deps
+    forecast_env = Environment.from_conda_specification(
+        name='many_models_environment',
+        file_path='Custom_Script/scripts/forecast_webservice.conda.yml'
+    )
     
     # Define inference configuration
     inference_config = InferenceConfig(
