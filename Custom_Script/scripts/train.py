@@ -25,6 +25,7 @@ args, _ = parser.parse_known_args()
 
 current_run = None
 
+
 def init():
     global current_run
     current_run = Run.get_context()
@@ -56,7 +57,7 @@ def run(input_data):
 
         # Drop columns that aren't helpful for modeling
         X_train = data.drop(columns=['Revenue', 'Store', 'Brand'])
-        print(X_train)
+        print(X_train.head())
 
         # 4.0 Make a Pipeline and train the model
         # Add a lag transform for making lagged features from the target
@@ -79,7 +80,7 @@ def run(input_data):
         current_run.register_model(model_path=model_name, model_name=model_name,
                                    model_framework=args.model_type, tags=tags_dict)
 
-        # 7.0 Get in-sample predictions and merge with actuals for later comparison
+        # 7.0 Get in-sample predictions and join with actuals for later comparison
         predictions = pipeline.predict(X_train)
         pred_column = 'predictions'
         compare_data = X_train.merge(predictions.to_frame(name=pred_column), how='left',
