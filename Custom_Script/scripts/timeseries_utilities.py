@@ -1,7 +1,37 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
+
+
+class ColumnDropper(TransformerMixin, BaseEstimator):
+    """
+    Transformer for dropping columns from a dataframe.
+    """
+    def __init__(self, drop_columns):
+        assert isinstance(drop_columns, list), "Expected drop_columns input to be a list"
+        self.drop_columns = drop_columns
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return X.drop(columns=self.drop_columns, errors='ignore')
+
+
+class SimpleCalendarFeaturizer(TransformerMixin, BaseEstimator):
+    """
+    Transformer for adding a simple calendar features derived from the input time index.
+    For demonstration purposes, the transform creates a feature for week of the year.
+    """
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return X.assign(Week_Year=X.index.weekofyear.values)
 
 
 class SimpleLagger(TransformerMixin, BaseEstimator):
@@ -82,6 +112,12 @@ class SklearnWrapper(BaseEstimator):
         self.sklearn_model.fit(X_fit.values, y_fit.values)
         return self
 
+    def transform(self, X):
+        """
+        Identity transform for fit_transform pipelines.
+        """
+        return X
+
     def predict(self, X):
         """
         Predict on the input dataframe.
@@ -93,7 +129,7 @@ class SklearnWrapper(BaseEstimator):
         return pd.Series(data=y_raw, index=X_pred.index)
 
 
-class SimpleForecaster:
+class SimpleForecaster(TransformerMixin):
     """
     Forecasting class for a simple, 1-step ahead forecaster.
     This class encapsulates fitting a transform pipeline with an sklearn regression estimator
@@ -147,6 +183,12 @@ class SimpleForecaster:
         self._latest_training_date = X.index.max()
         self.pipeline.fit(X)
         return self
+
+    def transform(self, X):
+        """
+        Transform the data through the pipeline.
+        """
+        return self.pipeline.transform(X)
 
     def forecast(self, X):
         """

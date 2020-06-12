@@ -10,16 +10,18 @@ import datetime
 import joblib
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.linear_model import LinearRegression
-from sklearn.pipeline import Pipeline
-from timeseries_utilities import SimpleLagger, SklearnForecaster
+from timeseries_utilities import ColumnDropper, SimpleLagger, SimpleCalendarFeaturizer, SimpleForecaster
 
 
 # 0.0 Parse input arguments
 parser = argparse.ArgumentParser("split")
-parser.add_argument("--target_column", type=str, help="input target column")
-parser.add_argument("--forecast_granularity", type=int, help="frequency of forecasts daily weekly")
-parser.add_argument("--timestamp_column", type=str, help="input timestamp column")
-parser.add_argument("--model_type", type=str, help="input model type")
+parser.add_argument("--target_column", type=str, required=True, help="input target column")
+parser.add_argument("--timestamp_column", type=str, required=True, help="input timestamp column")
+parser.add_argument("--timeseries_id_columns", type=str, nargs='*', required=True,
+                    help="input columns identifying the timeseries")
+parser.add_argument("--model_type", type=str, required=True, help="input model type")
+parser.add_argument("--drop_columns", type=str, nargs='*', default=[],
+                    help="list of columns to drop prior to modeling")
 
 args, _ = parser.parse_known_args()
 
@@ -44,67 +46,54 @@ def run(input_data):
 
         file_name = os.path.basename(csv_file_path)[:-4]
         model_name = args.model_type + '_' + file_name
-        store_name = file_name.split('_')[0]
-        brand_name = file_name.split('_')[1]
 
-        # Read the data from CSV - parse timestamps as datetime type and put the time in the index
+        # 1.0 Read the data from CSV - parse timestamps as datetime type and put the time in the index
         data = (pd.read_csv(csv_file_path, parse_dates=[args.timestamp_column], header=0)
                 .set_index(args.timestamp_column))
 
-        # 3.0 Create Features
-        # Make a feature for day of the week
-        data['Week_Day'] = data.index.weekday.values
+        # 2.0 Create and fit the forecasting pipeline
+        # The pipeline will drop unhelpful features, make a calendar feature, and make lag features
+        lagger = SimpleLagger(args.target_column, lag_orders=[1, 2, 3, 4])
+        transform_steps = [('column_dropper', ColumnDropper(args.drop_columns)),
+                           ('calendar_featurizer', SimpleCalendarFeaturizer()), ('lagger', lagger)]
+        forecaster = SimpleForecaster(transform_steps, LinearRegression(), args.target_column, args.timestamp_column)
+        forecaster.fit(data)
+        print('Featurized data example:')
+        print(forecaster.transform(data).head())
+        
 
-        # Drop columns that aren't helpful for modeling
-        X_train = data.drop(columns=['Revenue', 'Store', 'Brand'])
-        print(X_train.head())
+        # 3.0 Save the forecasting pipeline
+        joblib.dump(forecaster, filename=os.path.join('./outputs/', model_name))
 
-        # 4.0 Make a Pipeline and train the model
-        # Add a lag transform for making lagged features from the target
-        # Make lags of orders 1 - 4
-        lagger = SimpleLagger(args.target_column, args.timestamp_column,
-                              lag_orders=list(range(1, 4)))
-
-        # Wrap a linear regression model and make the pipeline
-        estimator = SklearnForecaster(LinearRegression(), args.target_column)
-        pipeline = Pipeline(steps=[('lagger', lagger), ('est', estimator)])
-        pipeline.fit(X_train)
-
-        # 5.0 Save the modeling pipeline
-        joblib.dump(pipeline, filename=os.path.join('./outputs/', model_name))
-
-        # 6.0 Register the model to the workspace
+        # 4.0 Register the model to the workspace
+        # Uses the values in the timeseries id columns from the first row of data to form tags for the model
         current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
-
-        tags_dict = {'Store': store_name, 'Brand': brand_name, 'ModelType': args.model_type}
+        ts_id_dict = {id_col: data[id_col].iloc[0] for id_col in args.timeseries_id_columns}
+        tags_dict = {**ts_id_dict, 'ModelType': args.model_type}
         current_run.register_model(model_path=model_name, model_name=model_name,
                                    model_framework=args.model_type, tags=tags_dict)
 
-        # 7.0 Get in-sample predictions and join with actuals for later comparison
-        predictions = pipeline.predict(X_train)
-        pred_column = 'predictions'
-        compare_data = X_train.merge(predictions.to_frame(name=pred_column), how='left',
-                                     left_index=True, right_index=True)
-        compare_data.dropna(inplace=True)
+        # 5.0 Get in-sample predictions and join with actuals
+        forecasts = forecaster.forecast(data)
+        compare_data = data.assign(forecasts=forecasts).dropna()
 
-        # 8.0 Calculate accuracy metrics
-        mse = mean_squared_error(compare_data[args.target_column], compare_data[pred_column])
+        # 6.0 Calculate accuracy metrics for the fit
+        mse = mean_squared_error(compare_data[args.target_column], compare_data['forecasts'])
         rmse = np.sqrt(mse)
-        mae = mean_absolute_error(compare_data[args.target_column], compare_data[pred_column])
+        mae = mean_absolute_error(compare_data[args.target_column], compare_data['forecasts'])
         actuals = compare_data[args.target_column].values
-        preds = compare_data[pred_column].values
+        preds = compare_data['forecasts'].values
         mape = np.mean(np.abs((actuals - preds) / actuals) * 100)
 
-        # 9.0 Log metrics
+        # 7.0 Log metrics
         current_run.log(model_name + '_mse', mse)
         current_run.log(model_name + '_rmse', rmse)
         current_run.log(model_name + '_mae', mae)
         current_run.log(model_name + '_mape', mape)
 
-        # 10.0 Add data to output
+        # 8.0 Add data to output
         end_datetime = datetime.datetime.now()
-        result['store'] = store_name
-        result['brand'] = brand_name
+        result.update(ts_id_dict)
         result['model_type'] = args.model_type
         result['file_name'] = file_name
         result['model_name'] = model_name
