@@ -60,7 +60,6 @@ def run(input_data):
         forecaster.fit(data)
         print('Featurized data example:')
         print(forecaster.transform(data).head())
-        
 
         # 3.0 Save the forecasting pipeline
         joblib.dump(forecaster, filename=os.path.join('./outputs/', model_name))
