@@ -9,6 +9,7 @@ from azureml.core.conda_dependencies import CondaDependencies
 from azureml.core.model import InferenceConfig
 from azureml.core.compute import AksCompute
 from azureml.core.webservice import AciWebservice, AksWebservice
+from azureml.exceptions import WebserviceException
 
 
 DEPLOYMENT_TYPES = ['aci', 'aks']
@@ -158,13 +159,18 @@ def deploy_model_group(ws, deployment_type, group_name, group_models, deployment
 
     if update:
         print('Launching updating of {}...'.format(service_name))
-        service = Webservice(ws, service_name)
-        service.update(
-            models=group_models,
-            inference_config=deployment_config['inference_config']
-        )
-        print('Updating of {} started'.format(service_name))
-    else:  
+        try:
+            service = Webservice(ws, service_name)
+            service.update(
+                models=group_models,
+                inference_config=deployment_config['inference_config']
+            )
+            print('Updating of {} started'.format(service_name))
+        except WebserviceException:
+            print('Webservice {} not found'.format(service_name))
+            update = False
+
+    if not update:
         print('Launching deployment of {}...'.format(service_name))
         service = Model.deploy(
             workspace=ws,
