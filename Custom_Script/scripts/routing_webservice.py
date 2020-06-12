@@ -52,10 +52,10 @@ def run(rawdata):
 
     ## Call endpoints and store result
     result = []
-    for service, minibatch in services_tocall.items():     
-        
+    for service, minibatch in services_tocall.items():
+
         try:
-            response = call_model_webservice(service, minibatch, service_key=service_keys[service])      
+            response = call_model_webservice(service, minibatch, service_key=service_keys[service])
             response.raise_for_status()
         except HTTPError:
             return AMLResponse(response.text, response.status_code)
@@ -71,7 +71,7 @@ def call_model_webservice(service_endpoint, data, service_key=None):
 
     request_headers = {'Content-Type': 'application/json'}
     if service_key:
-        request_headers['Authorization'] = 'Bearer f{service_key}'
+        request_headers['Authorization'] = f'Bearer {service_key}'
     
     response = requests.post(service_endpoint, json=data, headers=request_headers)
 
