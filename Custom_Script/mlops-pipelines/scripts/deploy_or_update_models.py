@@ -79,7 +79,7 @@ def split_groups_new_updated(model_groups, deployed_models):
     groups_new, groups_updated = {}, {}
     for group_name, group_models in model_groups.items():
         group_exists = group_name in deployed_groups
-        models_changed = any(m.version > deployed_models[m.name].get('version', 0) for m in group_models)
+        models_changed = any(m.version > deployed_models.get(m.name, {}).get('version', 0) for m in group_models)
         if not group_exists:
             groups_new[group_name] = group_models
         elif models_changed:
@@ -91,8 +91,8 @@ def split_groups_new_updated(model_groups, deployed_models):
 
 
 def get_deployed_models(routing_model_name):
-    routing_model = Model.list(ws, name=routing_model_name, latest=True)[0]
-    deployed_models = joblib.load(routing_model.download())
+    routing_model = Model.list(ws, name=routing_model_name, latest=True)
+    deployed_models = joblib.load(routing_model[0].download()) if routing_model else {}
     return deployed_models
 
 
