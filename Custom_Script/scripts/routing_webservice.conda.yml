@@ -1,6 +1,6 @@
 name: many_models_routing_environment
 dependencies:
-  - python=3.7.*
+  - python=3.7.7
   - pip
   - pip:
       - azureml-defaults

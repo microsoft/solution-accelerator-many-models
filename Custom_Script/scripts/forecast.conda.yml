@@ -1,9 +1,8 @@
-name: many_models_forecast_webservice_environment
+name: many_models_forecast_environment
 dependencies:
   - python=3.7.7
   - pip
   - pip:
-      - azureml-defaults
       - joblib
       - pandas
       - sklearn
