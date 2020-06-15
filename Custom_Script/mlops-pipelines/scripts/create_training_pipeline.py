@@ -56,9 +56,10 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
 def get_parallel_run_config(ws, dataset_name, compute_name, processes_per_node=8, node_count=3, timeout=300):
     
     # Configure environment for ParallelRunStep
-    train_env = Environment(name='many_models_environment')
-    train_conda_deps = CondaDependencies.create(pip_packages=['joblib', 'sklearn'])
-    train_env.python.conda_dependencies = train_conda_deps
+    train_env = Environment.from_conda_specification(
+        name='many_models_environment',
+        file_path='Custom_Script/scripts/train.conda.yml'
+    )
     
     # Get the compute target
     compute = AmlCompute(ws, compute_name)
