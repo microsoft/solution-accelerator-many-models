@@ -77,3 +77,11 @@ The batch forecasting code build pipeline will:
 - Publish the AML Pipeline into the AML workspace so it's ready to use whenever we want to do batch forecasting.
 
 You only need to create this Azure DevOps pipeline if you want to do batch forecasting. Do it as you did before, selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/4-batch-forecasting-code-build/batch-forecasting-code-build-pipeline.yml](4-batch-forecasting-code-build/batch-forecasting-code-build-pipeline.yml).
+
+## 5. [Optional] Batch Forecasting Pipeline
+
+The batch forecasting pipeline will:
+
+- Trigger the many models batch forecasting by invoking the batch forecasting AML Pipeline published in step 4.
+
+Create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to  [/Custom_Script/mlops-pipelines/5-batch-forecasting/batch-forecasting-pipeline.yml](5-batch-forecasting/batch-forecasting-pipeline.yml).

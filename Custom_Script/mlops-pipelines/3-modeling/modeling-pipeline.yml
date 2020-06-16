@@ -16,8 +16,8 @@
 #     - Custom_Script/scripts/routing_webservice.conda.yml
 
 # schedules:
-# - cron: "0 0 * * *"
-#   displayName: 'Daily training at midnight'
+# - cron: "0 0 * * 1"
+#   displayName: 'Weekly training at midnight on Mondays'
 #   branches:
 #     include:
 #     - v2-preview
