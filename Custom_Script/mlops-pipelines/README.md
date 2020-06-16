@@ -67,3 +67,13 @@ The modeling pipeline will:
 - Deploy the entry point that will route the requests to the corresponding model webservice.
 
 Create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/3-modeling/modeling-pipeline.yml](3-modeling/modeling-pipeline.yml).
+
+## 4. [Optional] Batch Forecasting Code Build Pipeline
+
+The batch forecasting code build pipeline will:
+
+- Create an Azure Machine Learning Pipeline that will generate batch forecasts for all the models in parallel using the [forecast script](../scripts/forecast.py).
+
+- Publish the AML Pipeline into the AML workspace so it's ready to use whenever we want to do batch forecasting.
+
+You only need to create this Azure DevOps pipeline if you want to do batch forecasting. Do it as you did before, selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/4-batch-forecasting-code-build/batch-forecasting-code-build-pipeline.yml](4-batch-forecasting-code-build/batch-forecasting-code-build-pipeline.yml).

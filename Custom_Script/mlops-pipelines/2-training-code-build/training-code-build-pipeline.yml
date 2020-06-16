@@ -12,6 +12,7 @@
 #     - Custom_Script/mlops-pipelines/2-training-code-build/*
 #     - Custom_Script/mlops-pipelines/scripts/create_training_pipeline.py
 #     - Custom_Script/scripts/train.py
+#     - Custom_Script/scripts/train.conda.yml
 
 variables:
 - template: ../many-models-variables.yml
