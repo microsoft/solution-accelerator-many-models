@@ -33,11 +33,11 @@ variables:
   - name: AML_MODEL_GROUPING_TAGS
     value: StoreGroup10
 
-  # Internal
+  # Training
   - name: AML_TRAINING_PIPELINE_NAME
     value: many-models-training
-  - name: AML_FORECASTING_PIPELINE_NAME
-    value: many-models-forecasting
+
+  # Real-time inferencing
   - name: AML_ROUTING_MODEL_NAME
     value: deployed_models_info
   - name: AML_ROUTING_MODEL_TAG_NAME
@@ -46,3 +46,9 @@ variables:
     value: _meta_
   - name: AML_ROUTING_WEBSERVICE
     value: routing-manymodels
+
+  # Batch forecasting
+  - name: AML_FORECASTING_PIPELINE_NAME
+    value: many-models-forecasting
+  - name: PREDICTIONS_CONTAINER_NAME
+    value: predictions
