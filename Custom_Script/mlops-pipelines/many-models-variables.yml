@@ -30,8 +30,6 @@ variables:
     value: manymodels-aks
   - name: AML_DATASET_NAME
     value: oj_sales_data_$(DATASET_MAXFILES)
-  - name: AML_MODEL_GROUPING_TAGS
-    value: StoreGroup10
 
   # Training
   - name: AML_TRAINING_PIPELINE_NAME
@@ -46,6 +44,8 @@ variables:
     value: _meta_
   - name: AML_ROUTING_WEBSERVICE
     value: routing-manymodels
+  - name: AML_MODEL_GROUPING_TAGS
+    value: StoreGroup10
 
   # Batch forecasting
   - name: AML_FORECASTING_PIPELINE_NAME

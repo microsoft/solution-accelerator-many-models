@@ -15,7 +15,7 @@ from azureml.exceptions import WebserviceException
 DEPLOYMENT_TYPES = ['aci', 'aks']
 
 
-def main(ws, deployment_type, routing_model_name, grouping_tags=None, aks_target=None):
+def main(ws, deployment_type, routing_model_name, grouping_tags=[], aks_target=None):
 
     if deployment_type not in DEPLOYMENT_TYPES:
         raise ValueError('Wrong deployment type. Expected: {}'.format(', '.join(DEPLOYMENT_TYPES)))
@@ -25,7 +25,7 @@ def main(ws, deployment_type, routing_model_name, grouping_tags=None, aks_target
     models_deployed = get_deployed_models(routing_model_name)
 
     # Get groups to deploy or update
-    all_groups = get_models_in_groups(grouping_tags=grouping_tags, exclude_names=routing_model_name)
+    all_groups = get_models_in_groups(grouping_tags=grouping_tags, exclude_names=[routing_model_name])
     groups_new, groups_updated = split_groups_new_updated(all_groups, models_deployed)
 
     # Deployment configuration
@@ -49,10 +49,10 @@ def main(ws, deployment_type, routing_model_name, grouping_tags=None, aks_target
     for deployment in deployments:
         
         service = deployment['service']
-        print('Waiting for deployment of {} to finish...'.format(service.name))
+        print(f'Waiting for deployment of {service.name} to finish...')
         service.wait_for_deployment(show_output=True)
         if service.state != 'Healthy':
-            print('DEPLOYMENT FAILED FOR SERVICE {}'.format(service.name))
+            print(f'DEPLOYMENT FAILED FOR SERVICE {service.name}')
 
         service_info = {
             'webservice': service.name,
@@ -87,6 +87,8 @@ def split_groups_new_updated(model_groups, deployed_models):
         else:
             pass
 
+    print(f'{len(groups_new)} groups to be deployed, {len(groups_updated)} groups to be updated.')
+    
     return groups_new, groups_updated
 
 
@@ -96,21 +98,33 @@ def get_deployed_models(routing_model_name):
     return deployed_models
 
 
-def get_models_in_groups(grouping_tags=None, exclude_names=[], exclude_tags=[], page_count=100):
+def get_models_in_groups(grouping_tags=[], exclude_names=[], exclude_tags=[], container_size=250, page_count=100):
     
     # Get all models registered in the workspace
     all_models = Model.list(ws, latest=True) #, expand=False, page_count=page_count)
-    
+    print(f'Found {len(all_models)} models registered.')
+
     # Group models by tags
     grouped_models = {}
     for m in all_models:
-        # Exclude models with names of kvtags specified
-        if m.name in exclude_names or any(m.tags[t] == v for t,v in exclude_tags):
+
+        # Exclude models with names or kvtags specified
+        if m.name in exclude_names or any(m.tags.get(t) == v for t,v in exclude_tags):
             continue
-        # Create or update group
-        group_name = '/'.join([m.tags[t] for t in grouping_tags]) if grouping_tags is not None else m.name
-        group = grouped_models.setdefault(group_name, [])
-        group.append(m)
+
+        if any(t not in m.tags.keys() for t in grouping_tags):
+            print(f'Model "{m.name}" does not contain grouping tags. Skipping.')
+            continue
+
+        # Group models in subgroups up to container_size inside groups splitted by grouping tags
+        group_name = '-'.join([m.tags[t] for t in grouping_tags]) if grouping_tags else 'modelgroup'
+        subgroups = grouped_models.setdefault(group_name, [[]])
+        if len(subgroups[-1]) == container_size:
+            subgroups.append([])
+        subgroups[-1].append(m)
+
+    grouped_models = {'{}-{}'.format(g, i+1):sg[i] for g,sg in grouped_models.items() for i in range(len(sg))}
+    print(f'Grouped models in {len(grouped_models)} groups.')
     
     return grouped_models
 
@@ -158,20 +172,20 @@ def deploy_model_group(ws, deployment_type, group_name, group_models, deployment
     ).lower()
 
     if update:
-        print('Launching updating of {}...'.format(service_name))
+        print(f'Launching updating of {service_name}...')
         try:
             service = Webservice(ws, service_name)
             service.update(
                 models=group_models,
                 inference_config=deployment_config['inference_config']
             )
-            print('Updating of {} started'.format(service_name))
+            print(f'Updating of {service_name} started')
         except WebserviceException:
-            print('Webservice {} not found'.format(service_name))
+            print(f'Webservice {service_name} not found')
             update = False
 
     if not update:
-        print('Launching deployment of {}...'.format(service_name))
+        print(f'Launching deployment of {service_name}...')
         service = Model.deploy(
             workspace=ws,
             name=service_name,
@@ -189,7 +203,7 @@ def parse_args(args=None):
     parser.add_argument('--subscription-id', required=True, type=str)
     parser.add_argument('--resource-group', required=True, type=str)
     parser.add_argument('--workspace-name', required=True, type=str)
-    parser.add_argument("--grouping-tags", type=lambda str: [t for t in str.split(',') if t])
+    parser.add_argument("--grouping-tags", type=lambda str: [t for t in str.split(',') if t], default='')
     parser.add_argument("--routing-model-name", type=str, default='deployed_models_info')
     parser.add_argument("--output", type=str, default='models_deployed.pkl')
     parser.add_argument("--aks-target", type=str)
