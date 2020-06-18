@@ -18,6 +18,8 @@ parameters:
   type: string
 - name: groupingTags
   type: string
+- name: containerSize
+  type: string
 - name: routingModelName
   type: string
 - name: routingModelTagName
@@ -54,6 +56,7 @@ jobs:
                                 --routing-model-name '${{parameters.routingModelName}}' \
                                 --output 'models_deployed.pkl' \
                                 --aks-target '${{parameters.amlAksName}}' \
+                                --container-size '${{parameters.containerSize}}' \
                                 --subscription-id $(az account show --query id -o tsv) \
                                 --resource-group ${{parameters.resourceGroup}} \
                                 --workspace-name ${{parameters.amlWorkspaceName}}

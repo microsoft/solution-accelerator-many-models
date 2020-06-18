@@ -15,7 +15,7 @@ from azureml.exceptions import WebserviceException
 DEPLOYMENT_TYPES = ['aci', 'aks']
 
 
-def main(ws, deployment_type, routing_model_name, grouping_tags=[], aks_target=None):
+def main(ws, deployment_type, routing_model_name, grouping_tags=[], aks_target=None, container_size=250):
 
     if deployment_type not in DEPLOYMENT_TYPES:
         raise ValueError('Wrong deployment type. Expected: {}'.format(', '.join(DEPLOYMENT_TYPES)))
@@ -25,7 +25,7 @@ def main(ws, deployment_type, routing_model_name, grouping_tags=[], aks_target=N
     models_deployed = get_deployed_models(routing_model_name)
 
     # Get groups to deploy or update
-    all_groups = get_models_in_groups(grouping_tags=grouping_tags, exclude_names=[routing_model_name])
+    all_groups = get_models_in_groups(grouping_tags=grouping_tags, exclude_names=[routing_model_name], container_size=container_size)
     groups_new, groups_updated = split_groups_new_updated(all_groups, models_deployed)
 
     # Deployment configuration
@@ -207,6 +207,7 @@ def parse_args(args=None):
     parser.add_argument("--routing-model-name", type=str, default='deployed_models_info')
     parser.add_argument("--output", type=str, default='models_deployed.pkl')
     parser.add_argument("--aks-target", type=str)
+    parser.add_argument("--container-size", type=int, default=250)
     args_parsed = parser.parse_args(args)
 
     if args_parsed.aks_target == '':
@@ -230,7 +231,8 @@ if __name__ == "__main__":
         deployment_type='aks' if args.aks_target else 'aci',
         routing_model_name=args.routing_model_name,
         grouping_tags=args.grouping_tags,
-        aks_target=args.aks_target
+        aks_target=args.aks_target,
+        container_size=args.container_size
     )
     
     joblib.dump(models_deployed, args.output)

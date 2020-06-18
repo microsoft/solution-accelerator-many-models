@@ -46,6 +46,8 @@ variables:
     value: routing-manymodels
   - name: AML_MODEL_GROUPING_TAGS
     value: StoreGroup10
+  - name: AML_MAX_CONTAINER_SIZE
+    value: 250
 
   # Batch forecasting
   - name: AML_FORECASTING_PIPELINE_NAME

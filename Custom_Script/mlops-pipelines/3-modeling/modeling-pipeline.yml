@@ -63,6 +63,7 @@ stages:
       deploymentType: aci
       amlAksName: ''
       groupingTags: '$(AML_MODEL_GROUPING_TAGS)'
+      containerSize: '$(AML_MAX_CONTAINER_SIZE)'
       routingModelName: '$(AML_ROUTING_MODEL_NAME)'
       routingModelTagName: '$(AML_ROUTING_MODEL_TAG_NAME)'
       routingModelTagValue: '$(AML_ROUTING_MODEL_TAG_VALUE)'
@@ -81,6 +82,7 @@ stages:
       amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
       deploymentType: aks
       amlAksName: '$(AML_AKS_NAME)'
+      containerSize: '$(AML_MAX_CONTAINER_SIZE)'
       groupingTags: '$(AML_MODEL_GROUPING_TAGS)'
       routingModelName: '$(AML_ROUTING_MODEL_NAME)'
       routingModelTagName: '$(AML_ROUTING_MODEL_TAG_NAME)'
