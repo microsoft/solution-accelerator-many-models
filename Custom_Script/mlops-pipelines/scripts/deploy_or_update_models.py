@@ -15,7 +15,7 @@ from azureml.exceptions import WebserviceException
 DEPLOYMENT_TYPES = ['aci', 'aks']
 
 
-def main(ws, deployment_type, routing_model_name, grouping_tags=[], aks_target=None, container_size=250):
+def main(ws, deployment_type, routing_model_name, grouping_tags=[], sorting_tags=[], aks_target=None, container_size=250):
 
     if deployment_type not in DEPLOYMENT_TYPES:
         raise ValueError('Wrong deployment type. Expected: {}'.format(', '.join(DEPLOYMENT_TYPES)))
@@ -25,7 +25,8 @@ def main(ws, deployment_type, routing_model_name, grouping_tags=[], aks_target=N
     models_deployed = get_deployed_models(routing_model_name)
 
     # Get groups to deploy or update
-    all_groups = get_models_in_groups(grouping_tags=grouping_tags, exclude_names=[routing_model_name], container_size=container_size)
+    all_groups = get_models_in_groups(grouping_tags=grouping_tags, sorting_tags=sorting_tags,
+                                      exclude_names=[routing_model_name], container_size=container_size)
     groups_new, groups_updated = split_groups_new_updated(all_groups, models_deployed)
 
     # Deployment configuration
@@ -72,6 +73,52 @@ def main(ws, deployment_type, routing_model_name, grouping_tags=[], aks_target=N
     return models_deployed
 
 
+def get_deployed_models(routing_model_name):
+    routing_model = Model.list(ws, name=routing_model_name, latest=True)
+    deployed_models = joblib.load(routing_model[0].download()) if routing_model else {}
+    return deployed_models
+
+
+def get_models_in_groups(grouping_tags=[], sorting_tags=[], exclude_names=[], exclude_tags=[], 
+                         container_size=250, page_count=100):
+    
+    # Get all models registered in the workspace
+    all_models = Model.list(ws, latest=True) #, expand=False, page_count=page_count)
+    print(f'Found {len(all_models)} models registered.')
+
+    # Sort models by sorting tags
+    if sorting_tags:
+        all_models = sorted(all_models, key=lambda m: combine_tags(m, sorting_tags))
+
+    # Group models by tags
+    grouped_models = {}
+    for m in all_models:
+
+        # Exclude models with names or kvtags specified
+        if m.name in exclude_names or any(m.tags.get(t) == v for t,v in exclude_tags):
+            continue
+
+        if any(t not in m.tags.keys() for t in grouping_tags):
+            print(f'Model "{m.name}" does not contain grouping tags. Skipping.')
+            continue
+
+        # Group models in subgroups up to container_size inside groups splitted by grouping tags
+        group_name = combine_tags(m, grouping_tags) if grouping_tags else 'modelgroup'
+        subgroups = grouped_models.setdefault(group_name, [[]])
+        if len(subgroups[-1]) == container_size:
+            subgroups.append([])
+        subgroups[-1].append(m)
+
+    grouped_models = {'{}-{}'.format(g, i+1):sg[i] for g,sg in grouped_models.items() for i in range(len(sg))}
+    print(f'Grouped models in {len(grouped_models)} groups.')
+    
+    return grouped_models
+
+
+def combine_tags(model, tags):
+    return '-'.join([model.tags.get(t, '') for t in tags])
+
+
 def split_groups_new_updated(model_groups, deployed_models):
     
     deployed_groups = set(m['group'] for m in deployed_models.values())
@@ -90,43 +137,6 @@ def split_groups_new_updated(model_groups, deployed_models):
     print(f'{len(groups_new)} groups to be deployed, {len(groups_updated)} groups to be updated.')
     
     return groups_new, groups_updated
-
-
-def get_deployed_models(routing_model_name):
-    routing_model = Model.list(ws, name=routing_model_name, latest=True)
-    deployed_models = joblib.load(routing_model[0].download()) if routing_model else {}
-    return deployed_models
-
-
-def get_models_in_groups(grouping_tags=[], exclude_names=[], exclude_tags=[], container_size=250, page_count=100):
-    
-    # Get all models registered in the workspace
-    all_models = Model.list(ws, latest=True) #, expand=False, page_count=page_count)
-    print(f'Found {len(all_models)} models registered.')
-
-    # Group models by tags
-    grouped_models = {}
-    for m in all_models:
-
-        # Exclude models with names or kvtags specified
-        if m.name in exclude_names or any(m.tags.get(t) == v for t,v in exclude_tags):
-            continue
-
-        if any(t not in m.tags.keys() for t in grouping_tags):
-            print(f'Model "{m.name}" does not contain grouping tags. Skipping.')
-            continue
-
-        # Group models in subgroups up to container_size inside groups splitted by grouping tags
-        group_name = '-'.join([m.tags[t] for t in grouping_tags]) if grouping_tags else 'modelgroup'
-        subgroups = grouped_models.setdefault(group_name, [[]])
-        if len(subgroups[-1]) == container_size:
-            subgroups.append([])
-        subgroups[-1].append(m)
-
-    grouped_models = {'{}-{}'.format(g, i+1):sg[i] for g,sg in grouped_models.items() for i in range(len(sg))}
-    print(f'Grouped models in {len(grouped_models)} groups.')
-    
-    return grouped_models
 
 
 def get_deployment_config(deployment_type, aks_target=None, cores=1, memory=1):
@@ -203,7 +213,8 @@ def parse_args(args=None):
     parser.add_argument('--subscription-id', required=True, type=str)
     parser.add_argument('--resource-group', required=True, type=str)
     parser.add_argument('--workspace-name', required=True, type=str)
-    parser.add_argument("--grouping-tags", type=lambda str: [t for t in str.split(',') if t], default='')
+    parser.add_argument("--grouping-tags", default='', type=lambda str: [t for t in str.split(',') if t])
+    parser.add_argument("--sorting-tags", default='', type=lambda str: [t for t in str.split(',') if t])
     parser.add_argument("--routing-model-name", type=str, default='deployed_models_info')
     parser.add_argument("--output", type=str, default='models_deployed.pkl')
     parser.add_argument("--aks-target", type=str)
@@ -231,6 +242,7 @@ if __name__ == "__main__":
         deployment_type='aks' if args.aks_target else 'aci',
         routing_model_name=args.routing_model_name,
         grouping_tags=args.grouping_tags,
+        sorting_tags=args.sorting_tags,
         aks_target=args.aks_target,
         container_size=args.container_size
     )

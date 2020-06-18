@@ -16,6 +16,8 @@ parameters:
   type: string
 - name: amlAksName
   type: string
+- name: sortingTags
+  type: string
 - name: groupingTags
   type: string
 - name: containerSize
@@ -53,6 +55,7 @@ jobs:
           # Create/update training pipeline
           deploy_script="Custom_Script/mlops-pipelines/scripts/deploy_or_update_models.py"
           python $deploy_script --grouping-tags '${{parameters.groupingTags}}' \
+                                --sorting-tags '${{parameters.sortingTags}}' \
                                 --routing-model-name '${{parameters.routingModelName}}' \
                                 --output 'models_deployed.pkl' \
                                 --aks-target '${{parameters.amlAksName}}' \
