@@ -197,7 +197,7 @@ class SimpleForecaster(TransformerMixin):
         For out-of-sample data, the 1-step-ahead model is recursively applied.
 
         Returns forecasts for the target in a pd.Series object with the same time index as X.
-        np.nan values will be returned for dates where a forecast could not be found.  
+        np.nan values will be returned for dates where a forecast could not be found.
         """
         assert list(X.index.names) == [self.time_column_name], \
             "Expected time column to comprise input dataframe index."

@@ -67,7 +67,7 @@ def run(input_data):
         # 4.0 Register the model to the workspace
         # Uses the values in the timeseries id columns from the first row of data to form tags for the model
         current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
-        ts_id_dict = {id_col: data[id_col].iloc[0] for id_col in args.timeseries_id_columns}
+        ts_id_dict = {id_col: str(data[id_col].iloc[0]) for id_col in args.timeseries_id_columns}
         tags_dict = {**ts_id_dict, 'ModelType': args.model_type}
         current_run.register_model(model_path=model_name, model_name=model_name,
                                    model_framework=args.model_type, tags=tags_dict)
