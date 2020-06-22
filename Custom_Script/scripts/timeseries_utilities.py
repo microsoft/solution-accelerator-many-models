@@ -41,11 +41,12 @@ class SimpleLagger(TransformerMixin, BaseEstimator):
     to maintain lag feature continuity across train/test splits.
     """
 
-    def __init__(self, target_column_name, lag_orders=[1]):
-        assert isinstance(lag_orders, list) and min(lag_orders) > 0, \
+    def __init__(self, target_column_name, lag_orders=None):
+        my_lag_orders = lag_orders if lag_orders is not None else [1]
+        assert isinstance(my_lag_orders, list) and min(my_lag_orders) > 0, \
             'Expected lag_orders to be a list of integers all greater than zero'
         self.target_column_name = target_column_name
-        self.lag_orders = lag_orders
+        self.lag_orders = my_lag_orders
 
     def fit(self, X, y=None):
         """
