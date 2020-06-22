@@ -28,9 +28,16 @@ The setup pipeline will:
 
 - Set up the Azure Machine Learning worskpace, creating a compute target and attaching the AKS cluster.
 
-- Download as many files as you specified in the DATASET_MAXFILES variable and register them as a dataset in AML.
+- Download as many files as you specified in the `DATASET_MAXFILES` variable and register them as a dataset in AML.
 
 Create the pipeline as in [here](https://github.com/microsoft/MLOpsPython/blob/master/docs/getting_started.md#create-the-iac-pipeline), selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/1-setup/setup-pipeline.yml](1-setup/setup-pipeline.yml).
+
+The pipeline run should look like this:
+
+<img src="../../images/mlops_pipeline1.png"
+     width="1000"
+     title="Setup Pipeline"
+     alt="Stage Deploy Infra with two jobs: IaC Build, IaC Deployment. Followed by stage Environment Setup with four jobs: Deploy AML Compute, Attach AKS cluster to AML, Sample Files Setup, Register Dataset" />
 
 ## 2. Training Code Build Pipeline
 
@@ -46,13 +53,20 @@ Before creating the Azure DevOps pipeline:
 
 - Create an **Azure Resource Manager** [service connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml#create-a-service-connection) to access the Machine Learning Workspace you created in the setup pipeline before. As you did before, mark the option to grant access permission to all pipelines, and copy the name as you'll need it in the next step.
 
-- Modify the **``manymodels-vg``** variable group you created before, and add this new variable:  called **``manymodels-vg``**, 
+- Modify the **``manymodels-vg``** variable group you created before, and add this new variable:
 
 | Variable Name               | Short description |
 | --------------------------- | ----------------- |
 | SERVICECONNECTION_WORKSPACE | Name of the connection to the AML Workspace you have just created |
 
 Then, create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/2-training-code-build/training-code-build-pipeline.yml](2-training-code-build/training-code-build-pipeline.yml).
+
+The pipeline run should look like this:
+
+<img src="../../images/mlops_pipeline2.png"
+     width="1000"
+     title="Training Code Build Pipeline"
+     alt="Single job: Publish Training AML Pipeline" />
 
 ## 3. Modeling Pipeline
 
@@ -68,6 +82,15 @@ The modeling pipeline will:
 
 Create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/3-modeling/modeling-pipeline.yml](3-modeling/modeling-pipeline.yml).
 
+The pipeline run should look like this:
+
+<img src="../../images/mlops_pipeline3.png"
+     width="1000"
+     title="Modeling Pipeline"
+     alt="Stage Run Model Training with two jobs: Get Training Pipeline ID, Run Training. After that two parallel stages are triggered with three identical jobs: Deploy Models to ACI and Deploy Models to AKS, with jobs Deploy Models, Register Routing Model, Deploy Routing Webservice" />
+
+The deployment stages will be triggered if you have the corresponding variables `DEPLOY_ACI`/`DEPLOY_AKS` in the variable group set to `true`.
+
 ## 4. [Optional] Batch Forecasting Code Build Pipeline
 
 The batch forecasting code build pipeline will:
@@ -78,6 +101,13 @@ The batch forecasting code build pipeline will:
 
 You only need to create this Azure DevOps pipeline if you want to do batch forecasting. Do it as you did before, selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/4-batch-forecasting-code-build/batch-forecasting-code-build-pipeline.yml](4-batch-forecasting-code-build/batch-forecasting-code-build-pipeline.yml).
 
+The pipeline run should look like this:
+
+<img src="../../images/mlops_pipeline4.png"
+     width="1000"
+     title="Batch Forecasting Code Build Pipeline"
+     alt="Single job: Publish Forecasting AML Pipeline" />
+
 ## 5. [Optional] Batch Forecasting Pipeline
 
 The batch forecasting pipeline will:
@@ -85,3 +115,10 @@ The batch forecasting pipeline will:
 - Trigger the many models batch forecasting by invoking the batch forecasting AML Pipeline published in step 4.
 
 Create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to  [/Custom_Script/mlops-pipelines/5-batch-forecasting/batch-forecasting-pipeline.yml](5-batch-forecasting/batch-forecasting-pipeline.yml).
+
+The pipeline run should look like this:
+
+<img src="../../images/mlops_pipeline5.png"
+     width="1000"
+     title="Batch Forecasting Pipeline"
+     alt="Two jobs: Get Forecasting Pipeline ID, Run Forecasting" />
