@@ -54,10 +54,9 @@ def run(input_data):
         forecasts = forecaster.forecast(data)
         prediction_df = forecasts.to_frame(name='Prediction')
 
-        # 6.0 If actuals are passed in with data, compute accuracy metrics and log in the Run
+        # 5.0 If actuals are passed in with data, compute accuracy metrics and log in the Run
         # Also add actuals to the returned dataframe if they are available
         if args.target_column is not None and args.target_column in data.columns:
-            # 6.0 Calculate accuracy metrics for the forecast
             compare_data = data.assign(forecasts=forecasts)
             mse = mean_squared_error(compare_data[args.target_column], compare_data['forecasts'])
             rmse = np.sqrt(mse)
@@ -73,7 +72,8 @@ def run(input_data):
 
             prediction_df[args.target_column] = data[args.target_column]
 
-        # 7.0 Add the timeseries id columns and add the dataframe to the return list
+        # 6.0 Add the timeseries id columns and append the dataframe to the return list
         results.append(prediction_df.reset_index().assign(**ts_id_dict))
 
+    # Data returned by this function will be available in parallel_run_step.txt
     return pd.concat(results)

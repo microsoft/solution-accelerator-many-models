@@ -24,7 +24,7 @@ class ColumnDropper(TransformerMixin, BaseEstimator):
 
 class SimpleCalendarFeaturizer(TransformerMixin, BaseEstimator):
     """
-    Transformer for adding a simple calendar features derived from the input time index.
+    Transformer for adding a simple calendar feature derived from the input time index.
     For demonstration purposes, the transform creates a feature for week of the year.
     """
     def fit(self, X, y=None):
@@ -38,10 +38,12 @@ class SimpleLagger(TransformerMixin, BaseEstimator):
     """
     Simple lagging transform that creates lagged values of the target column.
     This transform uses information known at fit time to create lags at transform time
-    to maintain lag feature continuity across train/test splits
+    to maintain lag feature continuity across train/test splits.
     """
 
     def __init__(self, target_column_name, lag_orders=[1]):
+        assert isinstance(lag_orders, list) and min(lag_orders) > 0, \
+            'Expected lag_orders to be a list of integers all greater than zero'
         self.target_column_name = target_column_name
         self.lag_orders = lag_orders
 
@@ -51,8 +53,8 @@ class SimpleLagger(TransformerMixin, BaseEstimator):
         This transform caches the tail of the training data up to the maximum lag order
         so that lag features can be created on test data.
         """
-        assert y is None, \
-            "Expected y input to be none. Use target column in input dataframe"
+        assert self.target_column_name in X.columns, \
+            "Target column is missing from the input dataframe."
 
         X_fit = X.copy()
         max_lag_order = max(self.lag_orders)
@@ -64,7 +66,8 @@ class SimpleLagger(TransformerMixin, BaseEstimator):
     def transform(self, X):
         """
         Create lag features of the target for the input data.
-        Transform will drop rows with NA values.
+        The transform uses data cached at fit time, if necessary, to provide
+        continuity of lag features.
         """
         X_trans = X.copy()
         added_target = False
@@ -72,14 +75,15 @@ class SimpleLagger(TransformerMixin, BaseEstimator):
             X_trans[self.target_column_name] = np.nan
             added_target = True
 
-        X_trans.sort_index(ascending=True, inplace=True)
-
         # decide if we need to use the training cache i.e. are we in a test scenario?
         train_latest = self._train_tail.index.max()
         X_earliest = X_trans.index.min()
         if train_latest < X_earliest:
             # X data is later than the training period - append the cached tail of training data
             X_trans = pd.concat((self._train_tail, X_trans[self._column_order]))
+
+        # Ensure data is sorted by time before making lags
+        X_trans.sort_index(ascending=True, inplace=True)
 
         # Make the lag features
         for lag_order in self.lag_orders:
@@ -93,7 +97,8 @@ class SimpleLagger(TransformerMixin, BaseEstimator):
 
 class SklearnWrapper(BaseEstimator):
     """
-    Wrapper class around an sklearn model
+    Wrapper class around an sklearn model.
+    This wrapper formats DataFrame input for scikit-learn regression estimators.
     """
     def __init__(self, sklearn_model, target_column_name):
         self.sklearn_model = sklearn_model
@@ -134,8 +139,8 @@ class SimpleForecaster(TransformerMixin):
     Forecasting class for a simple, 1-step ahead forecaster.
     This class encapsulates fitting a transform pipeline with an sklearn regression estimator
     and producing in-sample and out-of-sample forecasts.
-    Out-of-sample forecasts apply the model recursively over the test set to produce predictions
-    at any forecast horizon.
+    Out-of-sample forecasts apply the model recursively over the prediction set to produce forecasts
+    at any horizon.
 
     The forecaster assumes that the time-series data is regularly sampled on a contiguous interval;
     it does not handle missing values.
