@@ -111,8 +111,20 @@ class SklearnWrapper(BaseEstimator):
         """
         assert self.target_column_name in X.columns, \
             "Target column is missing from the input dataframe."
+
+        # Drop rows with missing values and check that we still have data left
         X_fit = X.dropna()
         assert len(X_fit) > 0, 'Training dataframe is empty after dropping NA values'
+
+        # Check that data is all numeric type
+        # This simple pipeline does not handle categoricals or other non-numeric types
+        full_col_set = set(X_fit.columns)
+        numeric_col_set = set(X_fit.select_dtypes(include=[np.number]).columns)
+        assert full_col_set == numeric_col_set, \
+            ('Found non-numeric columns {} in the input dataframe. Please drop them prior to modeling.'
+             .format(full_col_set - numeric_col_set))
+
+        # Fit the scikit model
         y_fit = X_fit.pop(self.target_column_name)
         self._column_order = X_fit.columns
         self.sklearn_model.fit(X_fit.values, y_fit.values)
@@ -129,6 +141,11 @@ class SklearnWrapper(BaseEstimator):
         Predict on the input dataframe.
         Return a Pandas Series with time in the index
         """
+        # Check the column set in input is compatible with fitted model
+        input_col_set = set(X.columns) - set([self.target_column_name])
+        assert input_col_set == set(self._column_order), \
+            'Input columns {} do not match expected columns {}'.format(input_col_set, self._column_order)
+
         X_pred = X.drop(columns=[self.target_column_name], errors='ignore')[self._column_order]
         X_pred.dropna(inplace=True)
         assert len(X_pred) > 0, 'Prediction dataframe is empty after dropping NA values'
