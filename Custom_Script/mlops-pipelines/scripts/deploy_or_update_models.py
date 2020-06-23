@@ -83,7 +83,7 @@ def get_models_in_groups(grouping_tags=[], sorting_tags=[], exclude_names=[], ex
                          container_size=250, page_count=100):
     
     # Get all models registered in the workspace
-    all_models = Model.list(ws, latest=True) #, expand=False, page_count=page_count)
+    all_models = Model.list(ws, latest=True, expand=False, page_count=page_count)
     print(f'Found {len(all_models)} models registered.')
 
     # Sort models by sorting tags
