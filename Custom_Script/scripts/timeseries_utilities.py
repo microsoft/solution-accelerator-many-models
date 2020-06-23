@@ -57,9 +57,9 @@ class SimpleLagger(TransformerMixin, BaseEstimator):
         assert self.target_column_name in X.columns, \
             "Target column is missing from the input dataframe."
 
-        X_fit = X.copy()
+        X_fit = X.sort_index(ascending=True)
         max_lag_order = max(self.lag_orders)
-        self._train_tail = X_fit.sort_index(ascending=True).iloc[-max_lag_order:]
+        self._train_tail = X_fit.iloc[-max_lag_order:]
         self._column_order = self._train_tail.columns
 
         return self
@@ -111,7 +111,7 @@ class SklearnWrapper(BaseEstimator):
         """
         assert self.target_column_name in X.columns, \
             "Target column is missing from the input dataframe."
-        X_fit = X.copy().dropna()
+        X_fit = X.dropna()
         assert len(X_fit) > 0, 'Training dataframe is empty after dropping NA values'
         y_fit = X_fit.pop(self.target_column_name)
         self._column_order = X_fit.columns
@@ -129,7 +129,8 @@ class SklearnWrapper(BaseEstimator):
         Predict on the input dataframe.
         Return a Pandas Series with time in the index
         """
-        X_pred = X.drop(columns=[self.target_column_name], errors='ignore')[self._column_order].dropna()
+        X_pred = X.drop(columns=[self.target_column_name], errors='ignore')[self._column_order]
+        X_pred.dropna(inplace=True)
         assert len(X_pred) > 0, 'Prediction dataframe is empty after dropping NA values'
         y_raw = self.sklearn_model.predict(X_pred.values)
         return pd.Series(data=y_raw, index=X_pred.index)
@@ -162,7 +163,7 @@ class SimpleForecaster(TransformerMixin):
         """
         Apply the trained model resursively for out-of-sample predictions.
         """
-        X_fcst = X.copy().sort_index(ascending=True)
+        X_fcst = X.sort_index(ascending=True)
         if self.target_column_name not in X_fcst.columns:
             X_fcst[self.target_column_name] = np.nan
 
