@@ -32,15 +32,21 @@ pool:
 
 stages:
 
-# There is no data to update in this example, but in the general case 
-# the registered dataset should be updated before retraining.
-# - stage: update_data
-#   displayName: 'Update Data for Training'
-#   jobs:
-#   - template: update-data/update-data.template.yml
+- stage: update_data
+  displayName: 'Update Data for Training/Retraining'
+  jobs:
+  - template: update-data/update-data.template.yml
+    parameters:
+      sdkVersion: '$(SDK_VERSION)'
+      serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
+      resourceGroup: '$(RESOURCE_GROUP)'
+      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
+      amlDatasetName: '$(AML_DATASET_NAME)'
+      maxFiles: '$(DATASET_MAXFILES)'
 
 - stage: run_training
   displayName: 'Run Model Training'
+  dependsOn: update_data
   jobs:
   - template: run-training/run-training.template.yml
     parameters:

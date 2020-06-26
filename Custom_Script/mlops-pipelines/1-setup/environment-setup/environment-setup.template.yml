@@ -125,7 +125,7 @@ jobs:
           # Install dependencies
           python -m pip install --upgrade pip && python -m pip install azureml-sdk==${{parameters.sdkVersion}}
           # Register dataset
-          register_dataset_script=Custom_Script/mlops-pipelines/scripts/register_dataset.py
+          register_dataset_script=Custom_Script/mlops-pipelines/scripts/register_or_update_dataset.py
           python $register_dataset_script --path $DATAPATH \
                                           --name ${{parameters.amlDatasetName}} \
                                           --subscription-id $(az account show --query id -o tsv) \
