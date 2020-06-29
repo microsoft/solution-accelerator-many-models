@@ -75,8 +75,25 @@ def main(ws, deployment_type, routing_model_name, grouping_tags=[], sorting_tags
 
 
 def get_deployed_models(routing_model_name):
+
+    # Load deployed models info
     routing_model = Model.list(ws, name=routing_model_name, latest=True)
     deployed_models = joblib.load(routing_model[0].download()) if routing_model else {}
+
+    # Make sure webservices are still deployed
+    services = {}
+    for service_name in set(v['webservice'] for v in deployed_models.values()):
+        try:
+            service = Webservice(ws, service_name)
+            services[service_name] = service
+        except WebserviceException:
+            print(f'Webservice {service_name} not found')
+
+    # Exclude models associated to deleted werbservices
+    deployed_models = { model_name : {**model_info, 'service': services[model_info['webservice']]}
+                        for model_name, model_info in deployed_models.items()
+                        if model_info['webservice'] in services.keys() }
+
     return deployed_models
 
 
@@ -184,18 +201,13 @@ def deploy_model_group(ws, group_name, group_models, deployment_config, name_pre
 
     if update:
         print(f'Launching updating of {service_name}...')
-        try:
-            service = Webservice(ws, service_name)
-            service.update(
-                models=group_models,
-                inference_config=deployment_config['inference_config']
-            )
-            print(f'Updating of {service_name} started')
-        except WebserviceException:
-            print(f'Webservice {service_name} not found')
-            update = False
-
-    if not update:
+        service = Webservice(ws, service_name)
+        service.update(
+            models=group_models,
+            inference_config=deployment_config['inference_config']
+        )
+        print(f'Updating of {service_name} started')
+    else:
         print(f'Launching deployment of {service_name}...')
         service = Model.deploy(
             workspace=ws,
@@ -204,7 +216,7 @@ def deploy_model_group(ws, group_name, group_models, deployment_config, name_pre
             **deployment_config,
             overwrite=True
         )
-        print('Deployment of {} started'.format(service_name))    
+        print('Deployment of {} started'.format(service_name))
 
     return service
 
