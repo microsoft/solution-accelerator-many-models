@@ -15,7 +15,8 @@ from azureml.exceptions import WebserviceException
 DEPLOYMENT_TYPES = ['aci', 'aks']
 
 
-def main(ws, deployment_type, routing_model_name, grouping_tags=[], sorting_tags=[], aks_target=None, container_size=250):
+def main(ws, deployment_type, routing_model_name, grouping_tags=[], sorting_tags=[], 
+         aks_target=None, service_prefix='manymodels-', container_size=250):
 
     if deployment_type not in DEPLOYMENT_TYPES:
         raise ValueError('Wrong deployment type. Expected: {}'.format(', '.join(DEPLOYMENT_TYPES)))
@@ -37,12 +38,12 @@ def main(ws, deployment_type, routing_model_name, grouping_tags=[], sorting_tags
 
     # Launch webservice deployments
     for group_name, group_models in groups_new.items():
-        service = deploy_model_group(ws, deployment_type, group_name, group_models, deployment_config)
+        service = deploy_model_group(ws, group_name, group_models, deployment_config, name_prefix=service_prefix)
         deployments.append({ 'service': service, 'group': group_name, 'models': group_models })
     
     # Launch webservice updates
     for group_name, group_models in groups_updated.items():
-        service = deploy_model_group(ws, deployment_type, group_name, group_models, deployment_config, update=True)
+        service = deploy_model_group(ws, group_name, group_models, deployment_config, name_prefix=service_prefix, update=True)
         deployments.append({ 'service': service, 'group': group_name, 'models': group_models })
     
 
@@ -174,10 +175,10 @@ def get_deployment_config(deployment_type, aks_target=None, cores=1, memory=1):
     return config
 
 
-def deploy_model_group(ws, deployment_type, group_name, group_models, deployment_config, update=False):
+def deploy_model_group(ws, group_name, group_models, deployment_config, name_prefix='manymodels-', update=False):
     
-    service_name = '{prefix}manymodels-{group}'.format(
-        prefix='test-' if deployment_type == 'aci' else '',
+    service_name = '{prefix}{group}'.format(
+        prefix=name_prefix,
         group=group_name
     ).lower()
 
@@ -218,11 +219,15 @@ def parse_args(args=None):
     parser.add_argument("--routing-model-name", type=str, default='deployed_models_info')
     parser.add_argument("--output", type=str, default='models_deployed.pkl')
     parser.add_argument("--aks-target", type=str)
+    parser.add_argument("--service-prefix", type=str)
     parser.add_argument("--container-size", type=int, default=250)
     args_parsed = parser.parse_args(args)
 
     if args_parsed.aks_target == '':
         args_parsed.aks_target = None
+
+    if args_parsed.service_prefix is None:
+        args_parsed.service_prefix = 'test-manymodels-' if not args_parsed.aks_target else 'manymodels-'
     
     return args_parsed
 
@@ -244,6 +249,7 @@ if __name__ == "__main__":
         grouping_tags=args.grouping_tags,
         sorting_tags=args.sorting_tags,
         aks_target=args.aks_target,
+        service_prefix=args.service_prefix,
         container_size=args.container_size
     )
     

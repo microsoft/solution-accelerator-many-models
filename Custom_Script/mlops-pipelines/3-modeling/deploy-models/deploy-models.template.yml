@@ -20,6 +20,8 @@ parameters:
   type: string
 - name: groupingTags
   type: string
+- name: webservicePrefix
+  type: string
 - name: containerSize
   type: string
 - name: routingModelName
@@ -59,6 +61,7 @@ jobs:
                                 --routing-model-name '${{parameters.routingModelName}}' \
                                 --output 'models_deployed.pkl' \
                                 --aks-target '${{parameters.amlAksName}}' \
+                                --service-prefix '${{parameters.webservicePrefix}}' \
                                 --container-size '${{parameters.containerSize}}' \
                                 --subscription-id $(az account show --query id -o tsv) \
                                 --resource-group ${{parameters.resourceGroup}} \
