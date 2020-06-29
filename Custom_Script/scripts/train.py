@@ -84,7 +84,7 @@ def run(input_data):
                     
         tags_dict = {
             'Store': store_name, 'Brand': brand_name, 'ModelType': args.model_type,
-            'StoreGroup10': store_name[:-1] + 'X', 'StoreGroup100': store_name[:-2] + 'XX'
+            'StoreGroup10': store_name[:-1] + 'X', 'StoreGroup100': store_name[:-2] + 'XX', 'StoreGroup1000': store_name[:-3] + 'XXX'
         }
         current_run.register_model(model_path = model_name, model_name = model_name, model_framework = args.model_type, tags = tags_dict)
 
