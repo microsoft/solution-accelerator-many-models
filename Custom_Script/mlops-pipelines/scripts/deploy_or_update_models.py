@@ -4,6 +4,7 @@
 import pathlib
 import argparse
 import joblib
+import warnings
 from azureml.core import Workspace, Model, Environment, Webservice
 from azureml.core.conda_dependencies import CondaDependencies
 from azureml.core.model import InferenceConfig
@@ -52,10 +53,11 @@ def main(ws, deployment_type, routing_model_name, grouping_tags=[], sorting_tags
         
         service = deployment['service']
         print(f'Waiting for deployment of {service.name} to finish...')
-        service.wait_for_deployment(show_output=True)
-        if service.state != 'Healthy':
-            print(f'DEPLOYMENT FAILED FOR SERVICE {service.name}')
-
+        try:
+            service.wait_for_deployment(show_output=True)
+        except WebserviceException as e:
+            warnings.warn(f'DEPLOYMENT FAILED FOR SERVICE {service.name}:\n{e}', RuntimeWarning)
+    
         service_info = {
             'webservice': service.name,
             'state': service.state,
