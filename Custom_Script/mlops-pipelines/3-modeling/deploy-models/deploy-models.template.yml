@@ -53,13 +53,16 @@ jobs:
         scriptLocation: inlineScript
         inlineScript: |
           # Install dependencies
-          python -m pip install --upgrade pip && python -m pip install joblib azureml-sdk==${{parameters.sdkVersion}}
+          python -m pip install --upgrade pip && python -m pip install joblib pyyaml azureml-sdk==${{parameters.sdkVersion}}
           # Create/update training pipeline
+          deployment_config_path="Custom_Script/mlops-pipelines/3-modeling/deploy-models/"
+          deployment_config_file="$deployment_config_path/forecasting-deployment-config-${{parameters.deploymentType}}.yml"
           deploy_script="Custom_Script/mlops-pipelines/scripts/deploy_or_update_models.py"
           python $deploy_script --grouping-tags '${{parameters.groupingTags}}' \
                                 --sorting-tags '${{parameters.sortingTags}}' \
                                 --routing-model-name '${{parameters.routingModelName}}' \
                                 --output 'models_deployed.pkl' \
+                                --deploy-config-file $deployment_config_file \
                                 --aks-target '${{parameters.amlAksName}}' \
                                 --service-prefix '${{parameters.webservicePrefix}}' \
                                 --container-size '${{parameters.containerSize}}' \
@@ -121,10 +124,10 @@ jobs:
           deployment_config_path="Custom_Script/mlops-pipelines/3-modeling/deploy-models/"
           if [ "${{parameters.deploymentType}}" == "aci" ]; then
             service_name="test-${{parameters.routingServiceName}}"
-            deployment_params="--deploy-config-file $deployment_config_path/deployment-config-aci.yml"
+            deployment_params="--deploy-config-file $deployment_config_path/routing-deployment-config-aci.yml"
           elif [ "${{parameters.deploymentType}}" == "aks" ]; then
             service_name=${{parameters.routingServiceName}}
-            deployment_params="--compute-target ${{parameters.amlAksName}} --deploy-config-file $deployment_config_path/deployment-config-aks.yml"
+            deployment_params="--compute-target ${{parameters.amlAksName}} --deploy-config-file $deployment_config_path/routing-deployment-config-aks.yml"
           fi
           # Deploy model
           az ml model deploy $deployment_params \

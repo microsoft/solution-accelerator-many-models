@@ -3,8 +3,9 @@
 
 import pathlib
 import argparse
-import joblib
 import warnings
+import joblib
+import yaml
 from azureml.core import Workspace, Model, Environment, Webservice
 from azureml.core.conda_dependencies import CondaDependencies
 from azureml.core.model import InferenceConfig
@@ -13,16 +14,13 @@ from azureml.core.webservice import AciWebservice, AksWebservice
 from azureml.exceptions import WebserviceException
 
 
-DEPLOYMENT_TYPES = ['aci', 'aks']
-
-
-def main(ws, deployment_type, routing_model_name, grouping_tags=[], sorting_tags=[], 
+def main(ws, config_file, routing_model_name, 
+         grouping_tags=[], sorting_tags=[], 
          aks_target=None, service_prefix='manymodels-', container_size=250):
 
-    if deployment_type not in DEPLOYMENT_TYPES:
-        raise ValueError('Wrong deployment type. Expected: {}'.format(', '.join(DEPLOYMENT_TYPES)))
-
-    
+    # Deployment configuration
+    deployment_config = get_deployment_config(config_file, aks_target)
+        
     # Get deployed models
     models_deployed = get_deployed_models(routing_model_name)
 
@@ -30,9 +28,6 @@ def main(ws, deployment_type, routing_model_name, grouping_tags=[], sorting_tags
     all_groups = get_models_in_groups(grouping_tags=grouping_tags, sorting_tags=sorting_tags,
                                       exclude_names=[routing_model_name], container_size=container_size)
     groups_new, groups_updated = split_groups_new_updated(all_groups, models_deployed)
-
-    # Deployment configuration
-    deployment_config = get_deployment_config(deployment_type, aks_target)
 
 
     deployments = []
@@ -159,31 +154,32 @@ def split_groups_new_updated(model_groups, deployed_models):
     return groups_new, groups_updated
 
 
-def get_deployment_config(deployment_type, aks_target=None, cores=1, memory=1):
+def get_deployment_config(config_file, aks_target=None):
     
-    if deployment_type == 'aks' and aks_target is None:
+    DEPLOYMENT_TYPES = ['aci', 'aks']
+    
+    # Deploy configuration
+    deployment_type, deployment_config = get_webservice_config(config_file)
+    
+    if deployment_type not in DEPLOYMENT_TYPES:
+        raise ValueError('Wrong deployment type. Expected: {}'.format(', '.join(DEPLOYMENT_TYPES)))
+    elif deployment_type == 'aks' and aks_target is None:
         raise ValueError('AKS target name needs to be set in AKS deployments')
 
-    # Define inference environment
+    deployment_target = AksCompute(ws, aks_target) if deployment_type == 'aks' else None
+
+    # Inference environment
     forecast_env = Environment.from_conda_specification(
         name='many_models_environment',
         file_path='Custom_Script/scripts/forecast_webservice.conda.yml'
     )
     
-    # Define inference configuration
+    # Inference configuration
     inference_config = InferenceConfig(
         source_directory='Custom_Script/scripts/',
         entry_script='forecast_webservice.py',
         environment=forecast_env
     )
-
-    # Define deploy configuration
-    if deployment_type == 'aci':
-        deployment_config = AciWebservice.deploy_configuration(cpu_cores=cores, memory_gb=memory)
-        deployment_target = None
-    elif deployment_type == 'aks':
-        deployment_config = AksWebservice.deploy_configuration(cpu_cores=cores, memory_gb=memory)
-        deployment_target = AksCompute(ws, aks_target)
     
     config = {
         'inference_config': inference_config,
@@ -192,6 +188,23 @@ def get_deployment_config(deployment_type, aks_target=None, cores=1, memory=1):
     }
     
     return config
+
+
+def get_webservice_config(config_file):
+    
+    COMPUTE_TYPES = ['aci', 'aks']    
+
+    with open(config_file) as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+
+    webservice_type = config['computeType'].lower()
+    if webservice_type not in COMPUTE_TYPES:
+        raise ValueError('Wrong compute type. Expected: {}'.format(', '.join(COMPUTE_TYPES)))
+
+    compute = AciWebservice if webservice_type == 'aci' else AksWebservice if webservice_type == 'aks' else None
+    webservice_config = compute.deploy_configuration(**config['containerResourceRequirements'])
+
+    return webservice_type, webservice_config
 
 
 def deploy_model_group(ws, group_name, group_models, deployment_config, name_prefix='manymodels-', update=False):
@@ -228,6 +241,7 @@ def parse_args(args=None):
     parser.add_argument('--subscription-id', required=True, type=str)
     parser.add_argument('--resource-group', required=True, type=str)
     parser.add_argument('--workspace-name', required=True, type=str)
+    parser.add_argument("--deploy-config-file", required=True, type=str)
     parser.add_argument("--grouping-tags", default='', type=lambda str: [t for t in str.split(',') if t])
     parser.add_argument("--sorting-tags", default='', type=lambda str: [t for t in str.split(',') if t])
     parser.add_argument("--routing-model-name", type=str, default='deployed_models_info')
@@ -257,8 +271,8 @@ if __name__ == "__main__":
     )
 
     models_deployed = main(
-        ws, 
-        deployment_type='aks' if args.aks_target else 'aci',
+        ws,
+        config_file=args.deploy_config_file,
         routing_model_name=args.routing_model_name,
         grouping_tags=args.grouping_tags,
         sorting_tags=args.sorting_tags,
