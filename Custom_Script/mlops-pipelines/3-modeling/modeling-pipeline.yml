@@ -72,10 +72,10 @@ stages:
       sortingTags: '$(AML_MODEL_SORTING_TAGS)'
       webservicePrefix: test-'$(AML_WEBSERVICE_PREFIX)'
       containerSize: '$(AML_MAX_CONTAINER_SIZE)'
-      routingModelName: '$(AML_ROUTING_MODEL_NAME)'
+      routingModelName: test-'$(AML_ROUTING_MODEL_NAME)'
       routingModelTagName: '$(AML_ROUTING_MODEL_TAG_NAME)'
       routingModelTagValue: '$(AML_ROUTING_MODEL_TAG_VALUE)'
-      routingServiceName: '$(AML_ROUTING_WEBSERVICE)'
+      routingServiceName: test-'$(AML_ROUTING_WEBSERVICE)'
 
 - stage: deploy_models_aks
   displayName: 'Deploy Models to AKS'

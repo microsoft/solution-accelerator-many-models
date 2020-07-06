@@ -123,15 +123,13 @@ jobs:
           # Deployment config
           deployment_config_path="Custom_Script/mlops-pipelines/3-modeling/deploy-models/"
           if [ "${{parameters.deploymentType}}" == "aci" ]; then
-            service_name="test-${{parameters.routingServiceName}}"
             deployment_params="--deploy-config-file $deployment_config_path/routing-deployment-config-aci.yml"
           elif [ "${{parameters.deploymentType}}" == "aks" ]; then
-            service_name=${{parameters.routingServiceName}}
             deployment_params="--compute-target ${{parameters.amlAksName}} --deploy-config-file $deployment_config_path/routing-deployment-config-aks.yml"
           fi
           # Deploy model
           az ml model deploy $deployment_params \
-                             --name $service_name \
+                             --name ${{parameters.routingServiceName}} \
                              --model-metadata-file '$(Pipeline.Workspace)/routingmodel-${{parameters.deploymentType}}/routing_model.json' \
                              --runtime python \
                              --source-directory Custom_Script/scripts \
