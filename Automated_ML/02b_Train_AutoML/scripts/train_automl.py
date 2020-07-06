@@ -22,6 +22,7 @@ from azureml.train.automl import AutoMLConfig
 from azureml.automl.core.shared import constants
 import datetime
 from entry_script_helper import EntryScriptHelper
+from train_automl_helper import str2bool, compose_logs
 import logging
 from azureml.automl.core.shared.exceptions import (AutoMLException,
                                                    ClientException, ErrorTypes)
@@ -38,8 +39,10 @@ current_step_run = Run.get_context()
 
 LOG_NAME = "user_log"
 
+
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--process_count_per_node", default=1, type=int, help="number of processes per node")
+parser.add_argument("--retrain_failed_models", default=False, type=str2bool, help="retrain failed models only")
 
 args, _ = parser.parse_known_args()
 
@@ -59,15 +62,16 @@ automl_settings = read_from_json()
 timestamp_column = automl_settings.get('time_column_name', None)
 grain_column_names = automl_settings.get('grain_column_names', [])
 group_column_names = automl_settings.get('group_column_names', [])
-n_test_periods = automl_settings.get('max_horizon', 0)
+max_horizon = automl_settings.get('max_horizon', 0)
 target_column = automl_settings.get('label_column_name', None)
 
 
-print("n_test_periods: {}".format(n_test_periods))
+print("max_horizon: {}".format(max_horizon))
 print("target_column: {}".format(target_column))
 print("timestamp_column: {}".format(timestamp_column))
 print("group_column_names: {}".format(group_column_names))
 print("grain_column_names: {}".format(grain_column_names))
+print("retrain_failed_models: {}".format(args.retrain_failed_models))
 
 
 def init():
@@ -91,7 +95,7 @@ def init():
 
     logger.info(f"{__file__}.output_folder:{output_folder}")
     logger.info("init()")
-    sleep(randint(1, 60))
+    sleep(randint(1, 120))
 
 
 def train_model(file_path, data, logger):
@@ -139,6 +143,30 @@ def run(input_data):
                 data = pd.read_parquet(file_path)
             else:
                 data = pd.read_csv(file_path, parse_dates=[timestamp_column])
+
+            tags_dict = {'ModelType': 'AutoML'}
+
+            for column_name in group_column_names:
+                tags_dict.update({column_name: str(data.iat[0, data.columns.get_loc(column_name)])})
+
+            if args.retrain_failed_models:
+                logger.info('querying for existing models')
+                try:
+                    tags = [[k, v] for k, v in tags_dict.items()]
+                    models = Model.list(current_step_run.experiment.workspace, tags=tags, latest=True)
+
+                    if models:
+                        logger.info("model already exists for the dataset " + models[0].name)
+                        logs = compose_logs(file_name, models[0], date1)
+                        resultList.append(logs)
+                        continue
+                except Exception as error:
+                    logger.info('Failed to list the models. ' + 'Error message: ' + str(error))
+
+            tags_dict.update({'InputData': file_path})
+            tags_dict.update({'StepRunId': current_step_run.id})
+            tags_dict.update({'RunId': current_step_run.parent.id})
+
             # train model
             fitted_model, model_name, current_run = train_model(file_path, data, logger)
 
@@ -150,12 +178,6 @@ def run(input_data):
                 logger.info(model_name)
 
                 logger.info('register model')
-
-                tags_dict = {'ModelType': 'AutoML'}
-                for column_name in group_column_names:
-                    tags_dict.update({column_name: str(data.iat[0, data.columns.get_loc(column_name)])})
-
-                tags_dict.update({'InputData': file_path})
 
                 current_run.register_model(model_name=model_name, description='AutoML', tags=tags_dict)
                 print('Registered ' + model_name)
