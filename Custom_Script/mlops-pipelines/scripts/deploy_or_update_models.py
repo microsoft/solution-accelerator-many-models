@@ -19,13 +19,13 @@ def main(ws, config_file, routing_model_name,
          aks_target=None, service_prefix='manymodels-', container_size=250):
 
     # Deployment configuration
-    deployment_config = get_deployment_config(config_file, aks_target)
+    deployment_config = get_deployment_config(ws, config_file, aks_target)
         
     # Get deployed models
     models_deployed, existing_services = get_deployed_models(ws, routing_model_name)
 
     # Get groups to deploy or update and old services to be deleted
-    all_groups = get_models_in_groups(grouping_tags=grouping_tags, sorting_tags=sorting_tags,
+    all_groups = get_models_in_groups(ws, grouping_tags=grouping_tags, sorting_tags=sorting_tags,
                                       exclude_names=[routing_model_name], container_size=container_size)
     groups_new, groups_updated, oldgroups_delete = split_groups(all_groups, models_deployed)
 
@@ -98,7 +98,7 @@ def get_deployed_models(ws, routing_model_name):
     return deployed_models, services
 
 
-def get_models_in_groups(grouping_tags=[], sorting_tags=[], exclude_names=[], exclude_tags=[], 
+def get_models_in_groups(ws, grouping_tags=[], sorting_tags=[], exclude_names=[], exclude_tags=[],
                          container_size=250, page_count=100):
     
     # Get all models registered in the workspace
@@ -149,6 +149,7 @@ def split_groups(model_groups, deployed_models):
             service_models = services_todelete.setdefault(m['webservice'], [])
             service_models.append(model_name)
 
+    # FIXME compare with models deployed
     # Split groups: new / to be updated / not changed
     groups_new, groups_updated = {}, {}
     for group_name, group_models in model_groups.items():
@@ -168,7 +169,7 @@ def split_groups(model_groups, deployed_models):
     return groups_new, groups_updated, services_todelete
 
 
-def get_deployment_config(config_file, aks_target=None):
+def get_deployment_config(ws, config_file, aks_target=None):
     
     DEPLOYMENT_TYPES = ['aci', 'aks']
     
