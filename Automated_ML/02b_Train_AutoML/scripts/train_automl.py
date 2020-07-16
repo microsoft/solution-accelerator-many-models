@@ -4,6 +4,7 @@
 
 import pandas as pd
 import os
+import tempfile
 import uuid
 
 from multiprocessing import current_process
@@ -90,6 +91,7 @@ def init():
     debug_log = automl_settings.get('debug_log', None)
     if debug_log is not None:
         automl_settings['debug_log'] = os.path.join(log_dir, debug_log)
+        automl_settings['path'] = tempfile.mkdtemp()
         print(automl_settings['debug_log'])
         logger.info(f"{__file__}.AutoML debug log:{debug_log}")
 
