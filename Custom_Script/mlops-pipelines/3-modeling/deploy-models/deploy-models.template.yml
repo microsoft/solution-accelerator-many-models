@@ -18,7 +18,7 @@ parameters:
   type: string
 - name: sortingTags
   type: string
-- name: groupingTags
+- name: splittingTags
   type: string
 - name: webservicePrefix
   type: string
@@ -58,7 +58,7 @@ jobs:
           deployment_config_path="Custom_Script/mlops-pipelines/3-modeling/deploy-models/"
           deployment_config_file="$deployment_config_path/forecasting-deployment-config-${{parameters.deploymentType}}.yml"
           deploy_script="Custom_Script/mlops-pipelines/scripts/deploy_or_update_models.py"
-          python $deploy_script --grouping-tags '${{parameters.groupingTags}}' \
+          python $deploy_script --splitting-tags '${{parameters.splittingTags}}' \
                                 --sorting-tags '${{parameters.sortingTags}}' \
                                 --routing-model-name '${{parameters.routingModelName}}' \
                                 --output 'models_deployed.pkl' \

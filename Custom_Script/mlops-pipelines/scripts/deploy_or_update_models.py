@@ -14,8 +14,8 @@ from azureml.core.webservice import AciWebservice, AksWebservice
 from azureml.exceptions import WebserviceException
 
 
-def main(ws, config_file, routing_model_name, 
-         grouping_tags=[], sorting_tags=[], 
+def main(ws, config_file, routing_model_name,
+         splitting_tags=[], sorting_tags=[],
          aks_target=None, service_prefix='manymodels-', container_size=250):
 
     # Deployment configuration
@@ -25,7 +25,7 @@ def main(ws, config_file, routing_model_name,
     models_deployed, existing_services = get_deployed_models(ws, routing_model_name)
 
     # Get groups to deploy or update and old services to be deleted
-    all_groups = get_models_in_groups(ws, grouping_tags=grouping_tags, sorting_tags=sorting_tags,
+    all_groups = get_models_in_groups(ws, splitting_tags=splitting_tags, sorting_tags=sorting_tags,
                                       exclude_names=[routing_model_name], container_size=container_size)
     groups_new, groups_updated, oldgroups_delete = split_groups(all_groups, models_deployed)
 
@@ -98,7 +98,7 @@ def get_deployed_models(ws, routing_model_name):
     return deployed_models, services
 
 
-def get_models_in_groups(ws, grouping_tags=[], sorting_tags=[], exclude_names=[], exclude_tags=[],
+def get_models_in_groups(ws, splitting_tags=[], sorting_tags=[], exclude_names=[], exclude_tags=[],
                          container_size=250, page_count=100):
     
     # Get all models registered in the workspace
@@ -117,12 +117,12 @@ def get_models_in_groups(ws, grouping_tags=[], sorting_tags=[], exclude_names=[]
         if m.name in exclude_names or any(m.tags.get(t) == v for t,v in exclude_tags):
             continue
 
-        if any(t not in m.tags.keys() for t in grouping_tags):
+        if any(t not in m.tags.keys() for t in splitting_tags):
             print(f'Model "{m.name}" does not contain grouping tags. Skipping.')
             continue
 
         # Group models in subgroups up to container_size inside groups splitted by grouping tags
-        group_name = combine_tags(m, grouping_tags) if grouping_tags else 'modelgroup'
+        group_name = combine_tags(m, splitting_tags) if splitting_tags else 'modelgroup'
         subgroups = grouped_models.setdefault(group_name, [[]])
         if len(subgroups[-1]) == container_size:
             subgroups.append([])
@@ -257,7 +257,7 @@ def parse_args(args=None):
     parser.add_argument('--resource-group', required=True, type=str)
     parser.add_argument('--workspace-name', required=True, type=str)
     parser.add_argument('--deploy-config-file', required=True, type=str)
-    parser.add_argument('--grouping-tags', default='', type=lambda str: [t for t in str.split(',') if t])
+    parser.add_argument('--splitting-tags', default='', type=lambda str: [t for t in str.split(',') if t])
     parser.add_argument('--sorting-tags', default='', type=lambda str: [t for t in str.split(',') if t])
     parser.add_argument('--routing-model-name', type=str, default='deployed_models_info')
     parser.add_argument('--output', type=str, default='models_deployed.pkl')
@@ -289,7 +289,7 @@ if __name__ == "__main__":
         ws,
         config_file=args.deploy_config_file,
         routing_model_name=args.routing_model_name,
-        grouping_tags=args.grouping_tags,
+        splitting_tags=args.splitting_tags,
         sorting_tags=args.sorting_tags,
         aks_target=args.aks_target,
         service_prefix=args.service_prefix,

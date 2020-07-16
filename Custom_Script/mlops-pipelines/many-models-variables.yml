@@ -36,7 +36,7 @@ variables:
   # Real-time inferencing
   - name: AML_AKS_NAME
     value: manymodels-aks
-  - name: AML_MODEL_GROUPING_TAGS
+  - name: AML_MODEL_SPLITTING_TAGS
     value: StoreGroup100
   - name: AML_MODEL_SORTING_TAGS
     value: StoreGroup10

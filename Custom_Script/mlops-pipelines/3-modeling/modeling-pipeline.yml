@@ -68,7 +68,7 @@ stages:
       amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
       deploymentType: aci
       amlAksName: ''
-      groupingTags: '$(AML_MODEL_GROUPING_TAGS)'
+      splittingTags: '$(AML_MODEL_SPLITTING_TAGS)'
       sortingTags: '$(AML_MODEL_SORTING_TAGS)'
       webservicePrefix: test-'$(AML_WEBSERVICE_PREFIX)'
       containerSize: '$(AML_MAX_CONTAINER_SIZE)'
@@ -90,7 +90,7 @@ stages:
       amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
       deploymentType: aks
       amlAksName: '$(AML_AKS_NAME)'
-      groupingTags: '$(AML_MODEL_GROUPING_TAGS)'
+      splittingTags: '$(AML_MODEL_SPLITTING_TAGS)'
       sortingTags: '$(AML_MODEL_SORTING_TAGS)'
       webservicePrefix: '$(AML_WEBSERVICE_PREFIX)'
       containerSize: '$(AML_MAX_CONTAINER_SIZE)'
