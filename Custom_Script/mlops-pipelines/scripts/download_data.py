@@ -33,7 +33,7 @@ def parse_args(args=None):
 
     if args_parsed.path is None:
         args_parsed.path = 'oj_sales_data{suffix}'.format(
-            suffix = '_{}'.format(args_parsed.maxfiles) if args_parsed.maxfiles else ''
+            suffix='_{}'.format(args_parsed.maxfiles) if args_parsed.maxfiles else ''
         )
 
     args_parsed.maxfiles = None if args_parsed.maxfiles <= 0 else args_parsed.maxfiles

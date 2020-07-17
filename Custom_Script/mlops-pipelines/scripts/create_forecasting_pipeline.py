@@ -1,11 +1,9 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-import pathlib
 import argparse
 from azureml.core import Workspace, Datastore, Dataset, Environment
 from azureml.data.data_reference import DataReference
-from azureml.core.conda_dependencies import CondaDependencies
 from azureml.core.compute import AmlCompute
 from azureml.pipeline.core import Pipeline, PipelineData, PublishedPipeline
 from azureml.pipeline.steps import PythonScriptStep
@@ -22,7 +20,7 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, output_name, compute
     datastore = ws.get_default_datastore()
     output_dir = PipelineData(name='forecasting_output', datastore=datastore)
     predictions_datastore = Datastore.register_azure_blob_container(
-        workspace=ws, 
+        workspace=ws,
         datastore_name=output_name,
         container_name=output_name,
         account_name=datastore.account_name,
@@ -30,7 +28,7 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, output_name, compute
         create_if_not_exists=True
     )
     predictions_dref = DataReference(predictions_datastore)
-    
+
     # Get the compute target
     compute = AmlCompute(ws, compute_name)
 
@@ -54,7 +52,7 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, output_name, compute
 
     # Create step to copy predictions
     upload_predictions_step = PythonScriptStep(
-        name='many-models-copy-predictions',   
+        name='many-models-copy-predictions',
         source_directory='Custom_Script/scripts/',
         script_name='copy_predictions.py',
         compute_target=compute,
@@ -69,7 +67,7 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, output_name, compute
     # Create the pipeline
     train_pipeline = Pipeline(workspace=ws, steps=[parallel_run_step, upload_predictions_step])
     train_pipeline.validate()
-    
+
     # Publish it and replace old pipeline
     disable_old_pipelines(ws, pipeline_name)
     published_pipeline = train_pipeline.publish(
@@ -83,13 +81,13 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, output_name, compute
 
 
 def get_parallel_run_config(ws, dataset_name, compute, processes_per_node=8, node_count=3, timeout=180):
-    
+
     # Configure environment for ParallelRunStep
     forecast_env = Environment.from_conda_specification(
         name='many_models_environment',
         file_path='Custom_Script/scripts/forecast.conda.yml'
     )
-    
+
     # Set up ParallelRunStep configuration
     parallel_run_config = ParallelRunConfig(
         source_directory='Custom_Script/scripts/',
@@ -103,7 +101,7 @@ def get_parallel_run_config(ws, dataset_name, compute, processes_per_node=8, nod
         compute_target=compute,
         node_count=node_count
     )
-    
+
     return parallel_run_config
 
 
@@ -138,23 +136,12 @@ if __name__ == "__main__":
     )
 
     pipeline_id = main(
-        ws, 
-        pipeline_name=args.name, 
-        pipeline_version=args.version, 
+        ws,
+        pipeline_name=args.name,
+        pipeline_version=args.version,
         dataset_name=args.dataset,
         output_name=args.output,
         compute_name=args.compute
     )
 
-    
-
-    pipeline_id = main(
-        ws, 
-        pipeline_name='many-models-forecasting', 
-        pipeline_version='v0', 
-        dataset_name='oj_sales_data_10',
-        output_name='predictions',
-        compute_name='cpu-compute'
-    )
-    
     print('Forecasting pipeline {} version {} published with ID {}'.format(args.name, args.version, pipeline_id))

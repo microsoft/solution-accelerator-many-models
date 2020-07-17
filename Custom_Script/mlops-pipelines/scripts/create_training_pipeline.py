@@ -1,10 +1,8 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-import pathlib
 import argparse
 from azureml.core import Workspace, Dataset, Environment
-from azureml.core.conda_dependencies import CondaDependencies
 from azureml.core.compute import AmlCompute
 from azureml.pipeline.core import Pipeline, PipelineData, PublishedPipeline
 from azureml.contrib.pipeline.steps import ParallelRunConfig, ParallelRunStep
@@ -29,10 +27,10 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
         output=output_dir,
         allow_reuse=False,
         arguments=[
-            '--target_column', 'Quantity', 
-            '--n_test_periods', 6, 
-            '--forecast_granularity', 7, 
-            '--timestamp_column', 'WeekStarting', 
+            '--target_column', 'Quantity',
+            '--n_test_periods', 6,
+            '--forecast_granularity', 7,
+            '--timestamp_column', 'WeekStarting',
             '--model_type', 'lr'
         ]
     )
@@ -40,7 +38,7 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
     # Create the pipeline
     train_pipeline = Pipeline(workspace=ws, steps=[parallel_run_step])
     train_pipeline.validate()
-    
+
     # Publish it and replace old pipeline
     disable_old_pipelines(ws, pipeline_name)
     published_pipeline = train_pipeline.publish(
@@ -54,16 +52,16 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
 
 
 def get_parallel_run_config(ws, dataset_name, compute_name, processes_per_node=8, node_count=3, timeout=300):
-    
+
     # Configure environment for ParallelRunStep
     train_env = Environment.from_conda_specification(
         name='many_models_environment',
         file_path='Custom_Script/scripts/train.conda.yml'
     )
-    
+
     # Get the compute target
     compute = AmlCompute(ws, compute_name)
-    
+
     # Set up ParallelRunStep configuration
     parallel_run_config = ParallelRunConfig(
         source_directory='Custom_Script/scripts/',
@@ -77,7 +75,7 @@ def get_parallel_run_config(ws, dataset_name, compute_name, processes_per_node=8
         compute_target=compute,
         node_count=node_count
     )
-    
+
     return parallel_run_config
 
 
@@ -111,11 +109,11 @@ if __name__ == "__main__":
     )
 
     pipeline_id = main(
-        ws, 
-        pipeline_name=args.name, 
-        pipeline_version=args.version, 
+        ws,
+        pipeline_name=args.name,
+        pipeline_version=args.version,
         dataset_name=args.dataset,
         compute_name=args.compute
     )
-    
+
     print('Training pipeline {} version {} published with ID {}'.format(args.name, args.version, pipeline_id))

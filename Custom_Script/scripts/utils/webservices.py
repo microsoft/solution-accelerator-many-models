@@ -1,8 +1,8 @@
 import json
-import importlib # To import pandas if needed
+import importlib  # To import pandas if needed
 
 
-## Input and output sample formats
+# Input and output sample formats
 
 input_sample = [
     {
@@ -43,18 +43,18 @@ output_sample = [
 ]
 
 
-## Helper functions
+# Helper functions
 
 def read_input(input_raw, format=True):
     ''' Read and format data received as input '''
     input_records = json.loads(input_raw)
-    
+
     if format:
         input_records = [{
             'metadata': format_input_metadata(input_record),
             'data': format_input_data(input_record)
         } for input_record in input_records]
-    
+
     return input_records
 
 
@@ -71,8 +71,8 @@ def format_input_data(input_record):
 
 def format_output_record(metadata, dates, values):
     ''' Format data to be sent as one record within the output list '''
-    output_record = { 
-        **metadata, 
+    output_record = {
+        **metadata,
         "forecast": {
             "dates": [d.strftime('%Y-%d-%m') for d in dates],
             "values": values.tolist()

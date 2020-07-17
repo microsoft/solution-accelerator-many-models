@@ -4,4 +4,3 @@
 
 def get_model_name(store, brand, model_type):
     return f'{model_type}_{store}_{brand}'
-

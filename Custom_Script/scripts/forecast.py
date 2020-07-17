@@ -35,7 +35,7 @@ def run(input_data):
         brand_name = file_name.split('_')[1]
 
         # 3.0 Set up data to predict on
-        data = pd.read_csv(csv_file_path, header = 0)
+        data = pd.read_csv(csv_file_path, header=0)
         data[args.timestamp_column] = data[args.timestamp_column].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'))
 
         prediction_df = format_prediction_data(
@@ -59,7 +59,7 @@ def run(input_data):
 
         prediction_df['Store'] = store_name
         prediction_df['Brand'] = brand_name
-        
+
         results = results.append(prediction_df[['Date', 'Prediction', 'Store', 'Brand']])
 
     return results
