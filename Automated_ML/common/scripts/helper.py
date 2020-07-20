@@ -23,7 +23,6 @@ def get_automl_environment():
     train_conda_deps.add_pip_package('py-cpuinfo==5.0.0')
     train_conda_deps.add_conda_package('psutil')
     train_conda_deps.add_conda_package('pandas==0.23.4')
-    train_conda_deps.add_conda_package('psutil')
     train_conda_deps.add_conda_package('numpy==1.16.2')
     train_conda_deps.add_conda_package('fbprophet==0.5')
     train_conda_deps.add_conda_package('py-xgboost==0.90')
