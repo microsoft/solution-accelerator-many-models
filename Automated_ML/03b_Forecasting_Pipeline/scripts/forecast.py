@@ -16,7 +16,7 @@ from azureml.core.model import Model
 from azureml.core import Experiment, Workspace, Run, Datastore
 from azureml.train.automl import AutoMLConfig
 from azureml.automl.core.shared import constants
-from entry_script import EntryScript
+from azureml_user.parallel_run import EntryScript
 
 import json
 
@@ -47,7 +47,7 @@ def run(input_data):
     for idx, file_path in enumerate(input_data):
         date1 = datetime.datetime.now()
         file_name, file_extension = os.path.splitext(os.path.basename(file_path))
-
+        logger.info(file_path)
         if file_extension.lower() == ".parquet":
             data = pd.read_parquet(file_path)
         else:
@@ -77,13 +77,12 @@ def run(input_data):
         print('Unpickled the model ' + model_name)
 
         X_test = data.copy()
-        y_test = None
         if args.target_column_name is not None:
-            y_test = X_test.pop(args.target_column_name).values
+            X_test.pop(args.target_column_name)
 
         print("prediction data head")
         print(X_test.head())
-        y_predictions, X_trans = model.forecast(X_test)
+        y_predictions, X_trans = model.forecast(X_test, ignore_data_errors=True)
         print('Made predictions ' + model_name)
 
         # Insert predictions to test set
@@ -95,17 +94,7 @@ def run(input_data):
         cols = list(data.columns.values)
         print(cols)
 
-        if y_test is not None and args.time_column_name is not None:
-            if X_test.dtypes[args.time_column_name] != 'datetime64[ns]':
-                X_test[args.time_column_name] = pd.to_datetime(X_test[args.time_column_name])
-            print("align_outputs")
-            df_all = align_outputs(y_predictions, X_trans, X_test, y_test, args.target_column_name,
-                                   predicted_column_name)
-            print("rearrage columns so that predictions are last")
-            df_all = df_all[cols]
-            all_predictions = all_predictions.append(df_all)
-        else:
-            all_predictions = all_predictions.append(data)
+        all_predictions = all_predictions.append(data)
 
         # 5.0 Log the run
         date2 = datetime.datetime.now()
@@ -113,45 +102,3 @@ def run(input_data):
 
     print(all_predictions.head())
     return all_predictions
-
-
-def align_outputs(y_predicted, X_trans, X_test, y_test, target_column_name,
-                  predicted_column_name='predicted',
-                  horizon_colname='horizon_origin'):
-    """
-    Demonstrates how to get the output aligned to the inputs
-    using pandas indexes. Helps understand what happened if
-    the output's shape differs from the input shape, or if
-    the data got re-sorted by time and grain during forecasting.
-
-    Typical causes of misalignment are:
-    * we predicted some periods that were missing in actuals -> drop from eval
-    * model was asked to predict past max_horizon -> increase max horizon
-    * data at start of X_test was needed for lags -> provide previous periods
-    """
-
-    if (horizon_colname in X_trans):
-        df_fcst = pd.DataFrame({predicted_column_name: y_predicted,
-                                horizon_colname: X_trans[horizon_colname]})
-    else:
-        df_fcst = pd.DataFrame({predicted_column_name: y_predicted})
-
-    # y and X outputs are aligned by forecast() function contract
-    df_fcst.index = X_trans.index
-
-    # align original X_test to y_test
-    X_test_full = X_test.copy()
-    X_test_full[target_column_name] = y_test
-
-    # X_test_full's index does not include origin, so reset for merge
-    df_fcst.reset_index(inplace=True)
-    X_test_full = X_test_full.reset_index().drop(columns='index')
-
-    together = df_fcst.merge(X_test_full, how='right')
-
-    # drop rows where prediction or actuals are nan
-    # happens because of missing actuals
-    # or at edges of time due to lags/rolling windows
-    clean = together[together[[target_column_name,
-                               predicted_column_name]].notnull().all(axis=1)]
-    return(clean)

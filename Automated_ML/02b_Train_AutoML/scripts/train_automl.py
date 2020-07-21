@@ -1,11 +1,17 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+
 import pandas as pd
 import os
+import tempfile
 import uuid
 
 from multiprocessing import current_process
 from pathlib import Path
 from azureml.core.dataset import Dataset
 from azureml.core.model import Model
+from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
@@ -16,22 +22,28 @@ from azureml.core import ScriptRunConfig
 from azureml.train.automl import AutoMLConfig
 from azureml.automl.core.shared import constants
 import datetime
-from entry_script_helper import EntryScriptHelper
+from azureml_user.parallel_run import EntryScript
+from train_automl_helper import str2bool, compose_logs
 import logging
 from azureml.automl.core.shared.exceptions import (AutoMLException,
-                                                   ClientException)
+                                                   ClientException, ErrorTypes)
+from azureml.automl.core.shared.utilities import get_error_code
 
 
-from sklearn.externals import joblib
 from joblib import dump, load
+from random import randint
+from time import sleep
 import json
+
 
 current_step_run = Run.get_context()
 
 LOG_NAME = "user_log"
 
+
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--process_count_per_node", default=1, type=int, help="number of processes per node")
+parser.add_argument("--retrain_failed_models", default=False, type=str2bool, help="retrain failed models only")
 
 args, _ = parser.parse_known_args()
 
@@ -51,20 +63,21 @@ automl_settings = read_from_json()
 timestamp_column = automl_settings.get('time_column_name', None)
 grain_column_names = automl_settings.get('grain_column_names', [])
 group_column_names = automl_settings.get('group_column_names', [])
-n_test_periods = automl_settings.get('max_horizon', 0)
+max_horizon = automl_settings.get('max_horizon', 0)
 target_column = automl_settings.get('label_column_name', None)
 
 
-print("n_test_periods: {}".format(n_test_periods))
+print("max_horizon: {}".format(max_horizon))
 print("target_column: {}".format(target_column))
 print("timestamp_column: {}".format(timestamp_column))
 print("group_column_names: {}".format(group_column_names))
 print("grain_column_names: {}".format(grain_column_names))
+print("retrain_failed_models: {}".format(args.retrain_failed_models))
 
 
 def init():
-    EntryScriptHelper().config(LOG_NAME)
-    logger = logging.getLogger(LOG_NAME)
+    entry_script = EntryScript()
+    logger = entry_script.logger
 
     output_folder = os.path.join(os.environ.get("AZ_BATCHAI_INPUT_AZUREML", ""), "temp/output")
     working_dir = os.environ.get("AZ_BATCHAI_OUTPUT_logs", "")
@@ -78,11 +91,13 @@ def init():
     debug_log = automl_settings.get('debug_log', None)
     if debug_log is not None:
         automl_settings['debug_log'] = os.path.join(log_dir, debug_log)
+        automl_settings['path'] = tempfile.mkdtemp()
         print(automl_settings['debug_log'])
         logger.info(f"{__file__}.AutoML debug log:{debug_log}")
 
     logger.info(f"{__file__}.output_folder:{output_folder}")
     logger.info("init()")
+    sleep(randint(1, 120))
 
 
 def train_model(file_path, data, logger):
@@ -108,12 +123,16 @@ def train_model(file_path, data, logger):
 
 
 def run(input_data):
-    logger = logging.getLogger(LOG_NAME)
+    entry_script = EntryScript()
+    logger = entry_script.logger
     os.makedirs('./outputs', exist_ok=True)
     resultList = []
-    idx = 0
-    model_name = ''
-    current_run = ''
+    model_name = None
+    current_run = None
+    error_message = None
+    error_code = None
+    error_type = None
+    tags_dict = None
     for file in input_data:
         logs = []
         date1 = datetime.datetime.now()
@@ -127,6 +146,30 @@ def run(input_data):
                 data = pd.read_parquet(file_path)
             else:
                 data = pd.read_csv(file_path, parse_dates=[timestamp_column])
+
+            tags_dict = {'ModelType': 'AutoML'}
+
+            for column_name in group_column_names:
+                tags_dict.update({column_name: str(data.iat[0, data.columns.get_loc(column_name)])})
+
+            if args.retrain_failed_models:
+                logger.info('querying for existing models')
+                try:
+                    tags = [[k, v] for k, v in tags_dict.items()]
+                    models = Model.list(current_step_run.experiment.workspace, tags=tags, latest=True)
+
+                    if models:
+                        logger.info("model already exists for the dataset " + models[0].name)
+                        logs = compose_logs(file_name, models[0], date1)
+                        resultList.append(logs)
+                        continue
+                except Exception as error:
+                    logger.info('Failed to list the models. ' + 'Error message: ' + str(error))
+
+            tags_dict.update({'InputData': file_path})
+            tags_dict.update({'StepRunId': current_step_run.id})
+            tags_dict.update({'RunId': current_step_run.parent.id})
+
             # train model
             fitted_model, model_name, current_run = train_model(file_path, data, logger)
 
@@ -139,15 +182,10 @@ def run(input_data):
 
                 logger.info('register model')
 
-                tags_dict = {'ModelType': 'AutoML'}
-                for column_name in group_column_names:
-                    tags_dict.update({column_name: str(data.iat[0, data.columns.get_loc(column_name)])})
-
-                tags_dict.update({'InputData': file_path})
-
                 current_run.register_model(model_name=model_name, description='AutoML', tags=tags_dict)
                 print('Registered ' + model_name)
             except Exception as error:
+                error_type = ErrorTypes.Unclassified
                 error_message = 'Failed to register the model. ' + 'Error message: ' + str(error)
                 logger.info(error_message)
 
@@ -155,33 +193,48 @@ def run(input_data):
 
             logs.append('AutoML')
             logs.append(file_name)
-            logs.append(current_run)
+            logs.append(current_run.id)
+            logs.append(current_run.get_status())
             logs.append(model_name)
+            logs.append(tags_dict)
             logs.append(str(date1))
             logs.append(str(date2))
-            logs.append(current_run.get_status())
-            idx += 1
+            logs.append(error_type)
+            logs.append(error_code)
+            logs.append(error_message)
 
             logger.info('ending (' + file_path + ') ' + str(date2))
 
         # 10.1 Log the error message if an exception occurs
-        except (ValueError, UnboundLocalError, NameError, ModuleNotFoundError, AttributeError, ImportError,
-                FileNotFoundError, KeyError, ClientException, AutoMLException) as error:
+        except (ClientException, AutoMLException) as error:
             date2 = datetime.datetime.now()
-            error_message = 'Failed to train the model. ' + 'Error message: ' + str(error)
+            error_message = 'Failed to train the model. ' + 'Error : ' + str(error)
 
             logs.append('AutoML')
             logs.append(file_name)
-            logs.append(current_run)
+
+            if current_run:
+                logs.append(current_run.id)
+                logs.append(current_run.get_status())
+            else:
+                logs.append(current_run)
+                logs.append('Failed')
+
             logs.append(model_name)
+            logs.append(tags_dict)
             logs.append(str(date1))
             logs.append(str(date2))
+            if isinstance(error, AutoMLException):
+                logs.append(error.error_type)
+            else:
+                logs.append(None)
+            logs.append(get_error_code(error))
             logs.append(error_message)
-            idx += 1
 
             logger.info(error_message)
             logger.info('ending (' + file_path + ') ' + str(date2))
 
         resultList.append(logs)
 
-    return resultList
+    result = pd.DataFrame(data=resultList)
+    return result
