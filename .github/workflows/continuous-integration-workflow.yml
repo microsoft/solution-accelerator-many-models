@@ -1,48 +1,46 @@
 name: Run notebooks
-# This workflow is triggered on pushes to the repository.
+# This workflow is triggered on pull request to the repository.
 on: pull_request
-
 jobs:
   build:
-    name: Run python notebooks
+    name: Run custom script python notebooks
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up python
-      uses: actions/setup-python@v2
-    - name: Az login
-      uses: azure/login@v1.1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-        python-version: '3.6'
-        architecture: 'x64'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade azureml-sdk
-        python -m pip install jupyter
-    - name: Convert notebooks to python
-      run: |
-        jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
-        jupyter nbconvert --to script Custom_Script/01_Data_Preparation.ipynb
-        jupyter nbconvert --to script Custom_Script/02_Training_Pipeline.ipynb
-        jupyter nbconvert --to script Custom_Script/03_Forecasting_Pipeline.ipynb
-    - name: Set up workspace
-      run: |
-        python 00_Setup_AML_Workspace.py
-        env:
-          SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
-          RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
-          WORKSPACE_NAME: ${{ secrets.WORKSPACE_NAME }}
-          WORKSPACE_REGION: ${{ secrets.WORKSPACE_REGION }}
-    - name: Change directory
-      run: |
-        cd Custom_Script
-    - name: Data preparation
-      run: |
-        python 01_Data_Preparation.py
-    - name: Run training
-      run: |
-        python 02_Training_Pipeline.py
-    - name: Run forecasting
-      run: |
-        python 03_Forecasting_Pipeline.py
+      - uses: actions/checkout@v2
+      - name: Set up python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.6'
+          architecture: 'x64'
+      - name: az login
+        uses: azure/login@v1.1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade azureml-sdk
+          python -m pip install jupyter
+      - name: Convert notebooks to python
+        run: |
+          jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
+          jupyter nbconvert --to script Custom_Script/01_Data_Preparation.ipynb
+          jupyter nbconvert --to script Custom_Script/02_Training_Pipeline.ipynb
+          jupyter nbconvert --to script Custom_Script/03_Forecasting_Pipeline.ipynb
+      - name: Set up workspace
+        run: |
+          python 00_Setup_AML_Workspace.py
+          env:
+            SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
+            RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
+            WORKSPACE_NAME: ${{ secrets.WORKSPACE_NAME }}
+            WORKSPACE_REGION: ${{ secrets.WORKSPACE_REGION }}
+      - name: Change directory and data preparation
+        run: |
+          cd Custom_Script
+          python 01_Data_Preparation.py
+      - name: Run training
+        run: |
+          python 02_Training_Pipeline.py
+      - name: Run forecasting
+        run: |
+          python 03_Forecasting_Pipeline.py
