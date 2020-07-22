@@ -102,7 +102,7 @@ The functionality is broken into the notebooks folders designed to be run sequen
 | `Automated_ML\03b_Forecasting_Pipeline\03b_Forecasting_Pipeline.ipynb` | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.  |
 
 ## How-to-videos
-Watch these how-to-videos for a step by step walkthrough of the many model solution accelerator to learn how to setup your models using both the custom training script and automated ml.
+Watch these how-to-videos for a step by step walk-through of the many model solution accelerator to learn how to setup your models using both the custom training script and automated ml.
 
 ### Custom Script
 [![Watch the video](https://media.giphy.com/media/dWUKfameudyNGRnp1t/giphy.gif)](https://channel9.msdn.com/Shows/Docs-AI/Building-Large-Scale-Machine-Learning-Models-using-Azure-Machine-Learning)
