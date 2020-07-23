@@ -26,8 +26,6 @@ jobs:
           jupyter nbconvert --to script Custom_Script/01_Data_Preparation.ipynb
           jupyter nbconvert --to script Custom_Script/02_Training_Pipeline.ipynb
           jupyter nbconvert --to script Custom_Script/03_Forecasting_Pipeline.ipynb
-      - name: Ensure az cli is there
-        uses: azure/CLI@v1
       - name: Set up workspace
         run: |
           az account show
