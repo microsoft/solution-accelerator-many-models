@@ -1,0 +1,4 @@
+azureml-sdk
+azureml-opendatasets
+azureml-contrib-pipeline-steps
+jupyter
