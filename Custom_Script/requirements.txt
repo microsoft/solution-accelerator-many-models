@@ -2,3 +2,7 @@ azureml-sdk
 azureml-opendatasets
 azureml-contrib-pipeline-steps
 jupyter
+matplotlib
+numpy
+pandas
+seaborn
