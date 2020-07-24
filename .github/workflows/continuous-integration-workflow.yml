@@ -2,7 +2,7 @@ name: Run notebooks
 # This workflow is triggered on pull request to the repository.
 on: push
 jobs:
-  build:
+  setup-and-train:
     name: Run custom script python notebooks
     runs-on: ubuntu-latest
     steps:
@@ -12,10 +12,6 @@ jobs:
         with:
           python-version: '3.6'
           architecture: 'x64'
-      - name: az login
-        uses: azure/login@v1.1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade azureml-sdk
@@ -28,10 +24,6 @@ jobs:
           jupyter nbconvert --to script Custom_Script/03_Forecasting_Pipeline.ipynb
       - name: Set up workspace
         run: |
-          echo "ls ~/.azure"
-          ls -l ~/.azure
-          echo "ls $HOME/.azure"
-          ls -l $HOME/.azure
           python 00_Setup_AML_Workspace.py
           env:
             SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
