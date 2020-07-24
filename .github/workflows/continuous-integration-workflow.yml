@@ -32,13 +32,12 @@ jobs:
       - name: Set up workspace
         run: |
           python 00_Setup_AML_Workspace.py
-      - name: Change directory and data preparation
+      - name: Data preparation
         run: |
-          cd Custom_Script
-          python 01_Data_Preparation.py
+          python Custom_Script/01_Data_Preparation.py
       - name: Run training
         run: |
-          python 02_Training_Pipeline.py
-      - name: Run forecasting
+          python Custom_Script/02_Training_Pipeline.py
+      - name: Run prediction
         run: |
-          python 03_Forecasting_Pipeline.py
+          python Custom_Script/03_Forecasting_Pipeline.py
