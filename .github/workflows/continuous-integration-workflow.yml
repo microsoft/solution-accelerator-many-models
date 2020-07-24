@@ -34,10 +34,13 @@ jobs:
           python 00_Setup_AML_Workspace.py
       - name: Data preparation
         run: |
-          python Custom_Script/01_Data_Preparation.py
+          cd Custom_Script
+          python 01_Data_Preparation.py
       - name: Run training
         run: |
-          python Custom_Script/02_Training_Pipeline.py
+          cd Custom_Script
+          python 02_Training_Pipeline.py
       - name: Run prediction
         run: |
-          python Custom_Script/03_Forecasting_Pipeline.py
+          cd Custom_Script
+          python 03_Forecasting_Pipeline.py
