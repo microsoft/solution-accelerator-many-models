@@ -1,6 +1,10 @@
 name: Run notebooks
 # This workflow is triggered on pull request to the repository.
 on: push
+env:
+  AZUREML_SERVICE_PRINCIPAL_TENANT_ID: ${{ secrets.AZUREML_SERVICE_PRINCIPAL_TENANT_ID }}
+  AZUREML_SERVICE_PRINCIPAL_ID: ${{ secrets.AZUREML_SERVICE_PRINCIPAL_ID }}
+  AZUREML_SERVICE_PRINCIPAL_PASSWORD: ${{ secrets.AZUREML_SERVICE_PRINCIPAL_PASSWORD }}
 jobs:
   setup-and-train:
     name: Run custom script python notebooks
