@@ -2,6 +2,10 @@ name: Run notebooks
 # This workflow is triggered on pull request to the repository.
 on: push
 env:
+  SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
+  RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
+  WORKSPACE_NAME: ${{ secrets.WORKSPACE_NAME }}
+  WORKSPACE_REGION: ${{ secrets.WORKSPACE_REGION }}
   AZUREML_SERVICE_PRINCIPAL_TENANT_ID: ${{ secrets.AZUREML_SERVICE_PRINCIPAL_TENANT_ID }}
   AZUREML_SERVICE_PRINCIPAL_ID: ${{ secrets.AZUREML_SERVICE_PRINCIPAL_ID }}
   AZUREML_SERVICE_PRINCIPAL_PASSWORD: ${{ secrets.AZUREML_SERVICE_PRINCIPAL_PASSWORD }}
@@ -29,11 +33,6 @@ jobs:
       - name: Set up workspace
         run: |
           python 00_Setup_AML_Workspace.py
-          env:
-            SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
-            RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
-            WORKSPACE_NAME: ${{ secrets.WORKSPACE_NAME }}
-            WORKSPACE_REGION: ${{ secrets.WORKSPACE_REGION }}
       - name: Change directory and data preparation
         run: |
           cd Custom_Script
