@@ -26,21 +26,21 @@ jobs:
       - name: Convert notebooks to python
         run: |
           jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
-          jupyter nbconvert --to script 01b_Data_Preparation/01b_Data_Preparation.ipynb
-          jupyter nbconvert --to script 02b_Train_AutoML/02b_Train_AutoML.ipynb
-          jupyter nbconvert --to script 03b_Forecasting_Pipeline/03b_Forecasting_Pipeline.ipynb
+          jupyter nbconvert --to script Automated_ML/01b_Data_Preparation/01b_Data_Preparation.ipynb
+          jupyter nbconvert --to script Automated_ML/02b_Train_AutoML/02b_Train_AutoML.ipynb
+          jupyter nbconvert --to script Automated_ML/03b_Forecasting_Pipeline/03b_Forecasting_Pipeline.ipynb
       - name: Set up workspace
         run: |
           python 00_Setup_AML_Workspace.py
       - name: Data preparation
         run: |
-          cd 01b_Data_Preparation
+          cd Automated_ML/01b_Data_Preparation
           python 01b_Data_Preparation.py
       - name: Run training
         run: |
-          cd 02b_Train_AutoML
+          cd Automated_ML/02b_Train_AutoML
           python 02b_Train_AutoML.py
       - name: Run prediction
         run: |
-          cd 03b_Forecasting_Pipeline
+          cd Automated_ML/03b_Forecasting_Pipeline
           python 03b_Forecasting_Pipeline.py
