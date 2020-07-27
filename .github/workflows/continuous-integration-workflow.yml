@@ -1,6 +1,6 @@
 name: Run notebooks
 # This workflow is triggered on pull request to the repository.
-on: push
+on: workflow_dispatch
 env:
   SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
   RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
