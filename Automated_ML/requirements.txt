@@ -1,0 +1,5 @@
+azureml-sdk[automl]
+azureml-contrib-pipeline-steps
+jupyter
+numpy
+pandas

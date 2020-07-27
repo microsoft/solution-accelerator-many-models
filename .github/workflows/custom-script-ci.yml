@@ -1,4 +1,4 @@
-name: Run notebooks
+name: Custom script notebooks
 # This workflow is triggered on pull request to the repository.
 on: workflow_dispatch
 env:
