@@ -25,16 +25,16 @@ jobs:
           python -m pip install -r Automated_ML/requirements.txt
       - name: Convert notebooks to python
         run: |
-          export uuid=`uuidgen`
-          export uuid="${uuid:0:8}"
-          export WORKSPACE_NAME="${WORKSPACE_NAME_PREFIX}"-${uuid}
-          echo "Using workspace ${WORKSPACE_NAME}"
           jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
           jupyter nbconvert --to script Automated_ML/01b_Data_Preparation/01b_Data_Preparation.ipynb
           jupyter nbconvert --to script Automated_ML/02b_Train_AutoML/02b_Train_AutoML.ipynb
           jupyter nbconvert --to script Automated_ML/03b_Forecasting_Pipeline/03b_Forecasting_Pipeline.ipynb
       - name: Set up workspace
         run: |
+          export uuid=`uuidgen`
+          export uuid="${uuid:0:8}"
+          export WORKSPACE_NAME="${WORKSPACE_NAME_PREFIX}"-${uuid}
+          echo "Using workspace ${WORKSPACE_NAME}"
           python 00_Setup_AML_Workspace.py
       - name: Data preparation
         run: |

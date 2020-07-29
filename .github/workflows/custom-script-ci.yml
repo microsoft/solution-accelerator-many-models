@@ -31,6 +31,10 @@ jobs:
           jupyter nbconvert --to script Custom_Script/03_Forecasting_Pipeline.ipynb
       - name: Set up workspace
         run: |
+          export uuid=`uuidgen`
+          export uuid="${uuid:0:8}"
+          export WORKSPACE_NAME="${WORKSPACE_NAME_PREFIX}"-${uuid}
+          echo "Using workspace ${WORKSPACE_NAME}"
           python 00_Setup_AML_Workspace.py
       - name: Data preparation
         run: |
