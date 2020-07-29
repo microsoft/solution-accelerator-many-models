@@ -1,6 +1,6 @@
 name: Custom script notebooks
 # This workflow is triggered on pull request to the repository.
-on: workflow_dispatch
+on: push
 env:
   SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
   RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
