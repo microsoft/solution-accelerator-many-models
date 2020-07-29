@@ -1,0 +1,50 @@
+name: Automl notebooks
+# This workflow is triggered on pull request to the repository.
+on: pull_request
+env:
+  SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
+  RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
+  WORKSPACE_NAME_PREFIX: ${{ secrets.WORKSPACE_NAME }}
+  WORKSPACE_REGION: ${{ secrets.WORKSPACE_REGION }}
+  AZUREML_SERVICE_PRINCIPAL_TENANT_ID: ${{ secrets.AZUREML_SERVICE_PRINCIPAL_TENANT_ID }}
+  AZUREML_SERVICE_PRINCIPAL_ID: ${{ secrets.AZUREML_SERVICE_PRINCIPAL_ID }}
+  AZUREML_SERVICE_PRINCIPAL_PASSWORD: ${{ secrets.AZUREML_SERVICE_PRINCIPAL_PASSWORD }}
+jobs:
+  setup-and-train:
+    name: Run automl python notebooks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.6'
+          architecture: 'x64'
+      - name: Install dependencies
+        run: |
+          python -m pip install -r Automated_ML/requirements.txt
+      - name: Convert notebooks to python
+        run: |
+          jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
+          jupyter nbconvert --to script Automated_ML/01b_Data_Preparation/01b_Data_Preparation.ipynb
+          jupyter nbconvert --to script Automated_ML/02b_Train_AutoML/02b_Train_AutoML.ipynb
+          jupyter nbconvert --to script Automated_ML/03b_Forecasting_Pipeline/03b_Forecasting_Pipeline.ipynb
+      - name: Set up workspace
+        run: |
+          export uuid=`uuidgen`
+          export uuid="${uuid:0:8}"
+          export WORKSPACE_NAME="${WORKSPACE_NAME_PREFIX}"-${uuid}
+          echo "Using workspace ${WORKSPACE_NAME}"
+          python 00_Setup_AML_Workspace.py
+      - name: Data preparation
+        run: |
+          cd Automated_ML/01b_Data_Preparation
+          python 01b_Data_Preparation.py
+      - name: Run training
+        run: |
+          cd Automated_ML/02b_Train_AutoML
+          python 02b_Train_AutoML.py
+      - name: Run prediction
+        run: |
+          cd Automated_ML/03b_Forecasting_Pipeline
+          python 03b_Forecasting_Pipeline.py
