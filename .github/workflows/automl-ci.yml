@@ -14,6 +14,10 @@ jobs:
     name: Run automl python notebooks
     runs-on: ubuntu-latest
     steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.4.1
+        with:
+          access_token: ${{ github.token }}
       - uses: actions/checkout@v2
       - name: Set up python
         uses: actions/setup-python@v2
