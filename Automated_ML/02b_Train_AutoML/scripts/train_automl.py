@@ -16,13 +16,14 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
 import argparse
+import hashlib
 import pickle
 from azureml.core import Experiment, Workspace, Run
 from azureml.core import ScriptRunConfig
 from azureml.train.automl import AutoMLConfig
 from azureml.automl.core.shared import constants
 import datetime
-from entry_script_helper import EntryScriptHelper
+from azureml_user.parallel_run import EntryScript
 from train_automl_helper import str2bool, compose_logs
 import logging
 from azureml.automl.core.shared.exceptions import (AutoMLException,
@@ -76,8 +77,8 @@ print("retrain_failed_models: {}".format(args.retrain_failed_models))
 
 
 def init():
-    EntryScriptHelper().config(LOG_NAME)
-    logger = logging.getLogger(LOG_NAME)
+    entry_script = EntryScript()
+    logger = entry_script.logger
 
     output_folder = os.path.join(os.environ.get("AZ_BATCHAI_INPUT_AZUREML", ""), "temp/output")
     working_dir = os.environ.get("AZ_BATCHAI_OUTPUT_logs", "")
@@ -117,13 +118,12 @@ def train_model(file_path, data, logger):
 
     fitted_model = local_run.get_output()
 
-    u1 = uuid.uuid4()
-    model_name = 'automl_' + str(u1)[0:16]
-    return fitted_model, model_name, local_run
+    return fitted_model, local_run
 
 
 def run(input_data):
-    logger = logging.getLogger(LOG_NAME)
+    entry_script = EntryScript()
+    logger = entry_script.logger
     os.makedirs('./outputs', exist_ok=True)
     resultList = []
     model_name = None
@@ -170,8 +170,13 @@ def run(input_data):
             tags_dict.update({'RunId': current_step_run.parent.id})
 
             # train model
-            fitted_model, model_name, current_run = train_model(file_path, data, logger)
-
+            fitted_model, current_run = train_model(file_path, data, logger)
+            model_string = '_'.join(str(v) for k, v in sorted(tags_dict.items()) if k in group_column_names).lower()
+            logger.info("model string to encode " + model_string)
+            sha = hashlib.sha256()
+            sha.update(model_string.encode())
+            model_name = 'automl_' + sha.hexdigest()
+            tags_dict.update({'Hash': sha.hexdigest()})
             try:
                 logger.info('done training')
                 print('Trained best model ' + model_name)

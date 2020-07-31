@@ -12,11 +12,12 @@ from joblib import dump, load
 import time
 from datetime import timedelta
 import datetime
+import hashlib
 from azureml.core.model import Model
 from azureml.core import Experiment, Workspace, Run, Datastore
 from azureml.train.automl import AutoMLConfig
 from azureml.automl.core.shared import constants
-from entry_script import EntryScript
+from azureml_user.parallel_run import EntryScript
 
 import json
 
@@ -47,7 +48,7 @@ def run(input_data):
     for idx, file_path in enumerate(input_data):
         date1 = datetime.datetime.now()
         file_name, file_extension = os.path.splitext(os.path.basename(file_path))
-
+        logger.info(file_path)
         if file_extension.lower() == ".parquet":
             data = pd.read_parquet(file_path)
         else:
@@ -56,15 +57,19 @@ def run(input_data):
         tags_dict = {}
         for column_name in args.group_column_names:
             tags_dict.update({column_name: str(data.iat[0, data.columns.get_loc(column_name)])})
+        print(tags_dict)
 
-        tags = [['ModelType', 'AutoML']]
-        for k in tags_dict.keys():
-            tags.append([k, tags_dict[k]])
-        print(tags)
+        model_string = '_'.join(str(v) for k, v in sorted(tags_dict.items()) if k in args.group_column_names).lower()
+        logger.info("model string to encode " + model_string)
+        sha = hashlib.sha256()
+        sha.update(model_string.encode())
+        model_name = 'automl_' + sha.hexdigest()
+
         logger.info('starting (' + file_path + ') ' + str(date1))
 
         ws = current_step_run.experiment.workspace
-        model_list = Model.list(ws, tags=tags, latest=True)
+        logger.info('query the model ' + model_name)
+        model_list = Model.list(ws, name=model_name, latest=True)
 
         if not model_list:
             print("Could not find model")
