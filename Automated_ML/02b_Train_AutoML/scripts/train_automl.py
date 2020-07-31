@@ -122,8 +122,7 @@ def train_model(file_path, data, logger):
 
 
 def run(input_data):
-    entry_script = EntryScript()
-    logger = entry_script.logger
+    logger = logging.getLogger(LOG_NAME)
     os.makedirs('./outputs', exist_ok=True)
     resultList = []
     model_name = None
