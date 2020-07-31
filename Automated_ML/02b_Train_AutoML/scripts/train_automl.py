@@ -23,7 +23,7 @@ from azureml.core import ScriptRunConfig
 from azureml.train.automl import AutoMLConfig
 from azureml.automl.core.shared import constants
 import datetime
-from entry_script import EntryScript
+from entry_script_helper import EntryScriptHelper
 from train_automl_helper import str2bool, compose_logs
 import logging
 from azureml.automl.core.shared.exceptions import (AutoMLException,
