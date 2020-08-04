@@ -23,7 +23,7 @@ from azureml.core import ScriptRunConfig
 from azureml.train.automl import AutoMLConfig
 from azureml.automl.core.shared import constants
 import datetime
-from entry_script_helper import EntryScriptHelper
+from azureml_user.parallel_run import EntryScript
 from train_automl_helper import str2bool, compose_logs
 import logging
 from azureml.automl.core.shared.exceptions import (AutoMLException,
@@ -77,8 +77,8 @@ print("retrain_failed_models: {}".format(args.retrain_failed_models))
 
 
 def init():
-    EntryScriptHelper().config(LOG_NAME)
-    logger = logging.getLogger(LOG_NAME)
+    entry_script = EntryScript()
+    logger = entry_script.logger
 
     output_folder = os.path.join(os.environ.get("AZ_BATCHAI_INPUT_AZUREML", ""), "temp/output")
     working_dir = os.environ.get("AZ_BATCHAI_OUTPUT_logs", "")
@@ -122,7 +122,8 @@ def train_model(file_path, data, logger):
 
 
 def run(input_data):
-    logger = logging.getLogger(LOG_NAME)
+    entry_script = EntryScript()
+    logger = entry_script.logger
     os.makedirs('./outputs', exist_ok=True)
     resultList = []
     model_name = None
