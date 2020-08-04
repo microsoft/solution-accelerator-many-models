@@ -16,6 +16,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
 import argparse
+import hashlib
 import pickle
 from azureml.core import Experiment, Workspace, Run
 from azureml.core import ScriptRunConfig
@@ -117,9 +118,7 @@ def train_model(file_path, data, logger):
 
     fitted_model = local_run.get_output()
 
-    u1 = uuid.uuid4()
-    model_name = 'automl_' + str(u1)[0:16]
-    return fitted_model, model_name, local_run
+    return fitted_model, local_run
 
 
 def run(input_data):
@@ -170,8 +169,13 @@ def run(input_data):
             tags_dict.update({'RunId': current_step_run.parent.id})
 
             # train model
-            fitted_model, model_name, current_run = train_model(file_path, data, logger)
-
+            fitted_model, current_run = train_model(file_path, data, logger)
+            model_string = '_'.join(str(v) for k, v in sorted(tags_dict.items()) if k in group_column_names).lower()
+            logger.info("model string to encode " + model_string)
+            sha = hashlib.sha256()
+            sha.update(model_string.encode())
+            model_name = 'automl_' + sha.hexdigest()
+            tags_dict.update({'Hash': sha.hexdigest()})
             try:
                 logger.info('done training')
                 print('Trained best model ' + model_name)
