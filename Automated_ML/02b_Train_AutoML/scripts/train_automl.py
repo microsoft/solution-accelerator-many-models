@@ -191,8 +191,8 @@ def run(input_data):
             except Exception as error:
                 error_type = ErrorTypes.Unclassified
                 error_message = 'Failed to register the model. ' + 'Error message: ' + str(error)
-                import traceback
-                logger.info(traceback.print_exc())
+		from azureml.automl.core.shared import logging_utilities
+                logging_utilities.log_traceback(error, None)
                 logger.info(error_message)
 
             date2 = datetime.datetime.now()
