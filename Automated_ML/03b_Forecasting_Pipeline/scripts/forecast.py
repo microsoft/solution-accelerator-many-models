@@ -17,7 +17,7 @@ from azureml.core.model import Model
 from azureml.core import Experiment, Workspace, Run, Datastore
 from azureml.train.automl import AutoMLConfig
 from azureml.automl.core.shared import constants
-from entry_script import EntryScript
+from azureml_user.parallel_run import EntryScript
 
 import json
 
