@@ -1,10 +1,10 @@
 name: Custom script notebooks
 # This workflow is triggered on pull request to the repository.
-on: pull_request
+on: push
 env:
   SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
   RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
-  WORKSPACE_NAME_PREFIX: ${{ secrets.WORKSPACE_NAME }}
+  WORKSPACE_NAME_PREFIX: "github-ci-pipeline"
   WORKSPACE_REGION: ${{ secrets.WORKSPACE_REGION }}
   AZUREML_SERVICE_PRINCIPAL_TENANT_ID: ${{ secrets.AZUREML_SERVICE_PRINCIPAL_TENANT_ID }}
   AZUREML_SERVICE_PRINCIPAL_ID: ${{ secrets.AZUREML_SERVICE_PRINCIPAL_ID }}
@@ -33,13 +33,24 @@ jobs:
           jupyter nbconvert --to script Custom_Script/01_Data_Preparation.ipynb
           jupyter nbconvert --to script Custom_Script/02_Training_Pipeline.ipynb
           jupyter nbconvert --to script Custom_Script/03_Forecasting_Pipeline.ipynb
-      - name: Set up workspace
-        run: |
-          export uuid=`uuidgen`
-          export uuid="${uuid:0:8}"
-          export WORKSPACE_NAME="${WORKSPACE_NAME_PREFIX}"-${uuid}
-          echo "Using workspace ${WORKSPACE_NAME}"
-          python 00_Setup_AML_Workspace.py
+      - name: Login via Az module
+        uses: azure/login@v1.1
+        with:
+          creds: ${{secrets.AZURE_CREDENTIALS}}
+          enable-AzPSSession: true
+      - name: Run Azure PowerShell script
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            $PR_NUMBER = ($GITHUB_REF -split "/")[2]
+            $WORKSPACE_NAME = "$WORKSPACE_NAME_PREFIX-$PR_NUMBER"
+            echo "Using workspace ${WORKSPACE_NAME}"
+            python 00_Setup_AML_Workspace.py
+            $resource = Get-AzResource -Name $WORKSPACE_NAME ResourceGroupName $RESOURCE_GROUP
+            $time = Get-Date
+            $utcTime = $time.ToUniversalTime()
+            New-AzTag -ResourceId $resource.id -Tag @{"modified"=$utcTime}
+          azPSVersion: '4.5.0'
       - name: Data preparation
         run: |
           cd Custom_Script
