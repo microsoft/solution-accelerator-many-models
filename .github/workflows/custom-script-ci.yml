@@ -40,7 +40,7 @@ jobs:
           creds: ${{secrets.AZURE_CREDENTIALS}}
           enable-AzPSSession: true
       - name: Run Azure PowerShell script
-        uses: azure/powershell@v4
+        uses: azure/powershell@v1
         with:
           inlineScript: |
             $WORKSPACE_NAME = "$Env:WORKSPACE_NAME_PREFIX-$Env:PR_NUMBER"
@@ -50,7 +50,7 @@ jobs:
             $time = Get-Date
             $utcTime = $time.ToUniversalTime()
             New-AzTag -ResourceId $resource.id -Tag @{"modified"=$utcTime}
-          azPSVersion: '4.5.0'
+          azPSVersion: 'latest'
       - name: Data preparation
         run: |
           cd Custom_Script
