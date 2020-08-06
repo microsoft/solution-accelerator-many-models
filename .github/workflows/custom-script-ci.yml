@@ -40,13 +40,13 @@ jobs:
           creds: ${{secrets.AZURE_CREDENTIALS}}
           enable-AzPSSession: true
       - name: Run Azure PowerShell script
-        uses: azure/powershell@v1
+        uses: azure/powershell@v4
         with:
           inlineScript: |
-            $WORKSPACE_NAME = "$WORKSPACE_NAME_PREFIX-$PR_NUMBER"
+            $WORKSPACE_NAME = "$Env:WORKSPACE_NAME_PREFIX-$Env:PR_NUMBER"
             echo "Using workspace ${WORKSPACE_NAME}"
             python 00_Setup_AML_Workspace.py
-            $resource = Get-AzResource -Name $WORKSPACE_NAME ResourceGroupName $RESOURCE_GROUP
+            $resource = Get-AzResource -Name $WORKSPACE_NAME ResourceGroupName $Env:RESOURCE_GROUP
             $time = Get-Date
             $utcTime = $time.ToUniversalTime()
             New-AzTag -ResourceId $resource.id -Tag @{"modified"=$utcTime}
