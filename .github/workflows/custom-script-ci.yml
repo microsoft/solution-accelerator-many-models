@@ -44,7 +44,9 @@ jobs:
         with:
           inlineScript: |
             $Env:WORKSPACE_NAME = "$Env:WORKSPACE_PREFIX-$Env:PR_NUMBER"
-            echo "Using workspace ${WORKSPACE_NAME}"
+            echo "************************************"
+            echo "Using workspace: $Env:WORKSPACE_NAME"
+            echo "************************************"
             python 00_Setup_AML_Workspace.py
             $resource = Get-AzResource -Name $Env:WORKSPACE_NAME -ResourceGroupName $Env:RESOURCE_GROUP
             $time = Get-Date
