@@ -54,9 +54,8 @@ jobs:
             echo "************************************"
             python 00_Setup_AML_Workspace.py
             $resource = Get-AzResource -Name $Env:WORKSPACE_NAME -ResourceGroupName $Env:RESOURCE_GROUP
-            $time = Get-Date
-            $utcTime = $time.ToUniversalTime()
-            New-AzTag -ResourceId $resource.id -Tag @{"modified"=$utcTime}
+            $expirationTime = (Get-Date).AddHours(24).ToUniversalTime()
+            New-AzTag -ResourceId $resource.id -Tag @{"expiresOn"=$expirationTime}
           azPSVersion: 'latest'
       - name: Data preparation
         run: |

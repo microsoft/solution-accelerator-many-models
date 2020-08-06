@@ -32,7 +32,7 @@ jobs:
           architecture: 'x64'
       - name: Install dependencies
         run: |
-          python -m pip install -r Custom_Script/requirements.txt
+          python -m pip install -r Automated_ML/requirements.txt
       - name: Convert notebooks to python
         run: |
           jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
@@ -54,9 +54,8 @@ jobs:
             echo "************************************"
             python 00_Setup_AML_Workspace.py
             $resource = Get-AzResource -Name $Env:WORKSPACE_NAME -ResourceGroupName $Env:RESOURCE_GROUP
-            $time = Get-Date
-            $utcTime = $time.ToUniversalTime()
-            New-AzTag -ResourceId $resource.id -Tag @{"modified"=$utcTime}
+            $expirationTime = (Get-Date).AddHours(24).ToUniversalTime()
+            New-AzTag -ResourceId $resource.id -Tag @{"expiresOn"=$expirationTime}
           azPSVersion: 'latest'
       - name: Data preparation
         run: |
