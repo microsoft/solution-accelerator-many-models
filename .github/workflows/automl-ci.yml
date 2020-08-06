@@ -4,7 +4,7 @@ on:
   pull_request:
     branches:
       - master
-    path:
+    paths:
       Automated_ML/*
 env:
   SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
