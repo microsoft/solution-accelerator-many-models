@@ -44,7 +44,7 @@ jobs:
         with:
           creds: ${{secrets.AZURE_CREDENTIALS}}
           enable-AzPSSession: true
-      - name: Run Azure PowerShell script
+      - name: Setup workspace
         uses: azure/powershell@v1
         with:
           inlineScript: |
