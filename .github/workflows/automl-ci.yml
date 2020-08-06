@@ -1,6 +1,7 @@
 name: Automl notebooks
 # This workflow is triggered on pull request to the repository.
-on: pull_request
+on:
+  pull_request:
     branches:
       - master
     path:
