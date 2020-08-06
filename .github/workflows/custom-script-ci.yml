@@ -4,7 +4,7 @@ on: pull_request
 env:
   SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
   RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
-  WORKSPACE_NAME_PREFIX: "github-ci-pipeline"
+  WORKSPACE_PREFIX: "github-ci-pipeline"
   WORKSPACE_REGION: ${{ secrets.WORKSPACE_REGION }}
   AZUREML_SERVICE_PRINCIPAL_TENANT_ID: ${{ secrets.AZUREML_SERVICE_PRINCIPAL_TENANT_ID }}
   AZUREML_SERVICE_PRINCIPAL_ID: ${{ secrets.AZUREML_SERVICE_PRINCIPAL_ID }}
@@ -43,10 +43,10 @@ jobs:
         uses: azure/powershell@v1
         with:
           inlineScript: |
-            $WORKSPACE_NAME = "$Env:WORKSPACE_NAME_PREFIX-$Env:PR_NUMBER"
+            $WORKSPACE_NAME = "$Env:WORKSPACE_PREFIX-$Env:PR_NUMBER"
             echo "Using workspace ${WORKSPACE_NAME}"
             python 00_Setup_AML_Workspace.py
-            $resource = Get-AzResource -Name $WORKSPACE_NAME ResourceGroupName $Env:RESOURCE_GROUP
+            $resource = Get-AzResource -Name $WORKSPACE_NAME -ResourceGroupName $Env:RESOURCE_GROUP
             $time = Get-Date
             $utcTime = $time.ToUniversalTime()
             New-AzTag -ResourceId $resource.id -Tag @{"modified"=$utcTime}
