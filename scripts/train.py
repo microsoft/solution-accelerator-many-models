@@ -1,7 +1,6 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-from azureml.core import Run
 import pandas as pd
 import numpy as np
 import os
@@ -10,7 +9,10 @@ import datetime
 import joblib
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.linear_model import LinearRegression
-from timeseries_utilities import ColumnDropper, SimpleLagger, SimpleCalendarFeaturizer, SimpleForecaster
+
+from azureml.core import Run
+
+from utils.timeseries import ColumnDropper, SimpleLagger, SimpleCalendarFeaturizer, SimpleForecaster
 
 
 # 0.0 Parse input arguments
