@@ -34,10 +34,10 @@ def split_data_train_test(data_path, time_column_name, ntest_periods):
         test_df = df.iloc[-ntest_periods:].copy()
 
         if file_extension.lower() == ".parquet":
-            train_df.to_parquet(os.path.join(train_data_path, file_name)
-            test_df.to_parquet(os.path.join(test_data_path, file_name)
+            train_df.to_parquet(os.path.join(train_data_path, file_name))
+            test_df.to_parquet(os.path.join(test_data_path, file_name))
         else:
-            train_df.to_csv(os.path.join(train_data_path, file_name, index=None, header=True)
-            test_df.to_csv(os.path.join(test_data_path, file_name, index=None, header=True)
+            train_df.to_csv(os.path.join(train_data_path, file_name), index=None, header=True)
+            test_df.to_csv(os.path.join(test_data_path, file_name), index=None, header=True)
 
     return train_data_path, test_data_path
