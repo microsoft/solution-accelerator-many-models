@@ -43,11 +43,13 @@ def run(input_data):
     # 2.0 Loop through each file in the batch
     # The number of files in each batch is controlled by the mini_batch_size parameter of ParallelRunConfig
     for idx, csv_file_path in enumerate(input_data):
-        result = {}
         start_datetime = datetime.datetime.now()
-
         file_name = os.path.basename(csv_file_path)[:-4]
         model_name = args.model_type + '_' + file_name
+        result = {
+            'model_type': args.model_type, 'num_models': len(input_data), 'index': idx,
+            'ts_start': start_datetime, 'file_name': file_name, 'model_name': model_name
+        }
 
         # 1.0 Read the data from CSV - parse timestamps as datetime type and put the time in the index
         data = (pd.read_csv(csv_file_path, parse_dates=[args.timestamp_column], header=0)
@@ -67,12 +69,21 @@ def run(input_data):
         joblib.dump(forecaster, filename=os.path.join('./outputs/', model_name))
 
         # 4.0 Register the model to the workspace
-        # Uses the values in the timeseries id columns from the first row of data to form tags for the model
-        current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
-        ts_id_dict = {id_col: str(data[id_col].iloc[0]) for id_col in args.timeseries_id_columns}
-        tags_dict = {**ts_id_dict, 'ModelType': args.model_type}
-        current_run.register_model(model_path=model_name, model_name=model_name,
-                                   model_framework=args.model_type, tags=tags_dict)
+        try:
+            current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
+            # Uses the values in the timeseries id columns from the first row of data to form tags for the model
+            id_columns_dict = {id_col: str(data[id_col].iloc[0]) for id_col in args.timeseries_id_columns}
+            result.update(id_columns_dict)
+            tags_dict = {**id_columns_dict, 'ModelType': args.model_type}
+            current_run.register_model(model_path=model_name, model_name=model_name,
+                                    model_framework=args.model_type, tags=tags_dict)
+        except Exception as error:
+            error_message = 'Failed to register the model. Error message: ' + str(error)
+            result.update({'error_type': 'Unclassified', 'error_message': error_message})
+            print(error_message)
+
+        end_datetime = datetime.datetime.now()
+        result['ts_end'] = str(end_datetime)
 
         # 5.0 Get in-sample predictions and join with actuals
         forecasts = forecaster.forecast(data)
@@ -87,30 +98,21 @@ def run(input_data):
         mape = np.mean(np.abs((actuals - preds) / actuals) * 100)
 
         # 7.0 Log metrics
-        current_run.log(model_name + '_mse', mse)
         current_run.log(model_name + '_rmse', rmse)
         current_run.log(model_name + '_mae', mae)
         current_run.log(model_name + '_mape', mape)
+        result.update({'rmse': rmse, 'mae': mae, 'mape': mape})
 
         # 8.0 Add data to output
-        end_datetime = datetime.datetime.now()
-        result.update(ts_id_dict)
-        result['model_type'] = args.model_type
-        result['file_name'] = file_name
-        result['model_name'] = model_name
-        result['start_date'] = str(start_datetime)
-        result['end_date'] = str(end_datetime)
-        result['duration'] = str(end_datetime-start_datetime)
-        result['mse'] = mse
-        result['rmse'] = rmse
-        result['mae'] = mae
-        result['mape'] = mape
-        result['index'] = idx
-        result['num_models'] = len(input_data)
         result['status'] = current_run.get_status()
-
-        print('ending (' + csv_file_path + ') ' + str(end_datetime))
         result_list.append(result)
 
+        print('ending (' + csv_file_path + ') ' + str(end_datetime))
+
     # Data returned by this function will be available in parallel_run_step.txt
-    return pd.DataFrame(result_list)
+    result = pd.DataFrame(result_list, columns=[
+        *args.timeseries_id_columns, 'model_type', 'file_name', 'model_name', 'ts_start', 'ts_end',
+        'rmse', 'mae', 'mape', 'index', 'num_models', 'status', 'error_type', 'error_message'
+    ])
+
+    return result
