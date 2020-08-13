@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths:
-      Automated_ML/*
+      Automated_ML/**
 env:
   SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
   RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
