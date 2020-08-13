@@ -2,8 +2,6 @@ name: Custom script notebooks
 # This workflow is triggered on pull request to the repository.
 on:
   pull_request:
-    branches:
-      - master
     paths:
       Custom_Script/*
 env:
