@@ -1,0 +1,60 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Definition of common runtime environment variables
+
+variables:
+  
+  # General
+  - name: ENVIRONMENT
+    value: DEV
+  - name: SDK_VERSION
+    value: 1.8.0
+
+  # Infra
+  - name: AMLWORKSPACE_NAME
+    value: $(NAMESPACE)aml
+  - name: STORAGEACCOUNT_NAME
+    value: $(NAMESPACE)sa
+  - name: KEYVAULT_NAME
+    value: $(NAMESPACE)kv
+  - name: APPINSIGHTS_NAME
+    value: $(NAMESPACE)ai
+  - name: CONTAINERREGISTRY_NAME
+    value: $(NAMESPACE)cr
+
+  # Azure ML workspace
+  - name: AML_COMPUTE_NAME
+    value: cpu-compute
+  - name: AML_DATASET_NAME
+    value: oj_sales_data_$(DATASET_MAXFILES)
+
+  # Training
+  - name: AutoML_TRAINING_PIPELINE_NAME
+    value: many-models-training
+
+  # Real-time inferencing
+  - name: AML_AKS_NAME
+    value: manymodels-aks
+  - name: AML_MODEL_SPLITTING_TAGS
+    value: StoreGroup100
+  - name: AML_MODEL_SORTING_TAGS
+    value: StoreGroup10
+  - name: AML_WEBSERVICE_PREFIX
+    value: manymodels-
+  - name: AML_MAX_CONTAINER_SIZE
+    value: 50
+  - name: AML_ROUTING_MODEL_NAME
+    value: deployed_models_info
+  - name: AML_ROUTING_MODEL_TAG_NAME
+    value: ModelType
+  - name: AML_ROUTING_MODEL_TAG_VALUE
+    value: _meta_
+  - name: AML_ROUTING_WEBSERVICE
+    value: routing-manymodels
+
+  # Batch forecasting
+  - name: AutoML_FORECASTING_PIPELINE_NAME
+    value: many-models-forecasting
+  - name: PREDICTIONS_CONTAINER_NAME
+    value: predictions
