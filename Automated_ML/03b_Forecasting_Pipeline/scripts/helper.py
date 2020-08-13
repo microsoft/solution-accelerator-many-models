@@ -4,6 +4,7 @@
 
 import os
 import sys
+import hashlib
 
 sys.path.append("..")
 
@@ -34,3 +35,12 @@ def get_automl_environment():
 def get_forecasting_output(run, forecasting_results_name, forecasting_output_name):
     from common.scripts.helper import get_output
     return get_output(run, forecasting_results_name, forecasting_output_name)
+
+
+def get_model_name(tags_dict):
+    model_string = '_'.join(str(v) for k, v in sorted(tags_dict.items())).lower()
+    sha = hashlib.sha256()
+    sha.update(model_string.encode())
+    model_name = 'automl_' + sha.hexdigest()
+    tags_dict.update({'Hash': sha.hexdigest()})
+    return model_name
