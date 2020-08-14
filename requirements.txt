@@ -1,0 +1,8 @@
+azureml-sdk[automl]>= 1.10.0
+azureml-opendatasets>=1.10.0
+azureml-pipeline-steps>=1.10.0
+jupyter
+numpy
+pandas
+matplotlib
+seaborn
