@@ -45,7 +45,6 @@ LOG_NAME = "user_log"
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--process_count_per_node", default=1, type=int, help="number of processes per node")
 parser.add_argument("--retrain_failed_models", default=False, type=str2bool, help="retrain failed models only")
-parser.add_argument("--drop_columns", type=str, nargs='*', default=[], help="list of columns to drop prior to modeling")
 
 args, _ = parser.parse_known_args()
 
@@ -65,6 +64,7 @@ automl_settings = read_from_json()
 timestamp_column = automl_settings.get('time_column_name', None)
 grain_column_names = automl_settings.get('grain_column_names', [])
 group_column_names = automl_settings.get('group_column_names', [])
+drop_column_names = automl_settings.get('drop_column_names', [])
 max_horizon = automl_settings.get('max_horizon', 0)
 target_column = automl_settings.get('label_column_name', None)
 
@@ -74,6 +74,7 @@ print("target_column: {}".format(target_column))
 print("timestamp_column: {}".format(timestamp_column))
 print("group_column_names: {}".format(group_column_names))
 print("grain_column_names: {}".format(grain_column_names))
+print("drop_column_names: {}".format(drop_column_names))
 print("retrain_failed_models: {}".format(args.retrain_failed_models))
 
 
@@ -171,7 +172,6 @@ def run(input_data):
             tags_dict.update({'RunId': current_step_run.parent.id})
 
             # train model
-            data = data.drop(columns=args.drop_columns, errors='ignore')
             fitted_model, current_run = train_model(file_path, data, logger)
             model_string = '_'.join(str(v) for k, v in sorted(tags_dict.items()) if k in group_column_names).lower()
             logger.info("model string to encode " + model_string)
