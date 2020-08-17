@@ -7,8 +7,7 @@ import pandas as pd
 from pandas.tseries.frequencies import to_offset
 import os
 import argparse
-from sklearn.externals import joblib
-from joblib import dump, load
+import joblib
 import time
 from datetime import timedelta
 import datetime
