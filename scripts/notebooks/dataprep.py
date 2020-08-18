@@ -3,12 +3,11 @@
 
 import os
 import glob
-import sys
 import pandas as pd
 
 
 def split_data_train_test(data_path, time_column_name, ntest_periods):
-    
+
     train_data_path = os.path.join(data_path, "upload_train_data")
     test_data_path = os.path.join(data_path, "upload_test_data")
 

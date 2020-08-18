@@ -1,0 +1,21 @@
+{
+    "task": "forecasting",
+    "primary_metric": "normalized_root_mean_squared_error",
+    "iteration_timeout_minutes": 10,
+    "iterations": 15,
+    "experiment_timeout_hours": 1,
+    "label_column_name": "Quantity",
+    "n_cross_validations": 3,
+    "verbosity": 20,
+    "debug_log": "automl_oj_sales_debug.txt",
+    "time_column_name": "WeekStarting",
+    "max_horizon": 6,
+    "group_column_names": [
+        "Store",
+        "Brand"
+    ],
+    "grain_column_names": [
+        "Store",
+        "Brand"
+    ]
+}

@@ -1,11 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-import argparse
-import os
 import json
-import shutil
-import sys
 
 
 def get_automl_environment(name):
@@ -36,7 +32,7 @@ def validate_parallel_run_config(parallel_run_config):
     if parallel_run_config.mini_batch_size != 1:
         errors = True
         print('Error: mini_batch_size should be set to 1')
-    
+
     if 'automl' in parallel_run_config.entry_script:
         max_concurrency = 20
         curr_concurrency = parallel_run_config.process_count_per_node * parallel_run_config.node_count
@@ -45,7 +41,7 @@ def validate_parallel_run_config(parallel_run_config):
             print(f'Error: node_count*process_count_per_node must be between 1 and max_concurrency {max_concurrency}.',
                   f'Please decrease concurrency from current {curr_concurrency} to maximum of {max_concurrency}',
                   'as currently AutoML does not support it.')
-    
+
     if not errors:
         print('Validation successful')
 

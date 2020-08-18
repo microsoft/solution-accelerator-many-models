@@ -76,7 +76,7 @@ def run(input_data):
             result.update(id_columns_dict)
             tags_dict = {**id_columns_dict, 'ModelType': args.model_type}
             current_run.register_model(model_path=model_name, model_name=model_name,
-                                    model_framework=args.model_type, tags=tags_dict)
+                                       model_framework=args.model_type, tags=tags_dict)
         except Exception as error:
             error_message = 'Failed to register the model. Error message: ' + str(error)
             result.update({'error_type': 'Unclassified', 'error_message': error_message})

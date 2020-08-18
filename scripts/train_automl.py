@@ -2,37 +2,24 @@
 # Licensed under the MIT License.
 
 
-import pandas as pd
 import os
 import tempfile
-import uuid
-
-from multiprocessing import current_process
-from pathlib import Path
-from azureml.core.dataset import Dataset
-from azureml.core.model import Model
-from sklearn.externals import joblib
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn import metrics
 import argparse
 import hashlib
-import pickle
-from azureml.core import Experiment, Workspace, Run
-from azureml.core import ScriptRunConfig
+import json
+import pandas as pd
+from random import randint
+from time import sleep
+from multiprocessing import current_process
+from pathlib import Path
+
+from azureml.core import Run, Model
 from azureml.train.automl import AutoMLConfig
-from azureml.automl.core.shared import constants
 import datetime
 from azureml_user.parallel_run import EntryScript
-import logging
 from azureml.automl.core.shared.exceptions import (AutoMLException,
                                                    ClientException, ErrorTypes)
 from azureml.automl.core.shared.utilities import get_error_code
-
-from joblib import dump, load
-from random import randint
-from time import sleep
-import json
 
 from utils.datatypes import str2bool
 from utils.models import get_model_metrics, get_run_metrics
@@ -144,7 +131,7 @@ def run(input_data):
                 data = pd.read_parquet(file_path)
             else:
                 data = pd.read_csv(file_path, parse_dates=[timestamp_column])
-            
+
             group_columns_dict = {col_name: str(data[col_name].iloc[0]) for col_name in group_column_names}
             result.update(group_columns_dict)
             tags_dict = {**group_columns_dict, 'ModelType': 'AutoML'}

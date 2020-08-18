@@ -2,23 +2,15 @@
 # Licensed under the MIT License.
 
 
-import numpy as np
 import pandas as pd
-from pandas.tseries.frequencies import to_offset
 import os
 import argparse
 import joblib
-import time
-from datetime import timedelta
 import datetime
 import hashlib
-from azureml.core.model import Model
-from azureml.core import Experiment, Workspace, Run, Datastore
-from azureml.train.automl import AutoMLConfig
-from azureml.automl.core.shared import constants
+from azureml.core import Run, Model
 from azureml_user.parallel_run import EntryScript
 
-import json
 
 # 0.0 Parse input arguments
 parser = argparse.ArgumentParser("split")
