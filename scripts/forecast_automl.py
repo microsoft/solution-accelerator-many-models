@@ -90,7 +90,7 @@ def run(input_data):
         print('Made predictions ' + model_name)
 
         # Insert predictions to test set
-        predicted_column_name = 'Predictions'
+        predicted_column_name = 'Prediction'
         data[predicted_column_name] = y_predictions
         print(data.head())
         print('Inserted predictions ' + model_name)
@@ -104,5 +104,12 @@ def run(input_data):
         date2 = datetime.datetime.now()
         logger.info('ending (' + str(file_path) + ') ' + str(date2))
 
+    # Data returned by this function will be available in parallel_run_step.txt
+    output_columns = [*args.group_column_names, args.time_column_name, predicted_column_name]
+    if args.target_column_name:
+        output_columns.append(args.target_column_name)
+    all_predictions = all_predictions[output_columns]
+
     print(all_predictions.head())
+
     return all_predictions

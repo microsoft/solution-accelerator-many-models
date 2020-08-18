@@ -76,4 +76,9 @@ def run(input_data):
         results.append(prediction_df.reset_index().assign(**ts_id_dict))
 
     # Data returned by this function will be available in parallel_run_step.txt
-    return pd.concat(results)
+    output_columns = [*args.timeseries_id_columns, args.timestamp_column, 'Prediction']
+    if args.target_column:
+        output_columns.append(args.target_column)
+    predictions = pd.concat(results)[output_columns]
+
+    return predictions
