@@ -74,7 +74,6 @@ print("target_column: {}".format(target_column))
 print("timestamp_column: {}".format(timestamp_column))
 print("group_column_names: {}".format(group_column_names))
 print("grain_column_names: {}".format(grain_column_names))
-print("drop_column_names: {}".format(drop_column_names))
 print("retrain_failed_models: {}".format(args.retrain_failed_models))
 
 
