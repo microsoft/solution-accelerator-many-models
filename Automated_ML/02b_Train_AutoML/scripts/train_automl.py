@@ -52,7 +52,6 @@ automl_settings = read_from_json()
 timestamp_column = automl_settings.get('time_column_name', None)
 grain_column_names = automl_settings.get('grain_column_names', [])
 group_column_names = automl_settings.get('group_column_names', [])
-drop_column_names = automl_settings.get('drop_column_names', [])
 max_horizon = automl_settings.get('max_horizon', 0)
 target_column = automl_settings.get('label_column_name', None)
 
