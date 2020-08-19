@@ -3,13 +3,18 @@
 
 import argparse
 import logging
+import sys
 
 from azureml.core import Workspace, Dataset, Environment
 from azureml.core.compute import AmlCompute
 from azureml.pipeline.core import Pipeline, PipelineData, PublishedPipeline
 from azureml.pipeline.steps import ParallelRunConfig, ParallelRunStep
-from Automated_ML.common.scripts.helper import get_automl_environment
-from Automated_ML.common.scripts.helper import write_automl_settings_to_file
+
+sys.path.append("Automated_ML")
+sys.path.append("Automated_ML//02b_Train_AutoML")
+
+from common.scripts.helper import get_automl_environment
+from scripts.helper import write_automl_settings_to_file
 
 
 def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
