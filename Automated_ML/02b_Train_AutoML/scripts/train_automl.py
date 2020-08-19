@@ -2,40 +2,28 @@
 # Licensed under the MIT License.
 
 
-import pandas as pd
+import argparse
+import datetime
+import hashlib
+import json
 import os
 import tempfile
-import uuid
-
 from multiprocessing import current_process
 from pathlib import Path
-from azureml.core.dataset import Dataset
-from azureml.core.model import Model
-from sklearn.externals import joblib
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn import metrics
-import argparse
-import hashlib
-import pickle
-from azureml.core import Experiment, Workspace, Run
-from azureml.core import ScriptRunConfig
-from azureml.train.automl import AutoMLConfig
+from random import randint
+from time import sleep
+
+import pandas as pd
 from azureml.automl.core.shared import constants
-import datetime
-from azureml_user.parallel_run import EntryScript
-from train_automl_helper import str2bool, compose_logs
-import logging
 from azureml.automl.core.shared.exceptions import (AutoMLException,
                                                    ClientException, ErrorTypes)
 from azureml.automl.core.shared.utilities import get_error_code
+from azureml.core import Run
+from azureml.core.model import Model
+from azureml.train.automl import AutoMLConfig
 
-
-from joblib import dump, load
-from random import randint
-from time import sleep
-import json
-
+from azureml_user.parallel_run import EntryScript
+from train_automl_helper import compose_logs, str2bool
 
 current_step_run = Run.get_context()
 
@@ -117,9 +105,9 @@ def train_model(file_path, data, logger):
     print(local_run)
     local_run.wait_for_completion(show_output=True)
 
-    fitted_model = local_run.get_output()
+    best_child_run, fitted_model = local_run.get_output()
 
-    return fitted_model, local_run
+    return fitted_model, local_run, best_child_run
 
 
 def run(input_data):
@@ -171,7 +159,7 @@ def run(input_data):
             tags_dict.update({'RunId': current_step_run.parent.id})
 
             # train model
-            fitted_model, current_run = train_model(file_path, data, logger)
+            fitted_model, current_run, best_child_run = train_model(file_path, data, logger)
             model_string = '_'.join(str(v) for k, v in sorted(tags_dict.items()) if k in group_column_names).lower()
             logger.info("model string to encode " + model_string)
             sha = hashlib.sha256()
@@ -182,12 +170,15 @@ def run(input_data):
                 logger.info('done training')
                 print('Trained best model ' + model_name)
 
+                logger.info(best_child_run)
                 logger.info(fitted_model)
                 logger.info(model_name)
 
                 logger.info('register model')
 
-                current_run.register_model(model_name=model_name, description='AutoML', tags=tags_dict)
+                best_child_run.register_model(
+                    model_name=model_name, model_path=constants.MODEL_PATH, description='AutoML', tags=tags_dict)
+
                 print('Registered ' + model_name)
             except Exception as error:
                 error_type = ErrorTypes.Unclassified

@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths:
-      Custom_Script/*
+      Custom_Script/**
 env:
   SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
   RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
