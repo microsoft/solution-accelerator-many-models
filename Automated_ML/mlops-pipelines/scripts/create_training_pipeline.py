@@ -7,7 +7,7 @@ import logging
 from azureml.core import Workspace, Dataset, Environment
 from azureml.core.compute import AmlCompute
 from azureml.pipeline.core import Pipeline, PipelineData, PublishedPipeline
-from azureml.contrib.pipeline.steps import ParallelRunConfig, ParallelRunStep
+from azureml.pipeline.steps import ParallelRunConfig, ParallelRunStep
 from common.scripts.helper import get_automl_environment
 from common.scripts.helper import write_automl_settings_to_file
 
