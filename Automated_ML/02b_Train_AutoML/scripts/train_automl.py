@@ -33,7 +33,6 @@ LOG_NAME = "user_log"
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--process_count_per_node", default=1, type=int, help="number of processes per node")
 parser.add_argument("--retrain_failed_models", default=False, type=str2bool, help="retrain failed models only")
-parser.add_argument("--drop_columns", type=str, nargs='*', default=[], help="list of columns to drop prior to modeling")
 
 args, _ = parser.parse_known_args()
 
@@ -159,7 +158,6 @@ def run(input_data):
             tags_dict.update({'RunId': current_step_run.parent.id})
 
             # train model
-            data = data.drop(columns=args.drop_columns, errors='ignore')
             fitted_model, current_run, best_child_run = train_model(file_path, data, logger)
             model_string = '_'.join(str(v) for k, v in sorted(tags_dict.items()) if k in group_column_names).lower()
             logger.info("model string to encode " + model_string)
