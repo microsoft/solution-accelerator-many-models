@@ -44,7 +44,7 @@ stages:
               python -m pip install --upgrade pip && python -m pip install azureml-sdk[automl]==$SDK_VERSION
               # Create/update training pipeline
               trainingbuild_script=Automated_ML/mlops-pipelines/scripts/create_training_pipeline.py
-              python $trainingbuild_script --name $(AML_TRAINING_PIPELINE_NAME) \
+              python $trainingbuild_script --pipeline-name $(AML_TRAINING_PIPELINE_NAME) \
                                            --version $(Build.BuildId) \
                                            --dataset $(AML_DATASET_NAME) \
                                            --compute $(AML_COMPUTE_NAME) \
