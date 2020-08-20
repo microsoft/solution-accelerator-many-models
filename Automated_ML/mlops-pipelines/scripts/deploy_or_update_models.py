@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import argparse
+import sys
 import warnings
 import joblib
 import yaml
@@ -11,15 +12,24 @@ from azureml.core.compute import AksCompute
 from azureml.core.webservice import AciWebservice, AksWebservice
 from azureml.exceptions import WebserviceException
 
+sys.path.append("Automated_ML")
+sys.path.append("Automated_ML//03b_Forecasting_Pipeline")
+
 
 def main(ws, config_file, routing_model_name,
          sorting_tags=[], splitting_tags=[], container_size=250,
-         aks_target=None, service_prefix='manymodels-', reset=False):
+         aks_target=None, service_prefix='manymodels-', reset=False,
+         pipeline_runid=None):
 
     # Deployment configuration
     deployment_config = get_deployment_config(ws, config_file, aks_target)
 
     # Get models currently deployed
+    include_tags = []
+    if pipeline_runid is not None:
+        include_tags.append(['ModelType', 'AutoML'])
+        include_tags.append(['RunId', pipeline_runid])
+
     models_deployed, existing_services = get_models_deployed(ws, routing_model_name)
 
     # Reset: delete all webservices and start from scratch
@@ -29,7 +39,7 @@ def main(ws, config_file, routing_model_name,
             service.delete()
 
     # Get models registered
-    models_registered = get_models_registered(ws, exclude_names=[routing_model_name])
+    models_registered = get_models_registered(ws, exclude_names=[routing_model_name], include_tags=include_tags)
 
     # Get groups to deploy or update and old services to be deleted
     groups_new, groups_update, groups_unchanged, groups_delete = create_deployment_groups(
@@ -52,14 +62,15 @@ def main(ws, config_file, routing_model_name,
     # Launch webservice deployments
     for group_name, group_models in groups_new.items():
         service = deploy_model_group(ws, group_name, group_models, deployment_config, name_prefix=service_prefix)
-        deployments.append({ 'service': service, 'group': group_name, 'models': group_models })
+        deployments.append({'service': service, 'group': group_name, 'models': group_models})
 
     # Launch webservice updates
     for group_name, group_models in groups_update.items():
-        service = deploy_model_group(ws, group_name, group_models, deployment_config, existing_services, name_prefix=service_prefix)
-        deployments.append({ 'service': service, 'group': group_name, 'models': group_models })
+        service = deploy_model_group(ws, group_name, group_models, deployment_config,
+                                     existing_services, name_prefix=service_prefix)
+        deployments.append({'service': service, 'group': group_name, 'models': group_models})
 
-    models_deployed_updated = { m.name:models_deployed[m.name] for m in groups_unchanged.values() }
+    models_deployed_updated = {m.name: models_deployed[m.name] for m in groups_unchanged.values()}
 
     # Wait for deployments to finish
     for deployment in deployments:
@@ -70,6 +81,7 @@ def main(ws, config_file, routing_model_name,
             service.wait_for_deployment(show_output=True)
         except WebserviceException as e:
             warnings.warn(f'DEPLOYMENT FAILED FOR SERVICE {service.name}:\n{e}', RuntimeWarning)
+            print(service.get_logs())
 
         service_info = {
             'webservice': service.name,
@@ -105,21 +117,21 @@ def get_models_deployed(ws, routing_model_name):
             print(f'Webservice {service_name} not found.')
 
     # Exclude models no longer deployed (associated to deleted webservices)
-    deployed_models = { model_name:model_info for model_name, model_info in deployed_models.items()
-                        if model_info['webservice'] in services }
+    deployed_models = {model_name: model_info for model_name, model_info in deployed_models.items()
+                       if model_info['webservice'] in services}
 
     return deployed_models, services
 
 
-def get_models_registered(ws, exclude_names=[], exclude_tags=[], include_tags=[], page_count=100):
+def get_models_registered(ws, exclude_names=[], exclude_tags=[], include_tags=[], page_count=100, pipeline_runid=None):
 
     # Get all models registered in the workspace with specified tags
-    all_models = Model.list(ws, tags=include_tags, latest=True, expand=False, page_count=page_count)
+    all_models = Model.list(ws, tags=include_tags, latest=True, expand=False)
 
     # Exclude models with names or kvtags specified
-    models_todeploy = { m.name:m for m in all_models if
-                        m.name not in exclude_names and
-                        not any(m.tags.get(t) == v for t,v in exclude_tags) }
+    models_todeploy = {m.name: m for m in all_models if
+                       m.name not in exclude_names and
+                       not any(m.tags.get(t) == v for t, v in exclude_tags)}
 
     print(f'Found {len(models_todeploy)} models registered.')
 
@@ -144,12 +156,13 @@ def create_deployment_groups(models_registered, models_deployed,
         subgroups_deployed = groups_deployed.get(group_name, {})
 
         subgroup_models_deployed = [m['name'] for sg in subgroups_deployed.values() for m in sg]
-        models_new = [models_registered[mname] for mname in group_models_registered if mname not in subgroup_models_deployed]
+        models_new = [models_registered[mname] for mname in group_models_registered
+                      if mname not in subgroup_models_deployed]
 
         # Update models already in subgroups according to registered models
         subgroups_registered, ind_subgroups_updated, models_relocate = update_existing_models(
             groups=subgroups_deployed,
-            models_registered={mname:models_registered[mname] for mname in group_models_registered},
+            models_registered={mname: models_registered[mname] for mname in group_models_registered},
             container_size=container_size
         )
 
@@ -173,22 +186,25 @@ def create_deployment_groups(models_registered, models_deployed,
             all_subgroups_registered[subgroup_name] = subgroup_models
 
         names_all_subgroups_new += [get_subgroup_name(group_name, i) for i in ind_subgroups_new]
-        names_all_subgroups_update += [get_subgroup_name(group_name, i) for i in ind_subgroups_updated | ind_subgroups_extended]
-        names_all_subgroups_delete += [get_subgroup_name(group_name, i) for i in subgroups_deployed if i not in subgroups_registered]
+        names_all_subgroups_update += [get_subgroup_name(group_name, i)
+                                       for i in ind_subgroups_updated | ind_subgroups_extended]
+        names_all_subgroups_delete += [get_subgroup_name(group_name, i)
+                                       for i in subgroups_deployed if i not in subgroups_registered]
 
     print(f'Grouped models in {len(all_subgroups_registered)} groups.')
 
     # Split subgroups according to status
     subgroups_new, subgroups_update, subgroups_unchanged = {}, {}, {}
-    for name,models in all_subgroups_registered.items():
+    for name, models in all_subgroups_registered.items():
         subgroups_set = subgroups_new if name in names_all_subgroups_new else \
                         subgroups_update if name in names_all_subgroups_update else \
                         subgroups_unchanged
         subgroups_set[name] = models
 
     # Find groups with no models registered anymore and mark subgroups for deletion as well
-    groups_delete = { gname:sg for gname,sg in groups_deployed.items() if gname not in groups_registered }
-    subgroups_delete = names_all_subgroups_delete + [get_subgroup_name(g, i) for g,sg in groups_delete.items() for i in sg]
+    groups_delete = {gname: sg for gname, sg in groups_deployed.items() if gname not in groups_registered}
+    subgroups_delete = names_all_subgroups_delete + [get_subgroup_name(g, i)
+                                                     for g, sg in groups_delete.items() for i in sg]
 
     return subgroups_new, subgroups_update, subgroups_unchanged, subgroups_delete
 
@@ -274,8 +290,7 @@ def update_existing_models(groups, models_registered, container_size=250):
 
 def distribute_new_models(models, existing_groups, container_size=250):
 
-    #TODO: case when container_size increases
-
+    # TODO: case when container_size increases
     groups_updated = existing_groups.copy()
     indexes_groups_changed = set()
 
@@ -327,14 +342,12 @@ def get_deployment_config(ws, config_file, aks_target=None):
     deployment_target = AksCompute(ws, aks_target) if deployment_type == 'aks' else None
 
     # Inference environment
-    forecast_env = Environment.from_conda_specification(
-        name='many_models_environment',
-        file_path='Custom_Script/scripts/forecast_webservice.conda.yml'
-    )
+    from scripts.helper import get_automl_environment
+    forecast_env = get_automl_environment()
 
     # Inference configuration
     inference_config = InferenceConfig(
-        source_directory='Custom_Script/scripts/',
+        source_directory='Automated_ML//03b_Forecasting_Pipeline//scripts',
         entry_script='forecast_webservice.py',
         environment=forecast_env
     )
@@ -365,7 +378,8 @@ def get_webservice_config(config_file):
     return webservice_type, webservice_config
 
 
-def deploy_model_group(ws, group_name, group_models, deployment_config, existing_services={}, name_prefix='manymodels-'):
+def deploy_model_group(ws, group_name, group_models, deployment_config,
+                       existing_services={}, name_prefix='manymodels-'):
 
     if group_name in existing_services:
         service = existing_services[group_name]
@@ -403,6 +417,7 @@ def parse_args(args=None):
     parser.add_argument('--sorting-tags', default='', type=lambda str: [t for t in str.split(',') if t])
     parser.add_argument('--routing-model-name', type=str, default='deployed_models_info')
     parser.add_argument('--output', type=str, default='models_deployed.pkl')
+    parser.add_argument('--pipeline-runid', type=str)
     parser.add_argument('--aks-target', type=str)
     parser.add_argument('--service-prefix', type=str)
     parser.add_argument('--container-size', type=int, default=250)
@@ -437,7 +452,8 @@ if __name__ == "__main__":
         aks_target=args.aks_target,
         service_prefix=args.service_prefix,
         container_size=args.container_size,
-        reset=args.reset
+        reset=args.reset,
+        pipeline_runid=args.pipeline_runid
     )
 
     joblib.dump(models_deployed, args.output)
