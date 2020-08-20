@@ -24,8 +24,8 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
     dataset_input = dataset.as_named_input(dataset_name)
 
     # Set output
-    datastore = ws.get_default_datastore()
-    output_dir = PipelineData(name='training_output', datastore=datastore)
+    #datastore = ws.get_default_datastore()
+    output_dir = PipelineData(name='training_output') #, datastore=datastore)
 
     automl_settings = {
         "task": 'forecasting',
@@ -46,7 +46,7 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
     write_automl_settings_to_file(automl_settings)
 
     # Set up ParallelRunStep
-    parallel_run_config = get_parallel_run_config(ws, dataset_name, compute_name)
+    parallel_run_config = get_parallel_run_config(ws, compute_name)
     parallel_run_step = ParallelRunStep(
         name="many-models-training",
         parallel_run_config=parallel_run_config,
@@ -72,7 +72,7 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
     return published_pipeline.id
 
 
-def get_parallel_run_config(ws, dataset_name, compute_name, node_count=3, processes_per_node=8, timeout=300):
+def get_parallel_run_config(ws, compute_name, node_count=3, processes_per_node=8, timeout=300):
 
     # Configure environment for ParallelRunStep
     # train_env = Environment.from_conda_specification(
