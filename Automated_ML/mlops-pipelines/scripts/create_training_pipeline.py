@@ -46,7 +46,7 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
     write_automl_settings_to_file(automl_settings)
 
     # Set up ParallelRunStep
-    parallel_run_config = get_parallel_run_config(ws, compute_name)
+    parallel_run_config = get_parallel_run_config(ws=ws, compute_name=compute_name, timeout=3700)
     parallel_run_step = ParallelRunStep(
         name="many-models-training",
         parallel_run_config=parallel_run_config,
@@ -72,7 +72,7 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
     return published_pipeline.id
 
 
-def get_parallel_run_config(ws, compute_name, node_count=3, processes_count_per_node=8, timeout=300):
+def get_parallel_run_config(ws, compute_name, node_count=2, processes_count_per_node=8, timeout=300):
     train_env = get_automl_environment()
 
     # Get the compute target
