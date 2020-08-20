@@ -9,10 +9,10 @@
 #     - v2-preview
 #   paths:
 #     include:
-#     - Custom_Script/mlops-pipelines/2-training-code-build/*
-#     - Custom_Script/mlops-pipelines/scripts/create_training_pipeline.py
-#     - Custom_Script/scripts/train.py
-#     - Custom_Script/scripts/train.conda.yml
+#     - Automated_ML/mlops-pipelines/2-training-code-build/*
+#     - Automated_ML/mlops-pipelines/scripts/create_training_pipeline.py
+#     - Automated_ML/02b_Train_AutoML/scripts/*
+#     - Automated_ML/common/scripts/*
 
 variables:
 - template: ../many-models-variables.yml

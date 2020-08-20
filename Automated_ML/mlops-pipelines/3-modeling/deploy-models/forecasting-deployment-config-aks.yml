@@ -1,0 +1,4 @@
+computeType: AKS
+containerResourceRequirements:
+  cpu_cores: 1
+  memory_gb: 1

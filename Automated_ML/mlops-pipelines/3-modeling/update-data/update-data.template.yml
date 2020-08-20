@@ -1,0 +1,91 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Azure Pipeline Template for updating training dataset
+# The dataset in this example is updated for illustration purposes only, the data downloaded is the same
+
+
+parameters:
+- name: sdkVersion
+  type: string
+- name: serviceConnection
+  type: string
+- name: resourceGroup
+  type: string
+- name: amlWorkspaceName
+  type: string
+- name: amlDatasetName
+  type: string
+- name: maxFiles
+  type: string
+
+
+jobs:
+
+- job: download_new_data
+  displayName: 'Download New Sample Files'
+  steps:
+
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.7'
+      inputs:
+        versionSpec: 3.7
+    
+    - bash: |
+        # Install dependencies
+        python -m pip install --upgrade pip && python -m pip install azureml-opendatasets==${{parameters.sdkVersion}}
+        # Download sample files
+        python Custom_Script/mlops-pipelines/scripts/download_data.py --maxfiles ${{parameters.maxFiles}} --path "new-sample-data"
+      name: download_files
+      displayName: 'Download Sample Files'
+      failOnStderr: true
+    
+    - task: AzureCLI@1
+      name: upload_files
+      displayName: 'Upload files to AML datastore'
+      inputs:
+        azureSubscription: ${{parameters.serviceConnection}}
+        scriptLocation: inlineScript
+        inlineScript: |
+          workspace_params="--workspace-name ${{parameters.amlWorkspaceName}} --resource-group ${{parameters.resourceGroup}}"
+          # Install ML extension
+          az extension add -n azure-cli-ml
+          # Get default datastore
+          datastore=$(az ml datastore show-default $workspace_params --query name -o tsv)
+          # Upload files
+          datapath=new-sample-data-$(date +"%Y%m%d-%H%M%S")
+          az ml datastore upload --name $datastore \
+                                 --src-path "new-sample-data" \
+                                 --target-path $datapath \
+                                 --overwrite true \
+                                 $workspace_params
+          echo "##vso[task.setvariable variable=datapath;isOutput=true;]$datapath"
+
+
+- job: update_dataset
+  displayName: 'Update Registered Dataset'
+  dependsOn: download_new_data
+  variables: 
+    datapath: $[ dependencies.download_new_data.outputs['upload_files.datapath'] ]
+  steps:
+
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.7'
+      inputs:
+        versionSpec: 3.7
+
+    - task: AzureCLI@1
+      displayName: 'Update dataset'
+      inputs:
+        azureSubscription: ${{parameters.serviceConnection}}
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Install dependencies
+          python -m pip install --upgrade pip && python -m pip install azureml-sdk==${{parameters.sdkVersion}}
+          # Register dataset
+          update_dataset_script=Custom_Script/mlops-pipelines/scripts/register_or_update_dataset.py
+          python $update_dataset_script --path $DATAPATH \
+                                        --name ${{parameters.amlDatasetName}} \
+                                        --subscription-id $(az account show --query id -o tsv) \
+                                        --resource-group ${{parameters.resourceGroup}} \
+                                        --workspace-name ${{parameters.amlWorkspaceName}}
