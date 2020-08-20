@@ -14,7 +14,7 @@ sys.path.append("Automated_ML")
 sys.path.append("Automated_ML//02b_Train_AutoML")
 
 from common.scripts.helper import get_automl_environment
-from scripts.helper import write_automl_settings_to_file
+from scripts.helper import build_parallel_run_config, write_automl_settings_to_file
 
 
 def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
@@ -24,8 +24,8 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
     dataset_input = dataset.as_named_input(dataset_name)
 
     # Set output
-    #datastore = ws.get_default_datastore()
-    output_dir = PipelineData(name='training_output') #, datastore=datastore)
+    datastore = ws.get_default_datastore()
+    output_dir = PipelineData(name='training_output', datastore=datastore)
 
     automl_settings = {
         "task": 'forecasting',
@@ -72,23 +72,15 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
     return published_pipeline.id
 
 
-def get_parallel_run_config(ws, compute_name, node_count=3, processes_per_node=8, timeout=300):
-
-    # Configure environment for ParallelRunStep
-    # train_env = Environment.from_conda_specification(
-        # name='many_models_environment',
-        # file_path='Custom_Script/scripts/train.conda.yml'
-    # )
-
+def get_parallel_run_config(ws, compute_name, node_count=3, processes_count_per_node=8, timeout=300):
     train_env = get_automl_environment()
 
     # Get the compute target
     compute = AmlCompute(ws, compute_name)
 
-    from scripts.helper import build_parallel_run_config
-    parallel_run_config = build_parallel_run_config(train_env, compute_name, node_count, process_count_per_node,
+    # build parallel run config
+    parallel_run_config = build_parallel_run_config(train_env, compute_name, node_count, processes_count_per_node,
                                                     timeout)
-
     return parallel_run_config
 
 
@@ -103,10 +95,10 @@ def parse_args(args=None):
     parser.add_argument('--subscription-id', required=True, type=str)
     parser.add_argument('--resource-group', required=True, type=str)
     parser.add_argument('--workspace-name', required=True, type=str)
-    parser.add_argument('--name', required=True, type=str)
+    parser.add_argument('--pipeline-name', required=True, type=str)
     parser.add_argument('--version', required=True, type=str)
-    parser.add_argument('--dataset', type=str, default='oj_sales_data')
-    parser.add_argument('--compute', type=str, default='cpu-compute')
+    parser.add_argument('--dataset', type=str, default='oj_data_small')
+    parser.add_argument('--compute', type=str, default='train-many-model')
     args_parsed = parser.parse_args(args)
     return args_parsed
 
@@ -123,10 +115,10 @@ if __name__ == "__main__":
 
     pipeline_id = main(
         ws,
-        pipeline_name=args.name,
+        pipeline_name=args.pipeline_name,
         pipeline_version=args.version,
         dataset_name=args.dataset,
         compute_name=args.compute
     )
 
-    print('Training pipeline {} version {} published with ID {}'.format(args.name, args.version, pipeline_id))
+    print('Training pipeline {} version {} published with ID {}'.format(args.pipeline_name, args.version, pipeline_id))
