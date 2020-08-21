@@ -1,13 +1,3 @@
----
-page_type: sample
-languages:
-- python
-products:
-- azureml
-description: "Solution Accelerator designed to help get you up and running with the many models pattern on Azure"
-urlFragment: "solution-accelerator-many-models"
----
-
 ![Many Models Solution Accelerator Banner](images/mmsa.png)
 # Many Models Solution Accelerator
 
@@ -18,6 +8,8 @@ Guidance on onboarding samples to docs.microsoft.com/samples: https://review.doc
 
 Taxonomies for products and languages: https://review.docs.microsoft.com/new-hope/information-architecture/metadata/taxonomies?branch=master
 -->
+![Automl notebooks](https://github.com/microsoft/solution-accelerator-many-models/workflows/Automl%20notebooks/badge.svg)
+![Custom script notebooks](https://github.com/microsoft/solution-accelerator-many-models/workflows/Custom%20script%20notebooks/badge.svg)
 
 In the real world, many problems can be too complex to be solved by a single machine learning model. Whether that be predicting sales for each individual store, building a predictive maintanence model for hundreds of oil wells, or tailoring an experience to individual users, building a model for each instance can lead to improved results on many machine learning problems.
 
@@ -56,7 +48,7 @@ While it's not required, a basic understanding of Azure Machine Learning will be
 
 Start by deploying the resources to Azure. The button below will deploy Azure Machine Learning and it's related resources:
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdereklegenzoff%2FSampleArmTemplates%2Fmaster%2FAzureML.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2Fsolution-accelerator-many-models%2Fmaster%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -100,6 +92,15 @@ The functionality is broken into the notebooks folders designed to be run sequen
 | `Automated_ML\01b_Data_Preparation\01b_Data_Preparation.ipynb`             | Register the blob container as a Datastore to the Workspace and register a File Dataset to the workspace.                         |
 | `Automated_ML\02b_Train_AutoML\02b_Train_AutoML.ipynb` | Creates a pipeline to train a model for each store and orange juice brand in the dataset using Automated ML.  |
 | `Automated_ML\03b_Forecasting_Pipeline\03b_Forecasting_Pipeline.ipynb` | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.  |
+
+## How-to-videos
+Watch these how-to-videos for a step by step walk-through of the many model solution accelerator to learn how to setup your models using both the custom training script and automated ml.
+
+### Custom Script
+[![Watch the video](https://media.giphy.com/media/dWUKfameudyNGRnp1t/giphy.gif)](https://channel9.msdn.com/Shows/Docs-AI/Building-Large-Scale-Machine-Learning-Models-using-Azure-Machine-Learning)
+
+### Automated ML
+[![Watch the video](https://media.giphy.com/media/dWUKfameudyNGRnp1t/giphy.gif)](https://channel9.msdn.com/Shows/Docs-AI/Building-Large-Scale-Machine-Learning-Forecasting-Models-using-Azure-Machine-Learnings-Automated-ML)
 
 ## Key concepts
 

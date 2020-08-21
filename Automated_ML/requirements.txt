@@ -1,0 +1,5 @@
+azureml-sdk[automl]>= 1.10.0
+azureml-contrib-pipeline-steps>=1.10.0
+jupyter
+numpy~=1.16.0
+pandas>=0.22.0,<=0.23.4
