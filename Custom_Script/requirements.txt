@@ -1,6 +1,6 @@
 azureml-sdk>=1.10.0
 azureml-opendatasets>=1.10.0
-azureml-contrib-pipeline-steps>=1.10.0
+azureml-pipeline-steps>=1.10.0
 jupyter
 matplotlib
 numpy
