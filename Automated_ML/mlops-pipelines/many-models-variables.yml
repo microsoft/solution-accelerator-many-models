@@ -30,14 +30,14 @@ variables:
     value: oj_sales_data_$(DATASET_MAXFILES)
 
   # Training
-  - name: AutoML_TRAINING_PIPELINE_NAME
+  - name: AML_TRAINING_PIPELINE_NAME
     value: many-models-training
 
   # Real-time inferencing
   - name: AML_AKS_NAME
     value: manymodels-aks
   - name: AML_MODEL_SPLITTING_TAGS
-    value: StoreGroup100
+    value: Store
   - name: AML_MODEL_SORTING_TAGS
     value: StoreGroup10
   - name: AML_WEBSERVICE_PREFIX
@@ -54,7 +54,7 @@ variables:
     value: routing-manymodels
 
   # Batch forecasting
-  - name: AutoML_FORECASTING_PIPELINE_NAME
+  - name: AML_FORECASTING_PIPELINE_NAME
     value: many-models-forecasting
   - name: PREDICTIONS_CONTAINER_NAME
     value: predictions
