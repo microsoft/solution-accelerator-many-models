@@ -36,7 +36,7 @@ jobs:
       - name: Convert notebooks to python
         run: |
           jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
-          jupyter nbconvert --to script Custom_Script/01_Data_Preparation.ipynb
+          jupyter nbconvert --to script 01_Data_Preparation.ipynb
           jupyter nbconvert --to script Custom_Script/02_Training_Pipeline.ipynb
           jupyter nbconvert --to script Custom_Script/03_Forecasting_Pipeline.ipynb
       - name: Login via Az module
@@ -59,7 +59,6 @@ jobs:
           azPSVersion: 'latest'
       - name: Data preparation
         run: |
-          cd Custom_Script
           python 01_Data_Preparation.py
       - name: Run training
         run: |
