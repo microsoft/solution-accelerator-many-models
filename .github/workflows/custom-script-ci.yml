@@ -59,7 +59,7 @@ jobs:
           azPSVersion: 'latest'
       - name: Data preparation
         run: |
-          python 01_Data_Preparation.py
+          ipython 01_Data_Preparation.py
       - name: Run training
         run: |
           cd Custom_Script
