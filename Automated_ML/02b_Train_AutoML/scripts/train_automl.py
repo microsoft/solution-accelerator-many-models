@@ -113,20 +113,16 @@ def run(input_data):
     entry_script = EntryScript()
     logger = entry_script.logger
     os.makedirs('./outputs', exist_ok=True)
-    resultList = []
-    model_name = None
-    current_run = None
-    error_message = None
-    error_code = None
-    error_type = None
-    tags_dict = None
-    for file in input_data:
-        logs = []
+    result_list = []
+
+    for file_path in input_data:
+        current_run = None
         date1 = datetime.datetime.now()
-        logger.info('start (' + file + ') ' + str(datetime.datetime.now()))
-        file_path = file
+        logger.info('start (' + file_path + ') ' + str(date1))
 
         file_name, file_extension = os.path.splitext(os.path.basename(file_path))
+
+        result = {'ts_start': date1, 'file_name': file_name}
 
         try:
             if file_extension.lower() == ".parquet":
@@ -135,9 +131,9 @@ def run(input_data):
                 data = pd.read_csv(file_path, parse_dates=[timestamp_column])
 
             tags_dict = {'ModelType': 'AutoML'}
-
             for column_name in group_column_names:
-                tags_dict.update({column_name: str(data.iat[0, data.columns.get_loc(column_name)])})
+                tags_dict.update({column_name: str(data[col_name].iloc[0])})
+            result.update(tags_dict)
 
             if args.retrain_failed_models:
                 logger.info('querying for existing models')
@@ -147,8 +143,9 @@ def run(input_data):
 
                     if models:
                         logger.info("model already exists for the dataset " + models[0].name)
-                        logs = compose_logs(file_name, models[0], date1)
-                        resultList.append(logs)
+                        result['model_name'] = models[0].name
+                        result['ts_end'] = datetime.datetime.now()
+                        result_list.append(result)
                         continue
                 except Exception as error:
                     logger.info('Failed to list the models. ' + 'Error message: ' + str(error))
@@ -159,12 +156,15 @@ def run(input_data):
 
             # train model
             fitted_model, current_run, best_child_run = train_model(file_path, data, logger)
+            result['run'] = current_run.id
+
             model_string = '_'.join(str(v) for k, v in sorted(tags_dict.items()) if k in group_column_names).lower()
             logger.info("model string to encode " + model_string)
             sha = hashlib.sha256()
             sha.update(model_string.encode())
             model_name = 'automl_' + sha.hexdigest()
             tags_dict.update({'Hash': sha.hexdigest()})
+            result['model_name'] = model_name
             try:
                 logger.info('done training')
                 print('Trained best model ' + model_name)
@@ -180,58 +180,32 @@ def run(input_data):
 
                 print('Registered ' + model_name)
             except Exception as error:
-                error_type = ErrorTypes.Unclassified
                 error_message = 'Failed to register the model. ' + 'Error message: ' + str(error)
+                result.update({'error_type': ErrorTypes.Unclassified, 'error_message': error_message})
                 from azureml.automl.core.shared import logging_utilities
                 logging_utilities.log_traceback(error, None)
                 logger.info(error_message)
 
-            date2 = datetime.datetime.now()
-
-            logs.append('AutoML')
-            logs.append(file_name)
-            logs.append(current_run.id)
-            logs.append(current_run.get_status())
-            logs.append(model_name)
-            logs.append(tags_dict)
-            logs.append(str(date1))
-            logs.append(str(date2))
-            logs.append(error_type)
-            logs.append(error_code)
-            logs.append(error_message)
-
-            logger.info('ending (' + file_path + ') ' + str(date2))
-
         # 10.1 Log the error message if an exception occurs
         except (ClientException, AutoMLException) as error:
-            date2 = datetime.datetime.now()
-            error_message = 'Failed to train the model. ' + 'Error : ' + str(error)
-
-            logs.append('AutoML')
-            logs.append(file_name)
-
-            if current_run:
-                logs.append(current_run.id)
-                logs.append(current_run.get_status())
-            else:
-                logs.append(current_run)
-                logs.append('Failed')
-
-            logs.append(model_name)
-            logs.append(tags_dict)
-            logs.append(str(date1))
-            logs.append(str(date2))
-            if isinstance(error, AutoMLException):
-                logs.append(error.error_type)
-            else:
-                logs.append(None)
-            logs.append(get_error_code(error))
-            logs.append(error_message)
-
+            error_message = 'Failed to train the model. Error ' + str(get_error_code(error)) + ': ' + str(error)
             logger.info(error_message)
-            logger.info('ending (' + file_path + ') ' + str(date2))
+            result['error_message'] = error_message
+            result['error_code'] = get_error_code(error)
+            if isinstance(error, AutoMLException):
+                result['error_type'] = error.error_type
 
-        resultList.append(logs)
+        date2 = datetime.datetime.now()
+        result['ts_end'] = str(date2)
+        result['status'] = current_run.get_status() if current_run else 'Failed'
+        result_list.append(result)
 
-    result = pd.DataFrame(data=resultList)
+        logger.info('ending (' + file_path + ') ' + str(date2))
+
+    # Data returned by this function will be available in parallel_run_step.txt
+    result = pd.DataFrame(result_list, columns=[
+        *group_column_names, 'model_type', 'file_name', 'run_id', 'status', 
+        'model_name', 'ts_start', 'ts_end', 'error_type', 'error_code', 'error_message'
+    ])
+
     return result
