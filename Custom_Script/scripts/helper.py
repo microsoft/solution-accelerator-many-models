@@ -2,7 +2,6 @@
 # Licensed under the MIT License.
 
 import os
-import glob
 import pandas as pd
 
 
@@ -22,7 +21,7 @@ def split_data_upload_to_datastore(data_path, time_column_name, split_date, data
     os.makedirs(inference_data_path, exist_ok=True)
 
     files_list = [os.path.join(path, f) for path, _, files in os.walk(data_path) for f in files
-                  if not path in (train_data_path, inference_data_path)]
+                  if path not in (train_data_path, inference_data_path)]
 
     for file in files_list:
         file_name = os.path.basename(file)
