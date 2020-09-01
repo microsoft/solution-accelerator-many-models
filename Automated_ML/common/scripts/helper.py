@@ -31,6 +31,7 @@ def get_automl_environment():
     train_env.docker.base_image = DEFAULT_CPU_IMAGE
     env = {}
     env['AZUREML_FLUSH_INGEST_WAIT'] = ''
+    env['DISABLE_ENV_MISMATCH'] = True
     train_env.environment_variables = env
     return train_env
 
