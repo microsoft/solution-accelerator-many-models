@@ -26,11 +26,23 @@ variables:
   # Azure ML workspace
   - name: AML_COMPUTE_NAME
     value: cpu-compute
-  - name: AML_DATASET_NAME
-    value: oj_sales_data_$(DATASET_MAXFILES)
+  - name: AML_TRAIN_DATASET_NAME
+    value: oj_sales_data
+  - name: AML_TEST_DATASET_NAME
+    value: oj_inference_data
+  - name: CONTAINER_NAME
+    value: automl-sample-notebook-data
+  - name: ACCOUNT_NAME
+    value: automlsamplenotebookdata
+  - name: ACCOUNT_KEY
+    value: None
+  - name: TRAIN_DATA_PATH_PREFIX
+    value: oj_data_small
+  - name: TEST_DATA_PATH_PREFIX
+    value: oj_inference_small
 
   # Training
-  - name: AML_TRAINING_PIPELINE_NAME
+  - name: AutoML_TRAINING_PIPELINE_NAME
     value: many-models-training
 
   # Real-time inferencing
@@ -39,7 +51,7 @@ variables:
   - name: AML_MODEL_SPLITTING_TAGS
     value: Store
   - name: AML_MODEL_SORTING_TAGS
-    value: StoreGroup10
+    value: Store
   - name: AML_WEBSERVICE_PREFIX
     value: manymodels-
   - name: AML_MAX_CONTAINER_SIZE
@@ -54,7 +66,7 @@ variables:
     value: routing-manymodels
 
   # Batch forecasting
-  - name: AML_FORECASTING_PIPELINE_NAME
+  - name: AutoML_FORECASTING_PIPELINE_NAME
     value: many-models-forecasting
   - name: PREDICTIONS_CONTAINER_NAME
     value: predictions

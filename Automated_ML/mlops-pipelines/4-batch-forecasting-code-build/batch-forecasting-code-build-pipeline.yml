@@ -41,12 +41,12 @@ stages:
             scriptLocation: inlineScript
             inlineScript: |
               # Install dependencies
-              python -m pip install --upgrade pip && python -m pip install azureml-sdk[automl, contrib]==$SDK_VERSION
+              python -m pip install --upgrade pip && python -m pip install azureml-sdk[automl]==$SDK_VERSION
               # Create/update forecasting pipeline
               forecastingbuild_script=Automated_ML/mlops-pipelines/scripts/create_forecasting_pipeline.py
-              python $forecastingbuild_script --name $(AML_FORECASTING_PIPELINE_NAME) \
+              python $forecastingbuild_script --pipeline-name $(AML_FORECASTING_PIPELINE_NAME) \
                                               --version $(Build.BuildId) \
-                                              --dataset $(AML_DATASET_NAME) \
+                                              --dataset $(AML_TEST_DATASET_NAME) \
                                               --output $(PREDICTIONS_CONTAINER_NAME) \
                                               --compute $(AML_COMPUTE_NAME) \
                                               --subscription-id $(az account show --query id -o tsv) \

@@ -133,7 +133,7 @@ jobs:
                              --model-metadata-file '$(Pipeline.Workspace)/routingmodel-${{parameters.deploymentType}}/routing_model.json' \
                              --runtime python \
                              --entry-script Automated_ML/03b_Forecasting_Pipeline/scripts/routing_webservice.py \
-                             --conda-file Custom_Script/scripts/routing_webservice.conda.yml \
+                             --conda-file Automated_ML/mlops-pipelines/scripts/routing_webservice.conda.yml \
                              --overwrite \
                              --workspace-name ${{parameters.amlWorkspaceName}} \
                              --resource-group ${{parameters.resourceGroup}}

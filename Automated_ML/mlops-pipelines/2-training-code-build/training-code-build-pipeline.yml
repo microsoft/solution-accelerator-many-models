@@ -46,7 +46,7 @@ stages:
               trainingbuild_script=Automated_ML/mlops-pipelines/scripts/create_training_pipeline.py
               python $trainingbuild_script --pipeline-name $(AML_TRAINING_PIPELINE_NAME) \
                                            --version $(Build.BuildId) \
-                                           --dataset $(AML_DATASET_NAME) \
+                                           --dataset $(AML_TRAIN_DATASET_NAME) \
                                            --compute $(AML_COMPUTE_NAME) \
                                            --subscription-id $(az account show --query id -o tsv) \
                                            --resource-group $(RESOURCE_GROUP) \

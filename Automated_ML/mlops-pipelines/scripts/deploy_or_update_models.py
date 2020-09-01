@@ -6,7 +6,7 @@ import sys
 import warnings
 import joblib
 import yaml
-from azureml.core import Workspace, Model, Environment, Webservice
+from azureml.core import Workspace, Model, Webservice
 from azureml.core.model import InferenceConfig
 from azureml.core.compute import AksCompute
 from azureml.core.webservice import AciWebservice, AksWebservice
@@ -214,7 +214,7 @@ def group_models(models, splitting_tags=[]):
     # Create groups of ordered models using splitting tags
     groups = {}
     for m in models:
-
+        print(splitting_tags)
         if any(t not in m.tags.keys() for t in splitting_tags):
             print(f'Model "{m.name}" does not contain splitting tags. Skipping.')
             continue
