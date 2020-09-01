@@ -1,0 +1,123 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Azure Pipeline Template for AutoML Workspace Setup
+
+parameters:
+- name: sdkVersion
+  type: string
+- name: serviceConnection
+  type: string
+- name: resourceGroup
+  type: string
+- name: resourcesLocation
+  type: string
+- name: amlWorkspaceName
+  type: string
+- name: amlComputeName
+  type: string
+- name: aksName
+  type: string
+- name: aksResourceGroup
+  type: string
+- name: amlAksName
+  type: string
+- name: amlTrainDatasetName
+  type: string
+- name: amlTestDatasetName
+  type: string
+- name: maxFiles
+  type: string
+- name: containerName
+  type: string
+- name: accountName
+  type: string
+- name: accountKey
+  type: string
+- name: trainDataPathPrefix
+  type: string
+- name: testDataPathPrefix
+  type: string
+
+
+jobs:
+
+- job: aml_compute
+  displayName: 'Deploy AML Compute'
+  steps:
+  - task: AzureResourceGroupDeployment@2
+    displayName: 'Deploy AML Compute'
+    inputs:
+      azureSubscription: ${{parameters.serviceConnection}}
+      resourceGroupName: ${{parameters.resourceGroup}}
+      location: ${{parameters.resourcesLocation}}
+      csmFile: '$(Build.SourcesDirectory)/Automated_ML/mlops-pipelines/1-setup/environment-setup/arm-templates/mlcompute.template.json'
+      csmParametersFile: '$(Build.SourcesDirectory)/Automated_ML/mlops-pipelines/1-setup/environment-setup/arm-templates/mlcompute.parameters.json'
+      overrideParameters: '-workspaceName ${{parameters.amlWorkspaceName}} -clusterName ${{parameters.amlComputeName}}'
+
+
+- job: aml_aks
+  displayName: 'Attach AKS Target to AML'
+  steps:
+  - task: AzureCLI@1
+    displayName: 'Attach AKS Target to AML'
+    inputs:
+      azureSubscription: ${{parameters.serviceConnection}}
+      scriptLocation: inlineScript
+      inlineScript: |
+        workspace_params="--workspace-name ${{parameters.amlWorkspaceName}} --resource-group ${{parameters.resourceGroup}}"
+        # Install ML extension
+        az extension add -n azure-cli-ml
+        # Check if AKS target is already attached and attach if not
+        az ml computetarget show --name ${{parameters.amlAksName}} $workspace_params
+        if [ $? -eq 1 ]; then
+          # Get AKS resource id
+          aks_id=$(az resource list -n ${{parameters.aksName}} -g ${{parameters.aksResourceGroup}} --query "[0].id" -o tsv)
+          # Attach AKS
+          az ml computetarget attach aks --name ${{parameters.amlAksName}} --compute-resource-id $aks_id $workspace_params
+        fi
+
+
+- job: sample_files
+  displayName: 'Sample Files Setup'
+  steps:
+
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.7'
+      inputs:
+        versionSpec: 3.7
+
+    - task: AzureCLI@1
+      displayName: 'Download Sample Files and Upload to AML datastore'
+      inputs:
+        azureSubscription: ${{parameters.serviceConnection}}
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Install dependencies
+          python -m pip install --upgrade pip && python -m pip install azureml-sdk==${{parameters.sdkVersion}}
+          # Download sample files and upload to blob store
+          python Automated_ML/mlops-pipelines/scripts/download_data.py \
+                      --resource-group ${{parameters.resourceGroup}} \
+                      --workspace-name ${{parameters.amlWorkspaceName}} \
+                      --container-name ${{parameters.containerName}} \
+                      --account-name ${{parameters.accountName}} \
+                      --account-key ${{parameters.accountKey}} \
+                      --train-data-path-prefix ${{parameters.trainDataPathPrefix}} \
+                      --test-data-path-prefix ${{parameters.testDataPathPrefix}} \
+                      --train-target-path ${{parameters.trainDataPathPrefix}} \
+                      --test-target-path ${{parameters.testDataPathPrefix}} \
+                      --subscription-id $(az account show --query id -o tsv)
+          register_dataset_script=Automated_ML/mlops-pipelines/scripts/register_or_update_dataset.py
+          # Register dataset
+          python $register_dataset_script --path ${{parameters.trainDataPathPrefix}} \
+                                          --name ${{parameters.amlTrainDatasetName}} \
+                                          --subscription-id $(az account show --query id -o tsv) \
+                                          --resource-group ${{parameters.resourceGroup}} \
+                                          --workspace-name ${{parameters.amlWorkspaceName}}
+          python $register_dataset_script --path ${{parameters.testDataPathPrefix}} \
+                                          --name ${{parameters.amlTestDatasetName}} \
+                                          --subscription-id $(az account show --query id -o tsv) \
+                                          --resource-group ${{parameters.resourceGroup}} \
+                                          --workspace-name ${{parameters.amlWorkspaceName}}
+        name: download_files
+        failOnStderr: true

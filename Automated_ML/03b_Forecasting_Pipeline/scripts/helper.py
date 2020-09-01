@@ -12,8 +12,10 @@ sys.path.append("..")
 def build_parallel_run_config_for_forecasting(train_env, compute, nodecount, workercount, timeout):
     from azureml.pipeline.steps import ParallelRunConfig
     from common.scripts.helper import validate_parallel_run_config
+    current_dir_path = os.path.dirname(os.path.realpath(__file__))
+
     parallel_run_config = ParallelRunConfig(
-        source_directory='./scripts',
+        source_directory=current_dir_path,
         entry_script='forecast.py',
         mini_batch_size="10",  # do not modify this setting
         run_invocation_timeout=timeout,

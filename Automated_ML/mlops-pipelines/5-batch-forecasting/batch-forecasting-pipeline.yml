@@ -1,0 +1,46 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Pipeline that runs AML Pipeline for model training
+
+# trigger:
+#   branches:
+#     include:
+#     - v2-preview
+#   paths:
+#     include:
+#     - Automated_ML/mlops-pipelines/5-batch-forecasting/*
+
+# schedules:
+# - cron: "30 7 * * *"
+#   displayName: 'Daily forecasting at 07:30 AM'
+#   branches:
+#     include:
+#     - v2-preview
+#   always: true
+
+variables:
+- template: ../many-models-variables.yml
+- group: manymodels-vg
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+# There is no data to update in this example, but in the general case 
+# the registered dataset should be updated before forecasting.
+# - stage: update_data
+#   displayName: 'Update Data for Forecasting'
+#   jobs:
+#   - template: update-data/update-data.template.yml
+
+- stage: run_forecasting
+  displayName: 'Run Model Forecasting'
+  jobs:
+  - template: run-forecasting/run-forecasting.template.yml
+    parameters:
+      serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
+      resourceGroup: '$(RESOURCE_GROUP)'
+      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
+      forecastingPipelineName: '$(AML_FORECASTING_PIPELINE_NAME)'

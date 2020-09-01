@@ -6,9 +6,9 @@ import sys
 
 
 def validate_parallel_run_config(parallel_run_config):
-    max_concurrency = 20
+    max_concurrency = 200
     if (parallel_run_config.process_count_per_node * parallel_run_config.node_count) > max_concurrency:
-        print("Please decrease concurrency to maximum of 20 as currently AutoML does not support it.")
+        print("Please decrease concurrency to maximum of 200 as currently AutoML does not support it.")
         raise ValueError("node_count*process_count_per_node must be between 1 and max_concurrency {}"
                          .format(max_concurrency))
 
@@ -31,6 +31,7 @@ def get_automl_environment():
     train_env.docker.base_image = DEFAULT_CPU_IMAGE
     env = {}
     env['AZUREML_FLUSH_INGEST_WAIT'] = ''
+    env['DISABLE_ENV_MISMATCH'] = True
     train_env.environment_variables = env
     return train_env
 
