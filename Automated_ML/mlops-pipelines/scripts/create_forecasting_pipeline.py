@@ -4,17 +4,16 @@
 import argparse
 import sys
 
-from azureml.core import Workspace, Datastore, Dataset, Environment
-from azureml.data.data_reference import DataReference
+from azureml.core import Workspace, Dataset
 from azureml.core.compute import AmlCompute
 from azureml.pipeline.core import Pipeline, PipelineData, PublishedPipeline
-from azureml.pipeline.steps import ParallelRunConfig, ParallelRunStep
+from azureml.pipeline.steps import ParallelRunStep
 
 sys.path.append("Automated_ML")
 sys.path.append("Automated_ML//03b_Forecasting_Pipeline")
 
 
-def main(ws, pipeline_name, pipeline_version, dataset_name, output_name, compute_name):
+def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
 
     # Get forecasting dataset
     dataset = Dataset.get_by_name(ws, name=dataset_name)
@@ -24,15 +23,6 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, output_name, compute
     datastore = ws.get_default_datastore()
     forecasting_output_name = 'forecasting_output'
     output_dir = PipelineData(name=forecasting_output_name, datastore=datastore)
-    predictions_datastore = Datastore.register_azure_blob_container(
-        workspace=ws,
-        datastore_name=output_name,
-        container_name=output_name,
-        account_name=datastore.account_name,
-        account_key=datastore.account_key,
-        create_if_not_exists=True
-    )
-    predictions_dref = DataReference(predictions_datastore)
 
     # Get the compute target
     compute = AmlCompute(ws, compute_name)
@@ -95,7 +85,6 @@ def parse_args(args=None):
     parser.add_argument('--pipeline-name', required=True, type=str)
     parser.add_argument('--version', required=True, type=str)
     parser.add_argument('--dataset', type=str, default='oj_sales_data')
-    parser.add_argument('--output', type=str, default='predictions')
     parser.add_argument('--compute', type=str, default='cpu-compute')
     args_parsed = parser.parse_args(args)
     return args_parsed
@@ -116,7 +105,6 @@ if __name__ == "__main__":
         pipeline_name=args.pipeline_name,
         pipeline_version=args.version,
         dataset_name=args.dataset,
-        output_name=args.output,
         compute_name=args.compute
     )
 

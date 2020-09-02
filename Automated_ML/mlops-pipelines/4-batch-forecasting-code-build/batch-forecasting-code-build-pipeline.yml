@@ -47,7 +47,6 @@ stages:
               python $forecastingbuild_script --pipeline-name $(AML_FORECASTING_PIPELINE_NAME) \
                                               --version $(Build.BuildId) \
                                               --dataset $(AML_TEST_DATASET_NAME) \
-                                              --output $(PREDICTIONS_CONTAINER_NAME) \
                                               --compute $(AML_COMPUTE_NAME) \
                                               --subscription-id $(az account show --query id -o tsv) \
                                               --resource-group $(RESOURCE_GROUP) \

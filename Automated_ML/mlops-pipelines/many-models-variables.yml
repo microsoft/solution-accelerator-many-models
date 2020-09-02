@@ -26,6 +26,9 @@ variables:
   # Azure ML workspace
   - name: AML_COMPUTE_NAME
     value: cpu-compute
+
+
+  # Training and Inferencing data
   - name: AML_TRAIN_DATASET_NAME
     value: oj_sales_data
   - name: AML_TEST_DATASET_NAME
@@ -66,7 +69,5 @@ variables:
     value: routing-manymodels
 
   # Batch forecasting
-  - name: AutoML_FORECASTING_PIPELINE_NAME
+  - name: AML_FORECASTING_PIPELINE_NAME
     value: many-models-forecasting
-  - name: PREDICTIONS_CONTAINER_NAME
-    value: predictions
