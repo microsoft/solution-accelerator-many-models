@@ -45,8 +45,8 @@ variables:
     value: oj_inference_small
 
   # Training
-  - name: AutoML_TRAINING_PIPELINE_NAME
-    value: many-models-training
+  - name: AML_TRAINING_PIPELINE_NAME
+    value: automl_training_pipeline
 
   # Real-time inferencing
   - name: AML_AKS_NAME
@@ -70,4 +70,4 @@ variables:
 
   # Batch forecasting
   - name: AML_FORECASTING_PIPELINE_NAME
-    value: many-models-forecasting
+    value: automl_forecasting_pipeline
