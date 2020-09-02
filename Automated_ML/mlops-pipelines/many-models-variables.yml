@@ -46,7 +46,7 @@ variables:
 
   # Training
   - name: AML_TRAINING_PIPELINE_NAME
-    value: automl_training_pipeline
+    value: automl-training-pipeline
 
   # Real-time inferencing
   - name: AML_AKS_NAME
@@ -70,4 +70,4 @@ variables:
 
   # Batch forecasting
   - name: AML_FORECASTING_PIPELINE_NAME
-    value: automl_forecasting_pipeline
+    value: automl-forecasting-pipeline

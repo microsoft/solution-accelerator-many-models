@@ -3,5 +3,5 @@ dependencies:
   - python=3.7.7
   - pip
   - pip:
-      - azureml-sdk[automl]
+      - azureml-defaults
       - joblib

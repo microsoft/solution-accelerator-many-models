@@ -3,7 +3,6 @@
 
 import os
 import joblib
-import hashlib
 from pathlib import Path
 from azureml.contrib.services.aml_response import AMLResponse
 

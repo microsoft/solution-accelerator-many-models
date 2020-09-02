@@ -2,13 +2,12 @@
 # Licensed under the MIT License.
 
 import os
-import hashlib
-import joblib
-import json
-import requests
-from requests.exceptions import HTTPError
 from collections import defaultdict
+
+import joblib
+import requests
 from azureml.contrib.services.aml_response import AMLResponse
+from requests.exceptions import HTTPError
 
 from utils.forecast_helper import get_model_name
 from utils.webservices import read_input
