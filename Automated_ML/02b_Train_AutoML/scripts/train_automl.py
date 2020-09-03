@@ -1,43 +1,33 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-
-import pandas as pd
+import argparse
+import datetime
+import hashlib
+import json
 import os
 import tempfile
-import uuid
-
 from multiprocessing import current_process
 from pathlib import Path
-from azureml.core.dataset import Dataset
-from azureml.core.model import Model
-from sklearn.externals import joblib
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn import metrics
-import argparse
-import hashlib
-import pickle
-from azureml.core import Experiment, Workspace, Run
-from azureml.core import ScriptRunConfig
-from azureml.train.automl import AutoMLConfig
+from random import randint
+from time import sleep
+
+import pandas as pd
 from azureml.automl.core.shared import constants
-import datetime
-from azureml_user.parallel_run import EntryScript
-from train_automl_helper import str2bool, compose_logs
-import logging
 from azureml.automl.core.shared.exceptions import (AutoMLException,
                                                    ClientException, ErrorTypes)
 from azureml.automl.core.shared.utilities import get_error_code
+from azureml.core import Run
+from azureml.core.model import Model
+from azureml.train.automl import AutoMLConfig
 
-
-from joblib import dump, load
-from random import randint
-from time import sleep
-import json
-
+from azureml_user.parallel_run import EntryScript
+from train_automl_helper import compose_logs, str2bool
 
 current_step_run = Run.get_context()
+
+# This is used by UI to display the many model settings
+many_model_run_properties = {'many_models_run': True}
 
 LOG_NAME = "user_log"
 
@@ -45,7 +35,6 @@ LOG_NAME = "user_log"
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--process_count_per_node", default=1, type=int, help="number of processes per node")
 parser.add_argument("--retrain_failed_models", default=False, type=str2bool, help="retrain failed models only")
-parser.add_argument("--drop_columns", type=str, nargs='*', default=[], help="list of columns to drop prior to modeling")
 
 args, _ = parser.parse_known_args()
 
@@ -113,13 +102,19 @@ def train_model(file_path, data, logger):
 
     logger.info("submit_child")
     local_run = current_step_run.submit_child(automl_config, show_output=False)
+
+    local_run.add_properties({
+        k: str(many_model_run_properties[k])
+        for k in many_model_run_properties
+    })
+
     logger.info(local_run)
     print(local_run)
     local_run.wait_for_completion(show_output=True)
 
-    fitted_model = local_run.get_output()
+    best_child_run, fitted_model = local_run.get_output()
 
-    return fitted_model, local_run
+    return fitted_model, local_run, best_child_run
 
 
 def run(input_data):
@@ -139,7 +134,8 @@ def run(input_data):
         logger.info('start (' + file + ') ' + str(datetime.datetime.now()))
         file_path = file
 
-        file_name, file_extension = os.path.splitext(os.path.basename(file_path))
+        file_name_with_extension = os.path.basename(file_path)
+        file_name, file_extension = os.path.splitext(file_name_with_extension)
 
         try:
             if file_extension.lower() == ".parquet":
@@ -148,9 +144,12 @@ def run(input_data):
                 data = pd.read_csv(file_path, parse_dates=[timestamp_column])
 
             tags_dict = {'ModelType': 'AutoML'}
+            group_columns_dict = {}
 
             for column_name in group_column_names:
-                tags_dict.update({column_name: str(data.iat[0, data.columns.get_loc(column_name)])})
+                group_columns_dict.update({column_name: str(data.iat[0, data.columns.get_loc(column_name)])})
+
+            tags_dict.update(group_columns_dict)
 
             if args.retrain_failed_models:
                 logger.info('querying for existing models')
@@ -166,14 +165,16 @@ def run(input_data):
                 except Exception as error:
                     logger.info('Failed to list the models. ' + 'Error message: ' + str(error))
 
-            tags_dict.update({'InputData': file_path})
+            tags_dict.update({'InputData': file_name_with_extension})
             tags_dict.update({'StepRunId': current_step_run.id})
             tags_dict.update({'RunId': current_step_run.parent.id})
 
             # train model
-            data = data.drop(columns=args.drop_columns, errors='ignore')
-            fitted_model, current_run = train_model(file_path, data, logger)
-            model_string = '_'.join(str(v) for k, v in sorted(tags_dict.items()) if k in group_column_names).lower()
+            many_model_run_properties['many_models_data_tags'] = group_columns_dict
+            many_model_run_properties['many_models_input_file'] = file_name_with_extension
+
+            fitted_model, current_run, best_child_run = train_model(file_path, data, logger)
+            model_string = '_'.join(str(v) for k, v in sorted(group_columns_dict.items()))
             logger.info("model string to encode " + model_string)
             sha = hashlib.sha256()
             sha.update(model_string.encode())
@@ -183,18 +184,18 @@ def run(input_data):
                 logger.info('done training')
                 print('Trained best model ' + model_name)
 
+                logger.info(best_child_run)
                 logger.info(fitted_model)
                 logger.info(model_name)
 
                 logger.info('register model')
 
-                current_run.register_model(model_name=model_name, description='AutoML', tags=tags_dict)
+                best_child_run.register_model(
+                    model_name=model_name, model_path=constants.MODEL_PATH, description='AutoML', tags=tags_dict)
                 print('Registered ' + model_name)
             except Exception as error:
                 error_type = ErrorTypes.Unclassified
                 error_message = 'Failed to register the model. ' + 'Error message: ' + str(error)
-                from azureml.automl.core.shared import logging_utilities
-                logging_utilities.log_traceback(error, None)
                 logger.info(error_message)
 
             date2 = datetime.datetime.now()
