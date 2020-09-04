@@ -24,7 +24,7 @@ parser.add_argument("--timeseries_id_columns", type=str, nargs='*', required=Tru
 parser.add_argument("--drop_columns", type=str, nargs='*', default=[],
                     help="list of columns to drop prior to modeling")
 parser.add_argument("--model_type", type=str, required=True, help="input model type")
-parser.add_argument("--test_proportion", type=float, default=0.3, help="proportion of data to be used for testing")
+parser.add_argument("--test_size", type=int, required=True, help="number of observations to be used for testing")
 
 args, _ = parser.parse_known_args()
 
@@ -56,9 +56,8 @@ def run(input_data):
                 .sort_index(ascending=True))
 
         # 2.0 Split the data into train and test sets
-        nrows_test = int(len(data) * args.test_proportion)
-        train = data[:-nrows_test]
-        test = data[-nrows_test:]
+        train = data[:-args.test_size]
+        test = data[-args.test_size:]
 
         # 3.0 Create and fit the forecasting pipeline
         # The pipeline will drop unhelpful features, make a calendar feature, and make lag features
