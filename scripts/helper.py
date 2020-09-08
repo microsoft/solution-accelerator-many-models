@@ -2,41 +2,42 @@
 # Licensed under the MIT License.
 
 import os
-import glob
 import pandas as pd
 
 
-def split_data(data_path, time_column_name, ntest_periods):
+def split_data(data_path, time_column_name, split_date):
 
     train_data_path = os.path.join(data_path, "upload_train_data")
-    test_data_path = os.path.join(data_path, "upload_test_data")
-
+    inference_data_path = os.path.join(data_path, "upload_inference_data")
     os.makedirs(train_data_path, exist_ok=True)
-    os.makedirs(test_data_path, exist_ok=True)
+    os.makedirs(inference_data_path, exist_ok=True)
 
-    files_list = [f for f in set(glob.glob(os.path.join(data_path, "**"), recursive=True)) -
-                  set(glob.glob(os.path.join(data_path, "upload_**"), recursive=True))
-                  if os.path.isfile(f)]
+    files_list = [os.path.join(path, f) for path, _, files in os.walk(data_path) for f in files
+                  if path not in (train_data_path, inference_data_path)]
 
     for file in files_list:
         file_name = os.path.basename(file)
-        file_extension = os.path.splitext(file_name)[1]
-        if file_extension.lower() == ".parquet":
-            df = pd.read_parquet(file)
-        else:
-            df = pd.read_csv(file)
+        file_extension = os.path.splitext(file_name)[1].lower()
+        df = read_file(file, file_extension)
 
-        df.reset_index(drop=True, inplace=True)
-        df[time_column_name] = pd.to_datetime(df[time_column_name])
-        df.sort_values(time_column_name, ascending=True, inplace=True)
-        train_df = df.iloc[:-ntest_periods].copy()
-        test_df = df.iloc[-ntest_periods:].copy()
+        before_split_date = df[time_column_name] < split_date
+        train_df, inference_df = df[before_split_date], df[~before_split_date]
 
-        if file_extension.lower() == ".parquet":
-            train_df.to_parquet(os.path.join(train_data_path, file_name))
-            test_df.to_parquet(os.path.join(test_data_path, file_name))
-        else:
-            train_df.to_csv(os.path.join(train_data_path, file_name), index=None, header=True)
-            test_df.to_csv(os.path.join(test_data_path, file_name), index=None, header=True)
+        write_file(train_df, os.path.join(train_data_path, file_name), file_extension)
+        write_file(inference_df, os.path.join(inference_data_path, file_name), file_extension)
 
-    return train_data_path, test_data_path
+    return train_data_path, inference_data_path
+
+
+def read_file(path, extension):
+    if extension == ".parquet":
+        return pd.read_parquet(path)
+    else:
+        return pd.read_csv(path)
+
+
+def write_file(data, path, extension):
+    if extension == ".parquet":
+        data.to_parquet(path)
+    else:
+        data.to_csv(path, index=None, header=True)
