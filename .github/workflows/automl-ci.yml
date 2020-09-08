@@ -5,7 +5,9 @@ on:
     branches:
       - master
     paths:
-      Automated_ML/**
+      - 00_Setup_AML_Workspace.ipynb
+      - 01_Data_Preparation.ipynb
+      - Automated_ML/**
 env:
   SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
   RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
