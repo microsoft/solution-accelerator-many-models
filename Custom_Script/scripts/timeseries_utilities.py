@@ -31,7 +31,7 @@ class SimpleCalendarFeaturizer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        return X.assign(Week_Year=X.index.weekofyear.values)
+        return X.assign(Week_Year=X.index.isocalendar().week.values)
 
 
 class SimpleLagger(TransformerMixin, BaseEstimator):

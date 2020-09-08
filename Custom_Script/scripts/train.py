@@ -8,8 +8,10 @@ import os
 import argparse
 import datetime
 import joblib
+
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.linear_model import LinearRegression
+
 from timeseries_utilities import ColumnDropper, SimpleLagger, SimpleCalendarFeaturizer, SimpleForecaster
 
 
@@ -19,9 +21,10 @@ parser.add_argument("--target_column", type=str, required=True, help="input targ
 parser.add_argument("--timestamp_column", type=str, required=True, help="input timestamp column")
 parser.add_argument("--timeseries_id_columns", type=str, nargs='*', required=True,
                     help="input columns identifying the timeseries")
-parser.add_argument("--model_type", type=str, required=True, help="input model type")
 parser.add_argument("--drop_columns", type=str, nargs='*', default=[],
                     help="list of columns to drop prior to modeling")
+parser.add_argument("--model_type", type=str, required=True, help="input model type")
+parser.add_argument("--test_size", type=int, required=True, help="number of observations to be used for testing")
 
 args, _ = parser.parse_known_args()
 
@@ -49,34 +52,28 @@ def run(input_data):
 
         # 1.0 Read the data from CSV - parse timestamps as datetime type and put the time in the index
         data = (pd.read_csv(csv_file_path, parse_dates=[args.timestamp_column], header=0)
-                .set_index(args.timestamp_column))
+                .set_index(args.timestamp_column)
+                .sort_index(ascending=True))
 
-        # 2.0 Create and fit the forecasting pipeline
+        # 2.0 Split the data into train and test sets
+        train = data[:-args.test_size]
+        test = data[-args.test_size:]
+
+        # 3.0 Create and fit the forecasting pipeline
         # The pipeline will drop unhelpful features, make a calendar feature, and make lag features
         lagger = SimpleLagger(args.target_column, lag_orders=[1, 2, 3, 4])
         transform_steps = [('column_dropper', ColumnDropper(args.drop_columns)),
                            ('calendar_featurizer', SimpleCalendarFeaturizer()), ('lagger', lagger)]
         forecaster = SimpleForecaster(transform_steps, LinearRegression(), args.target_column, args.timestamp_column)
-        forecaster.fit(data)
+        forecaster.fit(train)
         print('Featurized data example:')
-        print(forecaster.transform(data).head())
+        print(forecaster.transform(train).head())
 
-        # 3.0 Save the forecasting pipeline
-        joblib.dump(forecaster, filename=os.path.join('./outputs/', model_name))
+        # 4.0 Get predictions on test set
+        forecasts = forecaster.forecast(test)
+        compare_data = test.assign(forecasts=forecasts).dropna()
 
-        # 4.0 Register the model to the workspace
-        # Uses the values in the timeseries id columns from the first row of data to form tags for the model
-        current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
-        ts_id_dict = {id_col: str(data[id_col].iloc[0]) for id_col in args.timeseries_id_columns}
-        tags_dict = {**ts_id_dict, 'ModelType': args.model_type}
-        current_run.register_model(model_path=model_name, model_name=model_name,
-                                   model_framework=args.model_type, tags=tags_dict)
-
-        # 5.0 Get in-sample predictions and join with actuals
-        forecasts = forecaster.forecast(data)
-        compare_data = data.assign(forecasts=forecasts).dropna()
-
-        # 6.0 Calculate accuracy metrics for the fit
+        # 5.0 Calculate accuracy metrics for the fit
         mse = mean_squared_error(compare_data[args.target_column], compare_data['forecasts'])
         rmse = np.sqrt(mse)
         mae = mean_absolute_error(compare_data[args.target_column], compare_data['forecasts'])
@@ -84,13 +81,27 @@ def run(input_data):
         preds = compare_data['forecasts'].values
         mape = np.mean(np.abs((actuals - preds) / actuals) * 100)
 
-        # 7.0 Log metrics
+        # 6.0 Log metrics
         current_run.log(model_name + '_mse', mse)
         current_run.log(model_name + '_rmse', rmse)
         current_run.log(model_name + '_mae', mae)
         current_run.log(model_name + '_mape', mape)
 
-        # 8.0 Add data to output
+        # 7.0 Train model with full dataset
+        forecaster.fit(data)
+
+        # 8.0 Save the forecasting pipeline
+        joblib.dump(forecaster, filename=os.path.join('./outputs/', model_name))
+
+        # 9.0 Register the model to the workspace
+        # Uses the values in the timeseries id columns from the first row of data to form tags for the model
+        current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
+        ts_id_dict = {id_col: str(data[id_col].iloc[0]) for id_col in args.timeseries_id_columns}
+        tags_dict = {**ts_id_dict, 'ModelType': args.model_type}
+        current_run.register_model(model_path=model_name, model_name=model_name,
+                                   model_framework=args.model_type, tags=tags_dict)
+
+        # 10.0 Add data to output
         end_datetime = datetime.datetime.now()
         result.update(ts_id_dict)
         result['model_type'] = args.model_type
