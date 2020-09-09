@@ -27,11 +27,12 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
         output=output_dir,
         allow_reuse=False,
         arguments=[
-            '--target_column', 'Quantity',
-            '--n_test_periods', 6,
-            '--forecast_granularity', 7,
-            '--timestamp_column', 'WeekStarting',
-            '--model_type', 'lr'
+            '--target_column', 'Quantity', 
+            '--timestamp_column', 'WeekStarting', 
+            '--timeseries_id_columns', 'Store', 'Brand',
+            '--drop_columns', 'Revenue', 'Store', 'Brand', 'Price', 'Advert',
+            '--model_type', 'lr',
+            '--test_size', 20
         ]
     )
 
@@ -68,7 +69,7 @@ def get_parallel_run_config(ws, dataset_name, compute_name, processes_per_node=8
         entry_script='train.py',
         mini_batch_size='1',
         run_invocation_timeout=timeout,
-        error_threshold=25,
+        error_threshold=-1,
         output_action='append_row',
         environment=train_env,
         process_count_per_node=processes_per_node,

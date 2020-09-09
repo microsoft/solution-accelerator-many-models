@@ -41,12 +41,9 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, output_name, compute
         output=output_dir,
         allow_reuse=False,
         arguments=[
-            '--forecast_horizon', 8,
-            '--starting_date', '1992-10-01',
-            '--target_column', 'Quantity',
             '--timestamp_column', 'WeekStarting',
-            '--model_type', 'lr',
-            '--date_freq', 'W-THU'
+            '--timeseries_id_columns', 'Store', 'Brand',
+            '--model_type', 'lr'
         ]
     )
 
