@@ -2,21 +2,17 @@
 # Licensed under the MIT License.
 
 
-import argparse
 import json
-import os
 import sys
 
 from azureml.core import Experiment
 from azureml.core.run import Run
-
+from azureml.core import Workspace
 sys.path.append("..")
 
 
 def write_automl_settings_to_file(automl_settings):
-    current_dir_path = os.path.dirname(os.path.realpath(__file__))
-
-    with open(os.path.join(current_dir_path, 'automlconfig.json'), 'w', encoding='utf-8') as f:
+    with open('scripts//automlconfig.json', 'w', encoding='utf-8') as f:
         json.dump(automl_settings, f, ensure_ascii=False, indent=4)
 
 
@@ -36,11 +32,8 @@ def cancel_runs_in_experiment(ws, experiment):
 def build_parallel_run_config(train_env, compute, nodecount, workercount, timeout):
     from azureml.pipeline.steps import ParallelRunConfig
     from common.scripts.helper import validate_parallel_run_config
-
-    current_dir_path = os.path.dirname(os.path.realpath(__file__))
-
     parallel_run_config = ParallelRunConfig(
-        source_directory=current_dir_path,
+        source_directory='./scripts',
         entry_script='train_automl.py',
         mini_batch_size="1",  # do not modify this setting
         run_invocation_timeout=timeout,
@@ -54,9 +47,9 @@ def build_parallel_run_config(train_env, compute, nodecount, workercount, timeou
     return parallel_run_config
 
 
-def get_automl_environment():
+def get_automl_environment(workspace: Workspace, automl_settings_dict: dict):
     from common.scripts.helper import get_automl_environment as get_env
-    return get_env()
+    return get_env(workspace, automl_settings_dict)
 
 
 def get_training_output(run, training_results_name, training_output_name):
