@@ -57,7 +57,10 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, output_name, compute
         allow_reuse=False,
         arguments=[
             '--parallel_run_step_output', output_dir,
-            '--output_dir', predictions_dref
+            '--output_dir', predictions_dref,
+            '--target_column', 'Quantity',
+            '--timestamp_column', 'WeekStarting',
+            '--timeseries_id_columns', 'Store', 'Brand'
         ]
     )
 
