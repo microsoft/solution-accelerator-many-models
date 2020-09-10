@@ -27,10 +27,10 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
         output=output_dir,
         allow_reuse=False,
         arguments=[
+            '--id_columns', 'Store', 'Brand',
             '--target_column', 'Quantity', 
-            '--timestamp_column', 'WeekStarting', 
-            '--timeseries_id_columns', 'Store', 'Brand',
-            '--drop_columns', 'Revenue', 'Store', 'Brand', 'Price', 'Advert',
+            '--timestamp_column', 'WeekStarting',
+            '--drop_columns', 'Revenue', 'Store', 'Brand',
             '--model_type', 'lr',
             '--test_size', 20
         ]

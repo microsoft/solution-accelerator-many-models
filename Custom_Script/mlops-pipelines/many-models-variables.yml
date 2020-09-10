@@ -9,7 +9,7 @@ variables:
   - name: ENVIRONMENT
     value: DEV
   - name: SDK_VERSION
-    value: 1.8.0
+    value: 1.10.0
 
   # Infra
   - name: AMLWORKSPACE_NAME
@@ -37,9 +37,9 @@ variables:
   - name: AML_AKS_NAME
     value: manymodels-aks
   - name: AML_MODEL_SPLITTING_TAGS
-    value: StoreGroup100
+    value: Store
   - name: AML_MODEL_SORTING_TAGS
-    value: StoreGroup10
+    value: Brand
   - name: AML_WEBSERVICE_PREFIX
     value: manymodels-
   - name: AML_MAX_CONTAINER_SIZE

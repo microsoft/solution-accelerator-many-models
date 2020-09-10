@@ -4,49 +4,31 @@
 import pandas as pd
 
 
-def format_prediction_data(data, forecast_horizon, date_freq, timestamp_column='dates', value_column='values', nlags=3):
+def format_prediction_data(data_historical, data_future, timestamp_column,
+                           forecast_start, forecast_freq, forecast_horizon):
     ''' Format data into the dataset that will be used for prediction '''
 
-    # Make sure dataset contains all the timestamps needed and is sorted
-    timestamps_past = pd.date_range(end=data[timestamp_column].max(), periods=nlags, freq=date_freq)
-    if timestamps_past.isin(data[timestamp_column]).all():
-        data = data[[timestamp_column, value_column]]
-        data = data.set_index(timestamp_column)
-        data = data.loc[timestamps_past]
-    else:
-        raise ValueError('Expected timestamps: {}'.format(timestamps_past.tolist()))
+    size_historical = len(data_historical)
+    if data_historical.isnull().values.any():
+        raise ValueError(f'Historical series must be of the same length, equal to the number of lags used for training')
 
-    # Calculate forecasting timestamps
-    timestamps_forecast = pd.date_range(timestamps_past.max(), periods=forecast_horizon+1, freq=date_freq)[1:]
+    size_future = len(data_future)
+    if not data_future.empty and size_future != forecast_horizon:
+        raise ValueError(f'Future series must be of length {forecast_horizon}, the forecasting horizon')
 
-    # Create prediction dataset
-    prediction_df = pd.DataFrame()
-    prediction_df['Date'] = timestamps_forecast
-    prediction_df['Prediction'] = None
-    prediction_df['Week_Day'] = prediction_df.Date.apply(lambda x: x.weekday())
+    ts_historical = pd.date_range(end=forecast_start, periods=size_historical+1, freq=forecast_freq)
+    data_historical[timestamp_column] = ts_historical[:-1]
+    data_historical.set_index(timestamp_column, inplace=True)
 
-    # Fill prediction dataset with known lag values
-    nrows_tofill = min(forecast_horizon, nlags)
-    for i in range(nlags):
-        values_lagged = data.shift(-nlags+i+1).values
-        prediction_df.loc[:nrows_tofill-1, 'lag_{}'.format(i+1)] = values_lagged[:nrows_tofill]
+    ts_future = pd.date_range(start=forecast_start, periods=forecast_horizon, freq=forecast_freq)
+    data_future[timestamp_column] = ts_future
+    data_future.set_index(timestamp_column, inplace=True)
 
-    return prediction_df
+    # Past values of non-lagged data are not needed but can't be empty
+    if not data_future.empty:
+        for past_timestamp in data_historical.index:
+            data_future.loc[past_timestamp] = -1
 
+    full_dataset = data_historical.join(data_future, how='outer')
 
-def update_prediction_data(prediction_df, prediction_index, prediction_value, nlags=3):
-    ''' Update the dataset used for prediction with the new predictions generated '''
-
-    if prediction_index >= len(prediction_df):
-        raise ValueError('prediction_index')
-
-    # Fill prediction cell
-    prediction_df.loc[prediction_index, 'Prediction'] = prediction_value
-
-    # Fill corresponding lags with prediction value
-    index_firstupdate = prediction_index + 1
-    nrows_toupdate = min(nlags, len(prediction_df) - index_firstupdate)
-    for i in range(nrows_toupdate):
-        prediction_df.loc[index_firstupdate+i, 'lag_{}'.format(i+1)] = prediction_value
-
-    return prediction_df
+    return full_dataset

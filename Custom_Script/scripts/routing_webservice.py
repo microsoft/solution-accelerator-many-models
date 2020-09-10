@@ -35,12 +35,10 @@ def run(rawdata):
     for model_data in batch:
         # Find model in mapping table
         try:
-            model_name = get_model_name(model_data['store'], model_data['brand'], model_data['model_type'])
+            model_name = get_model_name(model_data['model_type'], model_data['id'])
             model_service = service_mapping[model_name]
         except KeyError:
-            return AMLResponse('Model not found for store {s} and brand {b} of type {t}'.format(
-                s=model_data['store'], b=model_data['brand'], t=model_data['model_type']
-            ), 400)
+            return AMLResponse(f"Model not found  of type {model_data['model_type']} for ID {model_data['id']}", 400)
         # Append data to service minibatch
         services_tocall[model_service].append(model_data)
 

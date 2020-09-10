@@ -6,37 +6,63 @@ import importlib  # To import pandas if needed
 
 input_sample = [
     {
-        "store": "Store1000", "brand": "dominicks", "model_type": "lr",
-        "forecast_horizon": 5, "date_freq": "W-THU",
+        "id": {
+            "Store": "1000",
+            "Brand": "dominicks"
+        },
+        "model_type": "lr",
+        "forecast_start": "2020-05-21", "forecast_freq": "W-THU", "forecast_horizon": 5,
         "data": {
-            "dates": ["2020-04-30", "2020-05-07", "2020-05-14"],
-            "values": [11450, 12235, 14713]
+            "historical": {
+                "Quantity": [11450, 12235, 14713]
+            },
+            "future": {
+                "Price": [2.4, 2.5, 3, 3],
+                "Advert": [0, 1, 1, 1]
+            }
         }
     },
     {
-        "store": "Store1010", "brand": "minute.maid", "model_type": "lr",
-        "forecast_horizon": 5, "date_freq": "W-THU",
+        "id": {
+            "Store": "1010",
+            "Brand": "minute.maid"
+        },
+        "model_type": "lr",
+        "forecast_start": "2020-05-21", "forecast_freq": "W-THU", "forecast_horizon": 5,
         "data": {
-            "dates": ["2020-04-30", "2020-05-07", "2020-05-14"],
-            "values": [25692, 32976, 28610]
+            "historical": {
+                "Quantity": [25692, 32976, 28610]
+            },
+            "future": {
+                "Price": [1.5, 1.5, 3.1, 3.2, 3.5],
+                "Advert": [0, 0, 1, 1, 1]
+            }
         }
     }
 ]
 
 output_sample = [
     {
-        "store": "Store1000", "brand": "dominicks", "model_type": "lr",
-        "forecast_horizon": 5, "date_freq": "W-THU",
+        "id": {
+            "Store": "1000",
+            "Brand": "dominicks"
+        },
+        "model_type": "lr",
+        "forecast_start": "2020-05-21", "forecast_freq": "W-THU", "forecast_horizon": 5,
         "forecast": {
-            "dates": ["2020-05-21", "2020-05-28", "2020-06-04", "2020-06-11", "2020-06-18"],
+            "timestamps": ["2020-05-21", "2020-05-28", "2020-06-04", "2020-06-11", "2020-06-18"],
             "values": [14572, 9834, 10512, 12854, 11046]
         }
     },
     {
-        "store": "Store1010", "brand": "minute.maid", "model_type": "lr",
-        "forecast_horizon": 5, "date_freq": "W-THU",
+        "id": {
+            "Store": "1010",
+            "Brand": "minute.maid"
+        },
+        "model_type": "lr",
+        "forecast_start": "2020-05-21", "forecast_freq": "W-THU", "forecast_horizon": 5,
         "forecast": {
-            "dates": ["2020-05-21", "2020-05-28", "2020-06-04", "2020-06-11", "2020-06-18"],
+            "dattimestampses": ["2020-05-21", "2020-05-28", "2020-06-04", "2020-06-11", "2020-06-18"],
             "values": [24182, 31863, 27539, 26910, 22600]
         }
     }
@@ -64,17 +90,19 @@ def format_input_metadata(input_record):
 
 def format_input_data(input_record):
     pd = importlib.import_module('pandas')
-    data = pd.DataFrame(input_record['data'])
-    data['dates'] = pd.to_datetime(data.dates, format='%Y-%m-%d')
-    return data
+    data_historical = pd.DataFrame(input_record['data'].get('historical'))
+    data_future = pd.DataFrame(input_record['data'].get('future'))
+    return data_historical, data_future
 
 
-def format_output_record(metadata, dates, values):
+def format_output_record(metadata, timestamps, values):
     ''' Format data to be sent as one record within the output list '''
+    all_dates = all(ts.time().isoformat() == '00:00:00' for ts in timestamps)
+    ts_format = '%Y-%d-%m' if all_dates else '%Y-%d-%m %H:%M:%S'
     output_record = {
         **metadata,
         "forecast": {
-            "dates": [d.strftime('%Y-%d-%m') for d in dates],
+            "timestamps": timestamps.strftime(ts_format).tolist(),
             "values": values.tolist()
         }
     }

@@ -6,10 +6,9 @@ import joblib
 from pathlib import Path
 from azureml.contrib.services.aml_response import AMLResponse
 
-
 from utils.webservices import read_input, format_output_record
 from utils.models import get_model_name
-from utils.forecasting import format_prediction_data, update_prediction_data
+from utils.forecasting import format_prediction_data
 
 
 def init():
@@ -27,30 +26,34 @@ def run(rawdata):
     for model_record in batch:
 
         metadata = model_record['metadata']
-        data = model_record['data']
+        data_historical, data_future = model_record['data']
+        print(f'Received request for: {metadata}')
 
         # Load model
         try:
-            model_name = get_model_name(metadata['store'], metadata['brand'], metadata['model_type'])
+            model_name = get_model_name(metadata['model_type'], metadata['id'])
             model = model_dict[model_name]
         except KeyError:
-            return AMLResponse('Model not found for store {s} and brand {b} of type {t}'.format(
-                s=metadata['store'], b=metadata['brand'], t=metadata['model_type']
-            ), 400)
+            return AMLResponse(f"Model not found  of type {metadata['model_type']} for ID {metadata['id']}", 400)
 
         # Format prediction dataset
         try:
-            prediction_df = format_prediction_data(data, metadata['forecast_horizon'], metadata['date_freq'])
-        except ValueError as e:
+            prediction_df = format_prediction_data(
+                data_historical, data_future, model.time_column_name,
+                metadata['forecast_start'], metadata['forecast_freq'], metadata['forecast_horizon']
+            )
+        except Exception as e:
             return AMLResponse('Wrong input: {}'.format(e), 400)
 
         # Forecasting
-        for i in range(len(prediction_df)):
-            x_pred = prediction_df.loc[prediction_df.index == i].drop(columns=['Date', 'Prediction'])
-            y_pred = model.predict(x_pred)[0]
-            prediction_df = update_prediction_data(prediction_df, i, y_pred)
+        try:
+            forecast = model.forecast(prediction_df)
+            forecast = forecast[forecast.index >= metadata['forecast_start']]
+        except Exception as e:
+            return AMLResponse('Error in model forecasting: {}'.format(e), 400)
 
-        model_result = format_output_record(metadata, dates=prediction_df.Date, values=prediction_df.Prediction)
+        # Append forecasting to output
+        model_result = format_output_record(metadata, timestamps=forecast.index, values=forecast.values)
         result.append(model_result)
 
     return result
