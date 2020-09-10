@@ -1,39 +1,35 @@
-import argparse
 import os
-import json
 import shutil
 import sys
+from azureml.core import Workspace
+from azureml.train.automl._azureautomlsettings import AzureAutoMLSettings
 
 
 def validate_parallel_run_config(parallel_run_config):
-    max_concurrency = 200
+    max_concurrency = 20
     if (parallel_run_config.process_count_per_node * parallel_run_config.node_count) > max_concurrency:
-        print("Please decrease concurrency to maximum of 200 as currently AutoML does not support it.")
+        print("Please decrease concurrency to maximum of 20 as currently AutoML does not support it.")
         raise ValueError("node_count*process_count_per_node must be between 1 and max_concurrency {}"
                          .format(max_concurrency))
 
 
-def get_automl_environment():
-    from azureml.core import Environment
-    from azureml.core.conda_dependencies import CondaDependencies
-    from azureml.core.runconfig import DEFAULT_CPU_IMAGE
-
-    train_env = Environment(name="many_models_environment_automl")
-    train_conda_deps = CondaDependencies.create(pip_packages=['azureml-sdk[automl]', 'pyarrow==0.14'])
-    train_conda_deps.add_pip_package('py-cpuinfo==5.0.0')
-    train_conda_deps.add_conda_package('psutil')
-    train_conda_deps.add_conda_package('pandas==0.23.4')
-    train_conda_deps.add_conda_package('numpy==1.16.2')
-    train_conda_deps.add_conda_package('fbprophet==0.5')
-    train_conda_deps.add_conda_package('py-xgboost==0.90')
-    train_env.python.conda_dependencies = train_conda_deps
-    train_env.docker.enabled = True
-    train_env.docker.base_image = DEFAULT_CPU_IMAGE
-    env = {}
-    env['AZUREML_FLUSH_INGEST_WAIT'] = ''
-    env['DISABLE_ENV_MISMATCH'] = True
-    train_env.environment_variables = env
-    return train_env
+def get_automl_environment(workspace: Workspace, automl_settings_dict: AzureAutoMLSettings):
+    from azureml.core import RunConfiguration
+    from azureml.train.automl._environment_utilities import modify_run_configuration
+    import logging
+    null_logger = logging.getLogger("manymodels_null_logger")
+    null_logger.addHandler(logging.NullHandler())
+    null_logger.propagate = False
+    automl_settings_obj = AzureAutoMLSettings.from_string_or_dict(
+        automl_settings_dict)
+    run_configuration = modify_run_configuration(
+        automl_settings_obj,
+        RunConfiguration(),
+        logger=null_logger)
+    train_env = run_configuration.environment
+    train_env.environment_variables['DISABLE_ENV_MISMATCH'] = True
+    train_env.environment_variables['AZUREML_FLUSH_INGEST_WAIT'] = ''
+    return run_configuration.environment
 
 
 def get_output(run, results_name, output_name):
@@ -60,7 +56,8 @@ def get_output(run, results_name, output_name):
 def keep_root_folder(root_path, cur_path):
     for filename in os.listdir(cur_path):
         if os.path.isfile(os.path.join(cur_path, filename)):
-            shutil.move(os.path.join(cur_path, filename), os.path.join(root_path, filename))
+            shutil.move(os.path.join(cur_path, filename),
+                        os.path.join(root_path, filename))
         elif os.path.isdir(os.path.join(cur_path, filename)):
             keep_root_folder(root_path, os.path.join(cur_path, filename))
         else:
