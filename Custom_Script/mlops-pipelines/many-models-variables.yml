@@ -27,7 +27,7 @@ variables:
   - name: AML_COMPUTE_NAME
     value: cpu-compute
   - name: AML_DATASET_NAME
-    value: oj_sales_data_$(DATASET_MAXFILES)
+    value: oj_sales_data
 
   # Training
   - name: AML_TRAINING_PIPELINE_NAME

@@ -9,9 +9,6 @@ from azureml.core.model import Model
 from azureml.core.run import Run
 
 
-from utils.forecasting import format_prediction_data, update_prediction_data
-
-
 # 0.0 Parse input arguments
 parser = argparse.ArgumentParser("split")
 parser.add_argument("--timestamp_column", type=str, help="timestamp column from data", required=True)

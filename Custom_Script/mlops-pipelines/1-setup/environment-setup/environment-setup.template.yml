@@ -22,7 +22,9 @@ parameters:
   type: string
 - name: amlAksName
   type: string
-- name: amlDatasetName
+- name: amlTrainDatasetName
+  type: string
+- name: amlInferenceDatasetName
   type: string
 - name: maxFiles
   type: string
@@ -77,10 +79,15 @@ jobs:
     
     - bash: |
         # Install dependencies
-        python -m pip install --upgrade pip && python -m pip install azureml-opendatasets==${{parameters.sdkVersion}}
+        dependencies="azureml-opendatasets==${{parameters.sdkVersion}} pandas"
+        python -m pip install --upgrade pip && python -m pip install $dependencies --use-feature=2020-resolver
         # Download sample files
-        datapath=$(python Custom_Script/mlops-pipelines/scripts/download_data.py --maxfiles ${{parameters.maxFiles}})
-        echo "##vso[task.setvariable variable=datapath;isOutput=true;]$datapath"
+        datapath_train="sample-data-train"
+        datapath_inference="sample-data-inference"
+        data_script="Custom_Script/mlops-pipelines/scripts/download_data.py"
+        python $data_script --maxfiles ${{parameters.maxFiles}} --train-path $datapath_train --inference-path $datapath_inference
+        echo "##vso[task.setvariable variable=datapath_train;isOutput=true;]$datapath_train"
+        echo "##vso[task.setvariable variable=datapath_inference;isOutput=true;]$datapath_inference"
       name: download_files
       displayName: 'Download Sample Files'
       failOnStderr: true
@@ -96,19 +103,26 @@ jobs:
           az extension add -n azure-cli-ml
           # Get default datastore
           datastore=$(az ml datastore show-default $workspace_params --query name -o tsv)
-          # Upload files
+          # Upload train files
           az ml datastore upload --name $datastore \
-                                 --src-path $(download_files.datapath) \
-                                 --target-path $(download_files.datapath) \
+                                 --src-path $(download_files.datapath_train) \
+                                 --target-path $(download_files.datapath_train) \
                                  --overwrite true \
-                                 $workspace_params                               
+                                 $workspace_params
+          # Upload inference files
+          az ml datastore upload --name $datastore \
+                                 --src-path $(download_files.datapath_inference) \
+                                 --target-path $(download_files.datapath_inference) \
+                                 --overwrite true \
+                                 $workspace_params
 
 
 - job: register_dataset
   displayName: 'Register Dataset'
   dependsOn: sample_files
   variables: 
-    datapath: $[ dependencies.sample_files.outputs['download_files.datapath'] ]
+    datapath_train: $[ dependencies.sample_files.outputs['download_files.datapath_train'] ]
+    datapath_inference: $[ dependencies.sample_files.outputs['download_files.datapath_inference'] ]
   steps:
 
     - task: UsePythonVersion@0
@@ -124,10 +138,16 @@ jobs:
         inlineScript: |
           # Install dependencies
           python -m pip install --upgrade pip && python -m pip install azureml-sdk==${{parameters.sdkVersion}}
-          # Register dataset
+          # Register train dataset
           register_dataset_script=Custom_Script/mlops-pipelines/scripts/register_or_update_dataset.py
-          python $register_dataset_script --path $DATAPATH \
-                                          --name ${{parameters.amlDatasetName}} \
+          python $register_dataset_script --path $DATAPATH_TRAIN \
+                                          --name ${{parameters.amlTrainDatasetName}} \
+                                          --subscription-id $(az account show --query id -o tsv) \
+                                          --resource-group ${{parameters.resourceGroup}} \
+                                          --workspace-name ${{parameters.amlWorkspaceName}}
+          # Register inference dataset
+          python $register_dataset_script --path $DATAPATH_INFERENCE \
+                                          --name ${{parameters.amlInferenceDatasetName}} \
                                           --subscription-id $(az account show --query id -o tsv) \
                                           --resource-group ${{parameters.resourceGroup}} \
                                           --workspace-name ${{parameters.amlWorkspaceName}}

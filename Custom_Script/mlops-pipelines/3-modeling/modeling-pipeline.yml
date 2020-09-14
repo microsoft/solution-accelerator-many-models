@@ -41,7 +41,8 @@ stages:
       serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
       resourceGroup: '$(RESOURCE_GROUP)'
       amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
-      amlDatasetName: '$(AML_DATASET_NAME)'
+      amlTrainDatasetName: '$(AML_DATASET_NAME)_train'
+      amlInferenceDatasetName: '$(AML_DATASET_NAME)_inference'
       maxFiles: '$(DATASET_MAXFILES)'
 
 - stage: run_training
