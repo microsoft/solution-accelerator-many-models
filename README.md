@@ -27,10 +27,7 @@ This Pattern is very common across a wide variety of industries and applicable t
 
 - Document management companies building text analytics and legal document search models per each state
 
-Azure Machine Learning makes it easy to train, operate, and manage hundreds or even thousands of models. This repo will walk you through the end to end process of creating a many models solution from training to scoring to monitoring.
-
-
-
+Azure Machine Learning (AML) makes it easy to train, operate, and manage hundreds or even thousands of models. This repo will walk you through the end to end process of creating a many models solution from training to scoring to monitoring.
 
 ## Prerequisites
 
@@ -44,26 +41,28 @@ While it's not required, a basic understanding of Azure Machine Learning will be
 
 ## Getting started
 
-#### 1. Deploy Resources
+### 1. Deploy Resources
 
-Start by deploying the resources to Azure. The button below will deploy Azure Machine Learning and it's related resources:
+Start by deploying the resources to Azure. The button below will deploy Azure Machine Learning and its related resources:
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2Fsolution-accelerator-many-models%2Fmaster%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-#### 2. Configure Development Environment
+### 2. Configure Development Environment
 
 Next you'll need to configure your [development environment](https://docs.microsoft.com/azure/machine-learning/how-to-configure-environment) for Azure Machine Learning. We recommend using a [Notebook VM](https://docs.microsoft.com/azure/machine-learning/how-to-configure-environment#compute-instance) as it's the fastest way to get up and running. Follow the steps in [EnvironmentSetup.md](./EnvironmentSetup.md) to create a Notebook VM and clone the repo onto it.
 
-#### 3. Run Notebooks
+### 3. Run Notebooks
 
-Once your development environment is set up, run through the Jupyter Notebooks sequentially following the steps outlined.  By the end, you'll know how to train, score, and make predictions using the many models pattern on Azure Machine Learning.
+Once your development environment is set up, run through the Jupyter Notebooks sequentially following the steps outlined. By the end, you'll know how to train, score, and make predictions using the many models pattern on Azure Machine Learning.
 
 There are two ways to train many models:
 
 1. Using a custom training script
 2. Using Automated ML
+
+However, the steps needed to set the workspace up and prepare the datasets are the same no matter which option you choose.
 
 ![Sequence of Notebooks](./images/mmsa-overview.png)
 
@@ -78,28 +77,42 @@ The data used in this sample is simulated based on the [Dominick's Orange Juice 
 
 The functionality is broken into the notebooks folders designed to be run sequentially.
 
-#### Using a custom training script to train the models:
+### Before training the models
 
 | Notebook       | Description                                |
-|-------------------|--------------------------------------------|
-| `Custom_Script\01_Data_Preparation.ipynb`             | Configures your environment including deploying compute cluster for training and downloading the dataset.                         |
-| `Custom_Script\02_Training_Pipeline.ipynb`      | Creates a pipeline to train a model for each store and orange juice brand in the dataset using a custom scoring script.     |
-| `Custom_Script\03_Forecasting_Pipeline.ipynb`    | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.           |
+|----------------|--------------------------------------------|
+| `00_Setup_AML_Workspace.ipynb`  | Creates and configures the AML Workspace, including deploying a compute cluster for training. |
+| `01_Data_Preparation.ipynb`     | Prepares the datasets that will be used during training and forecasting. |
 
-#### Using Automated ML to train the models:
+### Using a custom training script to train the models:
+
+The following notebooks are located under the [`Custom_Script/`](Custom_Script/) folder.
+
 | Notebook       | Description                                |
-|-------------------|--------------------------------------------|
-| `Automated_ML\01b_Data_Preparation\01b_Data_Preparation.ipynb`             | Register the blob container as a Datastore to the Workspace and register a File Dataset to the workspace.                         |
-| `Automated_ML\02b_Train_AutoML\02b_Train_AutoML.ipynb` | Creates a pipeline to train a model for each store and orange juice brand in the dataset using Automated ML.  |
-| `Automated_ML\03b_Forecasting_Pipeline\03b_Forecasting_Pipeline.ipynb` | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.  |
+|----------------|--------------------------------------------|
+| `02_CustomScript_Training_Pipeline.ipynb`    | Creates a pipeline to train a model for each store and orange juice brand in the dataset using a custom script. |
+| `03_CustomScript_Forecasting_Pipeline.ipynb` | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.|
+
+### Using Automated ML to train the models:
+
+The following notebooks are located under the [`Automated_ML/`](Automated_ML/) folder.
+
+
+| Notebook       | Description                                |
+|----------------|--------------------------------------------|
+| `02_AutoML_Training_Pipeline.ipynb`    | Creates a pipeline to train a model for each store and orange juice brand in the dataset using Automated ML.  |
+| `03_AutoML_Forecasting_Pipeline.ipynb` | Creates a pipeline to forecast future orange juice sales using the models trained in the previous step.  |
 
 ## How-to-videos
-Watch these how-to-videos for a step by step walk-through of the many model solution accelerator to learn how to setup your models using both the custom training script and automated ml.
+
+Watch these how-to-videos for a step by step walk-through of the many model solution accelerator to learn how to setup your models using both the custom training script and Automated ML.
 
 ### Custom Script
+
 [![Watch the video](https://media.giphy.com/media/dWUKfameudyNGRnp1t/giphy.gif)](https://channel9.msdn.com/Shows/Docs-AI/Building-Large-Scale-Machine-Learning-Models-using-Azure-Machine-Learning)
 
 ### Automated ML
+
 [![Watch the video](https://media.giphy.com/media/dWUKfameudyNGRnp1t/giphy.gif)](https://channel9.msdn.com/Shows/Docs-AI/Building-Large-Scale-Machine-Learning-Forecasting-Models-using-Azure-Machine-Learnings-Automated-ML)
 
 ## Key concepts
@@ -113,7 +126,8 @@ Watch these how-to-videos for a step by step walk-through of the many model solu
 [Pipelines](https://docs.microsoft.com/azure/machine-learning/concept-ml-pipelines) allow you to create workflows in your machine learning projects. These workflows have a number of benefits including speed, simplicity, repeatability, and modularity.
 
 ### Automated Machine Learning
-[Automated Machine Learning](https://docs.microsoft.com/azure/machine-learning/concept-automated-ml) also referred to as automated ML or AutoML, is the process of automating the time consuming, iterative tasks of machine learning model development. It allows data scientists, analysts, and developers to build ML models with high scale, efficiency, and productivity all while sustaining model quality. 
+
+[Automated Machine Learning](https://docs.microsoft.com/azure/machine-learning/concept-automated-ml) also referred to as automated ML or AutoML, is the process of automating the time consuming, iterative tasks of machine learning model development. It allows data scientists, analysts, and developers to build ML models with high scale, efficiency, and productivity all while sustaining model quality.
 
 ### Other Concepts
 

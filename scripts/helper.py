@@ -5,15 +5,7 @@ import os
 import pandas as pd
 
 
-def upload_to_datastore(datastore, source_path, target_path):
-    datastore.upload(src_dir=source_path,
-                     target_path=target_path,
-                     overwrite=True,
-                     show_progress=False)
-
-
-def split_data_upload_to_datastore(data_path, time_column_name, split_date, datastore, train_ds_target_path,
-                                   inference_ds_target_path):
+def split_data(data_path, time_column_name, split_date):
 
     train_data_path = os.path.join(data_path, "upload_train_data")
     inference_data_path = os.path.join(data_path, "upload_inference_data")
@@ -34,8 +26,7 @@ def split_data_upload_to_datastore(data_path, time_column_name, split_date, data
         write_file(train_df, os.path.join(train_data_path, file_name), file_extension)
         write_file(inference_df, os.path.join(inference_data_path, file_name), file_extension)
 
-    upload_to_datastore(datastore, train_data_path, train_ds_target_path)
-    upload_to_datastore(datastore, inference_data_path, inference_ds_target_path)
+    return train_data_path, inference_data_path
 
 
 def read_file(path, extension):

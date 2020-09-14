@@ -5,7 +5,9 @@ on:
     branches:
       - v2-preview
     paths:
-      Automated_ML/**
+      - 00_Setup_AML_Workspace.ipynb
+      - 01_Data_Preparation.ipynb
+      - Automated_ML/**
 env:
   SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
   RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
@@ -36,9 +38,9 @@ jobs:
       - name: Convert notebooks to python
         run: |
           jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
-          jupyter nbconvert --to script Automated_ML/01b_Data_Preparation/01b_Data_Preparation.ipynb
-          jupyter nbconvert --to script Automated_ML/02b_Train_AutoML/02b_Train_AutoML.ipynb
-          jupyter nbconvert --to script Automated_ML/03b_Forecasting_Pipeline/03b_Forecasting_Pipeline.ipynb
+          jupyter nbconvert --to script 01_Data_Preparation.ipynb
+          jupyter nbconvert --to script Automated_ML/02_AutoML_Training_Pipeline/02_AutoML_Training_Pipeline.ipynb
+          jupyter nbconvert --to script Automated_ML/03_AutoML_Forecasting_Pipeline/03_AutoML_Forecasting_Pipeline.ipynb
       - name: Login via Az module
         uses: azure/login@v1.1
         with:
@@ -59,13 +61,12 @@ jobs:
           azPSVersion: 'latest'
       - name: Data preparation
         run: |
-          cd Automated_ML/01b_Data_Preparation
-          python 01b_Data_Preparation.py
+          ipython 01_Data_Preparation.py
       - name: Run training
         run: |
-          cd Automated_ML/02b_Train_AutoML
-          python 02b_Train_AutoML.py
+          cd Automated_ML/02_AutoML_Training_Pipeline
+          python 02_AutoML_Training_Pipeline.py
       - name: Run prediction
         run: |
-          cd Automated_ML/03b_Forecasting_Pipeline
-          python 03b_Forecasting_Pipeline.py
+          cd Automated_ML/03_AutoML_Forecasting_Pipeline
+          python 03_AutoML_Forecasting_Pipeline.py
