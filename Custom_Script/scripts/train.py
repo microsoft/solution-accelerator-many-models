@@ -18,7 +18,7 @@ from utils.timeseries import ColumnDropper, SimpleLagger, SimpleCalendarFeaturiz
 
 # 0.0 Parse input arguments
 parser = argparse.ArgumentParser("split")
-parser.add_argument("--id_columns", type=str, nargs='*', required=True, help="input columns identifying the timeseries")
+parser.add_argument("--id_columns", type=str, nargs='*', required=True, help="input columns identifying the model entity")
 parser.add_argument("--target_column", type=str, required=True, help="input target column")
 parser.add_argument("--timestamp_column", type=str, required=True, help="input timestamp column")
 parser.add_argument("--drop_columns", type=str, nargs='*', default=[],
