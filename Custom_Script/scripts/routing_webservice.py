@@ -2,10 +2,11 @@
 # Licensed under the MIT License.
 
 import os
-import joblib
+import json
 import requests
 from requests.exceptions import HTTPError
 from collections import defaultdict
+
 from azureml.contrib.services.aml_response import AMLResponse
 
 from utils.webservices import read_input
@@ -19,8 +20,9 @@ def init():
     models_root_path = os.getenv('AZUREML_MODEL_DIR')
     models_files = [os.path.join(path, f) for path,dirs,files in os.walk(models_root_path) for f in files]
     if len(models_files) > 1:
-        raise RuntimeError('Found more than one model')
-    routing_model = joblib.load(models_files[0])
+        raise RuntimeError(f'Found more than one model: {models_files}')
+    with open(models_files[0], 'r') as f:
+        routing_model = json.load(f)
 
     service_mapping = {model:service['endpoint'] for model,service in routing_model.items()}
     service_keys = {service['endpoint']:service['key'] for service in routing_model.values()}

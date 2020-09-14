@@ -3,8 +3,9 @@
 
 import argparse
 import warnings
-import joblib
+import json
 import yaml
+
 from azureml.core import Workspace, Model, Environment, Webservice
 from azureml.core.model import InferenceConfig
 from azureml.core.compute import AksCompute
@@ -93,7 +94,12 @@ def get_models_deployed(ws, routing_model_name):
 
     # Load deployed models info
     routing_model = Model.list(ws, name=routing_model_name, latest=True)
-    deployed_models = joblib.load(routing_model[0].download()) if routing_model else {}
+    if routing_model:
+        artifact_path = routing_model[0].download()
+        with open(artifact_path, 'r') as f:
+            deployed_models = json.load(f)
+    else:
+        deployed_models = {}
 
     # Make sure webservices are still deployed
     services = {}
@@ -402,7 +408,7 @@ def parse_args(args=None):
     parser.add_argument('--splitting-tags', default='', type=lambda str: [t for t in str.split(',') if t])
     parser.add_argument('--sorting-tags', default='', type=lambda str: [t for t in str.split(',') if t])
     parser.add_argument('--routing-model-name', type=str, default='deployed_models_info')
-    parser.add_argument('--output', type=str, default='models_deployed.pkl')
+    parser.add_argument('--output', type=str, default='models_deployed.json')
     parser.add_argument('--aks-target', type=str)
     parser.add_argument('--service-prefix', type=str)
     parser.add_argument('--container-size', type=int, default=250)
@@ -440,4 +446,5 @@ if __name__ == "__main__":
         reset=args.reset
     )
 
-    joblib.dump(models_deployed, args.output)
+    with open(args.output, 'w') as f:
+        json.dump(models_deployed, f, indent=4)

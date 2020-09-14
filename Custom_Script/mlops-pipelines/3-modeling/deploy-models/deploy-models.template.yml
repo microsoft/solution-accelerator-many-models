@@ -61,7 +61,7 @@ jobs:
           python $deploy_script --splitting-tags '${{parameters.splittingTags}}' \
                                 --sorting-tags '${{parameters.sortingTags}}' \
                                 --routing-model-name '${{parameters.routingModelName}}' \
-                                --output 'models_deployed.pkl' \
+                                --output 'models_deployed.json' \
                                 --deploy-config-file $deployment_config_file \
                                 --aks-target '${{parameters.amlAksName}}' \
                                 --service-prefix '${{parameters.webservicePrefix}}' \
@@ -70,7 +70,7 @@ jobs:
                                 --resource-group ${{parameters.resourceGroup}} \
                                 --workspace-name ${{parameters.amlWorkspaceName}}
 
-    - publish: 'models_deployed.pkl'
+    - publish: 'models_deployed.json'
       artifact: modelsdeployed-${{parameters.deploymentType}}
       displayName: 'Publish Models Deployed Artifact'
 
@@ -93,7 +93,7 @@ jobs:
           az extension add -n azure-cli-ml
           # Register model
           az ml model register --name ${{parameters.routingModelName}} \
-                               --model-path '$(Pipeline.Workspace)/modelsdeployed-${{parameters.deploymentType}}/models_deployed.pkl' \
+                               --model-path '$(Pipeline.Workspace)/modelsdeployed-${{parameters.deploymentType}}/models_deployed.json' \
                                --tag '${{parameters.routingModelTagName}}=${{parameters.routingModelTagValue}}' \
                                --output-metadata-file routing_model.json \
                                --workspace-name ${{parameters.amlWorkspaceName}} \
