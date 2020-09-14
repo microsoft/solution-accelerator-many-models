@@ -5,7 +5,9 @@ on:
     branches:
       - master
     paths:
-      Custom_Script/**
+      - 00_Setup_AML_Workspace.ipynb
+      - 01_Data_Preparation.ipynb
+      - Custom_Script/**
 env:
   SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
   RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
@@ -28,7 +30,7 @@ jobs:
       - name: Set up python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.6'
+          python-version: '3.7'
           architecture: 'x64'
       - name: Install dependencies
         run: |
@@ -36,9 +38,9 @@ jobs:
       - name: Convert notebooks to python
         run: |
           jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
-          jupyter nbconvert --to script Custom_Script/01_Data_Preparation.ipynb
-          jupyter nbconvert --to script Custom_Script/02_Training_Pipeline.ipynb
-          jupyter nbconvert --to script Custom_Script/03_Forecasting_Pipeline.ipynb
+          jupyter nbconvert --to script 01_Data_Preparation.ipynb
+          jupyter nbconvert --to script Custom_Script/02_CustomScript_Training_Pipeline.ipynb
+          jupyter nbconvert --to script Custom_Script/03_CustomScript_Forecasting_Pipeline.ipynb
       - name: Login via Az module
         uses: azure/login@v1.1
         with:
@@ -59,13 +61,12 @@ jobs:
           azPSVersion: 'latest'
       - name: Data preparation
         run: |
-          cd Custom_Script
-          python 01_Data_Preparation.py
+          ipython 01_Data_Preparation.py
       - name: Run training
         run: |
           cd Custom_Script
-          python 02_Training_Pipeline.py
+          python 02_CustomScript_Training_Pipeline.py
       - name: Run prediction
         run: |
           cd Custom_Script
-          python 03_Forecasting_Pipeline.py
+          python 03_CustomScript_Forecasting_Pipeline.py
