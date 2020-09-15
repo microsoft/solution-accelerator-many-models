@@ -7,6 +7,7 @@ import requests
 from requests.exceptions import HTTPError
 from collections import defaultdict
 
+from azureml.contrib.services.aml_request import AMLRequest, rawhttp
 from azureml.contrib.services.aml_response import AMLResponse
 
 from utils.webservices import read_input
@@ -14,6 +15,7 @@ from utils.models import get_model_name
 
 
 def init():
+    global routing_model_artifact
     global service_mapping
     global service_keys
 
@@ -22,13 +24,26 @@ def init():
     if len(models_files) > 1:
         raise RuntimeError(f'Found more than one model: {models_files}')
     with open(models_files[0], 'r') as f:
-        routing_model = json.load(f)
+        routing_model_artifact = json.load(f)
 
-    service_mapping = {model:service['endpoint'] for model,service in routing_model.items()}
-    service_keys = {service['endpoint']:service['key'] for service in routing_model.values()}
+    service_mapping = {model:service['endpoint'] for model,service in routing_model_artifact.items()}
+    service_keys = {service['endpoint']:service['key'] for service in routing_model_artifact.values()}
 
 
-def run(rawdata):
+@rawhttp
+def run(request):
+    if request.method == 'GET':
+        return routing_model_artifact
+    elif request.method == 'POST':
+        rawdata = request.get_data(cache=False, as_text=True)
+        print(rawdata)
+        return route_forecasting_requests(rawdata)
+    else:
+        return AMLResponse("bad request", 500)
+
+
+def route_forecasting_requests(rawdata):
+    ''' Call the appropiate model webservice for all the records in the request body '''
 
     batch = read_input(rawdata, format=False)
 
