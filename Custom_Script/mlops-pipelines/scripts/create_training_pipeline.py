@@ -27,10 +27,13 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name):
         output=output_dir,
         allow_reuse=False,
         arguments=[
-            '--id_columns', 'Store', 'Brand', 'StoreGroup10', 'StoreGroup100', 'StoreGroup1000',
+            '--id_columns', 'Store', 'Brand',
             '--target_column', 'Quantity', 
             '--timestamp_column', 'WeekStarting',
-            '--drop_columns', 'Revenue', 'Store', 'Brand', 'StoreGroup10', 'StoreGroup100', 'StoreGroup1000',
+            '--tag_columns', 'StoreGroup10', 'StoreGroup100', 'StoreGroup1000',
+            '--drop_id',
+            '--drop_tags',
+            '--drop_columns', 'Revenue',
             '--model_type', 'lr',
             '--test_size', 20
         ]

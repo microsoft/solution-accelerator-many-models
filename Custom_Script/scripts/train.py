@@ -21,8 +21,10 @@ parser = argparse.ArgumentParser("split")
 parser.add_argument("--id_columns", type=str, nargs='*', required=True, help="input columns identifying the model entity")
 parser.add_argument("--target_column", type=str, required=True, help="input target column")
 parser.add_argument("--timestamp_column", type=str, required=True, help="input timestamp column")
-parser.add_argument("--drop_columns", type=str, nargs='*', default=[],
-                    help="list of columns to drop prior to modeling")
+parser.add_argument("--tag_columns", type=str, nargs='*', default=[], help="input columns to set as tags for the model")
+parser.add_argument("--drop_id", action='store_true', help="flag to drop columns used as ID")
+parser.add_argument("--drop_tags", action='store_true', help="flag to drop columns used as tags")
+parser.add_argument("--drop_columns", type=str, nargs='*', default=[], help="list of columns to drop prior to modeling")
 parser.add_argument("--model_type", type=str, required=True, help="input model type")
 parser.add_argument("--test_size", type=int, required=True, help="number of observations to be used for testing")
 
@@ -51,10 +53,17 @@ def run(input_data):
                 .set_index(args.timestamp_column)
                 .sort_index(ascending=True))    
 
-        # Uses the values from the first row of data in ID columns
+        # ID and tags: uses the values from the first row of data
         id_dict = {id_col: str(data[id_col].iloc[0]) for id_col in args.id_columns}
         model_name = get_model_name(args.model_type, id_dict)
-        print(f'Model name "{model_name}" with ID tags: {id_dict}')
+        tags_dict = {tag_col: str(data[tag_col].iloc[0]) for tag_col in args.tag_columns}
+        cols_todrop = args.drop_columns + \
+                      (args.id_columns if args.drop_id else []) + \
+                      (args.tag_columns if args.drop_tags else [])
+        print(f'Model name: "{model_name}"')
+        print(f'ID tags: {id_dict}')
+        print(f'Extra tags: {tags_dict}')
+        print(f'Columns to drop: {cols_todrop}')
 
         # 2.0 Split the data into train and test sets
         train = data[:-args.test_size]
@@ -63,7 +72,7 @@ def run(input_data):
         # 3.0 Create and fit the forecasting pipeline
         # The pipeline will drop unhelpful features, make a calendar feature, and make lag features
         lagger = SimpleLagger(args.target_column, lag_orders=[1, 2, 3, 4])
-        transform_steps = [('column_dropper', ColumnDropper(args.drop_columns)),
+        transform_steps = [('column_dropper', ColumnDropper(cols_todrop)),
                            ('calendar_featurizer', SimpleCalendarFeaturizer()), ('lagger', lagger)]
         forecaster = SimpleForecaster(transform_steps, LinearRegression(), args.target_column, args.timestamp_column)
         forecaster.fit(train)
@@ -97,9 +106,9 @@ def run(input_data):
         current_run.upload_file(model_name, model_path)
 
         # 9.0 Register the model to the workspace to be used in forecasting
-        tags_dict = {**id_dict, 'ModelType': args.model_type}
+        all_tags = {'ModelType': args.model_type, **id_dict, **tags_dict}
         current_run.register_model(model_path=model_name, model_name=model_name,
-                                   model_framework=args.model_type, tags=tags_dict)
+                                   model_framework=args.model_type, tags=all_tags)
 
         # 10.0 Add data to output
         end_datetime = datetime.datetime.now()
