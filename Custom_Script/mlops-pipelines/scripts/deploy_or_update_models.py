@@ -14,7 +14,7 @@ from azureml.exceptions import WebserviceException
 
 
 def main(ws, config_file, routing_model_name,
-         sorting_tags=[], splitting_tags=[], container_size=250,
+         sorting_tags=[], splitting_tags=[], container_size=500,
          aks_target=None, service_prefix='manymodels-', reset=False):
 
     # Deployment configuration
@@ -60,7 +60,7 @@ def main(ws, config_file, routing_model_name,
         service = deploy_model_group(ws, group_name, group_models, deployment_config, existing_services, name_prefix=service_prefix)
         deployments.append({ 'service': service, 'group': group_name, 'models': group_models })
 
-    models_deployed_updated = { m.name:models_deployed[m.name] for m in groups_unchanged.values() }
+    models_deployed_updated = { m.name:models_deployed[m.name] for mlist in groups_unchanged.values() for m in mlist }
 
     # Wait for deployments to finish
     for deployment in deployments:
@@ -112,7 +112,7 @@ def get_models_deployed(ws, routing_model_name):
 
     # Exclude models no longer deployed (associated to deleted webservices)
     deployed_models = { model_name:model_info for model_name, model_info in deployed_models.items()
-                        if model_info['webservice'] in services }
+                        if model_info['group'] in services }
 
     return deployed_models, services
 
@@ -134,7 +134,7 @@ def get_models_registered(ws, exclude_names=[], exclude_tags=[], include_tags=[]
 
 def create_deployment_groups(models_registered, models_deployed,
                              sorting_tags=[], splitting_tags=[],
-                             container_size=250):
+                             container_size=500):
 
     groups_registered = group_models(models_registered.values(), splitting_tags=splitting_tags)
     groups_deployed = get_groups_deployed(models_deployed)
@@ -149,25 +149,27 @@ def create_deployment_groups(models_registered, models_deployed,
 
         subgroups_deployed = groups_deployed.get(group_name, {})
 
-        subgroup_models_deployed = [m['name'] for sg in subgroups_deployed.values() for m in sg]
-        models_new = [models_registered[mname] for mname in group_models_registered if mname not in subgroup_models_deployed]
+        # Check that container size has not decreased
+        max_container_size = max([len(container) for container in subgroups_deployed.values()], default=0)
+        if max_container_size > container_size:
+            raise ValueError(f'Container size set to {container_size} but found deployed container ' + \
+                             f'of size {max_container_size}. To decrease container size use --reset parameter.')
 
         # Update models already in subgroups according to registered models
-        subgroups_registered, ind_subgroups_updated, models_relocate = update_existing_models(
+        subgroups_registered, ind_subgroups_updated = update_existing_models(
             groups=subgroups_deployed,
-            models_registered={mname:models_registered[mname] for mname in group_models_registered},
-            container_size=container_size
+            models_registered={mname:models_registered[mname] for mname in group_models_registered}
         )
 
-        # Distribute new/relocated models
+        # Distribute new models
 
-        models_todeploy = models_new + models_relocate
-
+        subgroup_models_deployed = [m['name'] for sg in subgroups_deployed.values() for m in sg]
+        models_new = [models_registered[mname] for mname in group_models_registered if mname not in subgroup_models_deployed]
         if sorting_tags:
-            models_todeploy = sorted(models_todeploy, key=lambda m: combine_tags(m, sorting_tags))
+            models_new = sorted(models_new, key=lambda m: combine_tags(m, sorting_tags))
 
         subgroups_registered, ind_subgroups_extended, ind_subgroups_new = distribute_new_models(
-            models=models_todeploy,
+            models=models_new,
             existing_groups=subgroups_registered,
             container_size=container_size
         )
@@ -182,7 +184,10 @@ def create_deployment_groups(models_registered, models_deployed,
         names_all_subgroups_update += [get_subgroup_name(group_name, i) for i in ind_subgroups_updated | ind_subgroups_extended]
         names_all_subgroups_delete += [get_subgroup_name(group_name, i) for i in subgroups_deployed if i not in subgroups_registered]
 
-    print(f'Grouped models in {len(all_subgroups_registered)} groups.')
+
+    container_sizes = [len(container) for container in all_subgroups_registered]
+    print(f'Grouped models in {len(all_subgroups_registered)} groups.',
+          f'Min size: {min(container_sizes)}. Max size: {max(container_sizes)}.')
 
     # Split subgroups according to status
     subgroups_new, subgroups_update, subgroups_unchanged = {}, {}, {}
@@ -245,12 +250,10 @@ def get_groups_deployed(models_deployed):
     return groups
 
 
-def update_existing_models(groups, models_registered, container_size=250):
+def update_existing_models(groups, models_registered):
 
     groups_updated = {}
     indexes_groups_changed = set()
-
-    models_relocate = []
 
     # Update models already in groups according to status in registered models
     for group_index, group_models in groups.items():
@@ -261,24 +264,15 @@ def update_existing_models(groups, models_registered, container_size=250):
 
         any_deleted = len(group_aml_models) < len(group_models)
         any_changed = any(m.version != models_registered[m.name].version for m in group_aml_models)
-
-        # Put aside models to be deployed elsewhere if group size exceeds maximum
-        any_relocate = container_size < len(group_aml_models)
-        if any_relocate:
-            print(f'Container {group_index} exceeds max container size ({container_size}),',
-                  f'{len(group_aml_models) - container_size} models will be relocated.')
-            models_relocate += group_aml_models[container_size:]
-            group_aml_models = group_aml_models[:container_size]
-
-        if any_deleted or any_changed or any_relocate:
+        if any_deleted or any_changed:
             indexes_groups_changed.add(group_index)
 
         groups_updated[group_index] = group_aml_models
 
-    return groups_updated, indexes_groups_changed, models_relocate
+    return groups_updated, indexes_groups_changed
 
 
-def distribute_new_models(models, existing_groups, container_size=250):
+def distribute_new_models(models, existing_groups, container_size=500):
 
     #TODO: case when container_size increases
 
@@ -411,7 +405,7 @@ def parse_args(args=None):
     parser.add_argument('--output', type=str, default='models_deployed.json')
     parser.add_argument('--aks-target', type=str)
     parser.add_argument('--service-prefix', type=str)
-    parser.add_argument('--container-size', type=int, default=250)
+    parser.add_argument('--container-size', type=int, default=500)
     parser.add_argument('--reset', action='store_true')
     args_parsed = parser.parse_args(args)
 
