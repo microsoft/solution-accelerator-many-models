@@ -420,6 +420,7 @@ def parse_args(args=None):
 
 if __name__ == "__main__":
     args = parse_args()
+    print(args)
 
     # Connect to workspace
     ws = Workspace.get(

@@ -74,7 +74,7 @@ The modeling pipeline will:
 
 - Trigger the many models training by invoking the training AML Pipeline previously published.
 
-- Group the registered models according to specified tags.
+- Group the registered models according to specified tags and maximum container size (500 by default).
 
 - Deploy each group into a different webservice hosted in ACI and/or AKS. These webservices will all use the same [forecast script](../scripts/forecast_webservice.py).
 
@@ -90,6 +90,13 @@ The pipeline run should look like this:
      alt="Stage Run Model Training with two jobs: Get Training Pipeline ID, Run Training. After that two parallel stages are triggered with three identical jobs: Deploy Models to ACI and Deploy Models to AKS, with jobs Deploy Models, Register Routing Model, Deploy Routing Webservice" />
 
 The deployment stages will be triggered if you have the corresponding variables `DEPLOY_ACI`/`DEPLOY_AKS` in the variable group set to `true`.
+
+There are two variables you can add to the **``manymodels-vg``** variable group to customize deployments:
+
+| Variable Name               | Short description |
+| --------------------------- | ----------------- |
+| MAX_CONTAINER_SIZE | Maximum number of models to fit into one webservice container |
+| RESET_DEPLOYMENT   | Set to `true` to reset existing containers |
 
 ## 4. [Optional] Batch Forecasting Code Build Pipeline
 

@@ -42,8 +42,6 @@ variables:
     value: Brand
   - name: AML_WEBSERVICE_PREFIX
     value: manymodels-
-  - name: AML_MAX_CONTAINER_SIZE
-    value: 50
   - name: AML_ROUTING_MODEL_NAME
     value: deployed_models_info
   - name: AML_ROUTING_MODEL_TAG_NAME
