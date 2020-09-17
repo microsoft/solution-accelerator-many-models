@@ -55,8 +55,8 @@ jobs:
         scriptLocation: inlineScript
         inlineScript: |
           # Install dependencies
-          python -m pip install --upgrade pip && python -m pip install joblib pyyaml azureml-sdk==${{parameters.sdkVersion}}
-          # Create/update training pipeline
+          python -m pip install --upgrade pip && python -m pip install pyyaml azureml-sdk==${{parameters.sdkVersion}}
+          # Deploy/update models in groups in webservices
           deployment_config_path="Custom_Script/mlops-pipelines/3-modeling/deploy-models/"
           deployment_config_file="$deployment_config_path/forecasting-deployment-config-${{parameters.deploymentType}}.yml"
           deploy_script="Custom_Script/mlops-pipelines/scripts/deploy_or_update_models.py"
@@ -113,8 +113,10 @@ jobs:
   dependsOn: routing_model
   steps:
 
-    - download: current
-      artifact: routingmodel-${{parameters.deploymentType}}
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.7'
+      inputs:
+        versionSpec: 3.7
 
     - task: AzureCLI@1
       displayName: 'Deploy Routing Webservice'
@@ -122,23 +124,16 @@ jobs:
         azureSubscription: ${{parameters.serviceConnection}}
         scriptLocation: inlineScript
         inlineScript: |
-          # Install ML extension
-          az extension add -n azure-cli-ml
-          # Deployment config
+          # Install dependencies
+          python -m pip install --upgrade pip && python -m pip install pyyaml azureml-sdk==${{parameters.sdkVersion}}
+          # Deploy/update routing webservice
           deployment_config_path="Custom_Script/mlops-pipelines/3-modeling/deploy-models/"
-          if [ "${{parameters.deploymentType}}" == "aci" ]; then
-            deployment_params="--deploy-config-file $deployment_config_path/routing-deployment-config-aci.yml"
-          elif [ "${{parameters.deploymentType}}" == "aks" ]; then
-            deployment_params="--compute-target ${{parameters.amlAksName}} --deploy-config-file $deployment_config_path/routing-deployment-config-aks.yml"
-          fi
-          # Deploy model
-          az ml model deploy $deployment_params \
-                             --name ${{parameters.routingServiceName}} \
-                             --model-metadata-file '$(Pipeline.Workspace)/routingmodel-${{parameters.deploymentType}}/routing_model.json' \
-                             --runtime python \
-                             --source-directory Custom_Script/scripts \
-                             --entry-script routing_webservice.py \
-                             --conda-file routing_webservice.conda.yml \
-                             --overwrite \
-                             --workspace-name ${{parameters.amlWorkspaceName}} \
-                             --resource-group ${{parameters.resourceGroup}}
+          deployment_config_file="$deployment_config_path/routing-deployment-config-${{parameters.deploymentType}}.yml"
+          deploy_script="Custom_Script/mlops-pipelines/scripts/deploy_or_update_router.py"
+          python $deploy_script --model-name '${{parameters.routingModelName}}' \
+                                --service-name '${{parameters.routingServiceName}}' \
+                                --deploy-config-file $deployment_config_file \
+                                --aks-target '${{parameters.amlAksName}}' \
+                                --subscription-id $(az account show --query id -o tsv) \
+                                --resource-group ${{parameters.resourceGroup}} \
+                                --workspace-name ${{parameters.amlWorkspaceName}}

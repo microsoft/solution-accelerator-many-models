@@ -6,11 +6,10 @@ import warnings
 import json
 import yaml
 
-from azureml.core import Workspace, Model, Environment, Webservice
-from azureml.core.model import InferenceConfig
-from azureml.core.compute import AksCompute
-from azureml.core.webservice import AciWebservice, AksWebservice
+from azureml.core import Workspace, Model, Webservice
 from azureml.exceptions import WebserviceException
+
+from utils.deployment import build_deployment_config, launch_deployment
 
 
 def main(ws, config_file, routing_model_name,
@@ -18,7 +17,14 @@ def main(ws, config_file, routing_model_name,
          aks_target=None, service_prefix='manymodels-', reset=False):
 
     # Deployment configuration
-    deployment_config = get_deployment_config(ws, config_file, aks_target)
+    deployment_config = build_deployment_config(
+        ws, 
+        script_dir='Custom_Script/scripts/',
+        script_file='forecast_webservice.py',
+        environment_file='Custom_Script/scripts/forecast_webservice.conda.yml',
+        config_file=config_file,
+        aks_target=aks_target
+    )
 
     # Get models currently deployed
     models_deployed, existing_services = get_models_deployed(ws, routing_model_name)
@@ -50,14 +56,11 @@ def main(ws, config_file, routing_model_name,
 
     deployments = []
 
-    # Launch webservice deployments
-    for group_name, group_models in groups_new.items():
-        service = deploy_model_group(ws, group_name, group_models, deployment_config, name_prefix=service_prefix)
-        deployments.append({ 'service': service, 'group': group_name, 'models': group_models })
-
-    # Launch webservice updates
-    for group_name, group_models in groups_update.items():
-        service = deploy_model_group(ws, group_name, group_models, deployment_config, existing_services, name_prefix=service_prefix)
+    # Launch webservice deployments / updates
+    groups_deploy = {**groups_new, **groups_update}
+    for group_name, group_models in groups_deploy.items():
+        service_name = get_service_name(group_name, service_prefix)
+        service = launch_deployment(ws, service_name, group_models, deployment_config, existing_services)
         deployments.append({ 'service': service, 'group': group_name, 'models': group_models })
 
     models_deployed_updated = { m.name:models_deployed[m.name] for mlist in groups_unchanged.values() for m in mlist }
@@ -103,16 +106,16 @@ def get_models_deployed(ws, routing_model_name):
 
     # Make sure webservices are still deployed
     services = {}
-    for group_name, service_name in set((v['group'], v['webservice']) for v in deployed_models.values()):
+    for service_name in set(v['webservice'] for v in deployed_models.values()):
         try:
             service = Webservice(ws, service_name)
-            services[group_name] = service
+            services[service_name] = service
         except WebserviceException:
             print(f'Webservice {service_name} not found.')
 
     # Exclude models no longer deployed (associated to deleted webservices)
     deployed_models = { model_name:model_info for model_name, model_info in deployed_models.items()
-                        if model_info['group'] in services }
+                        if model_info['webservice'] in services }
 
     return deployed_models, services
 
@@ -233,6 +236,10 @@ def get_subgroup_name(group_name, subgroup_index):
     return f'{group_name}-{subgroup_index}'
 
 
+def get_service_name(group_name, service_prefix):
+    return f'{service_prefix}{group_name}'.lower()
+
+
 def get_groups_deployed(models_deployed):
 
     groups = {}
@@ -274,8 +281,6 @@ def update_existing_models(groups, models_registered):
 
 def distribute_new_models(models, existing_groups, container_size=500):
 
-    #TODO: case when container_size increases
-
     groups_updated = existing_groups.copy()
     indexes_groups_changed = set()
 
@@ -312,87 +317,6 @@ def distribute_new_models(models, existing_groups, container_size=500):
     return groups_updated, indexes_groups_extended, indexes_groups_new
 
 
-def get_deployment_config(ws, config_file, aks_target=None):
-
-    DEPLOYMENT_TYPES = ['aci', 'aks']
-
-    # Deploy configuration
-    deployment_type, deployment_config = get_webservice_config(config_file)
-
-    if deployment_type not in DEPLOYMENT_TYPES:
-        raise ValueError('Wrong deployment type. Expected: {}'.format(', '.join(DEPLOYMENT_TYPES)))
-    elif deployment_type == 'aks' and aks_target is None:
-        raise ValueError('AKS target name needs to be set in AKS deployments')
-
-    deployment_target = AksCompute(ws, aks_target) if deployment_type == 'aks' else None
-
-    # Inference environment
-    forecast_env = Environment.from_conda_specification(
-        name='many_models_environment',
-        file_path='Custom_Script/scripts/forecast_webservice.conda.yml'
-    )
-
-    # Inference configuration
-    inference_config = InferenceConfig(
-        source_directory='Custom_Script/scripts/',
-        entry_script='forecast_webservice.py',
-        environment=forecast_env
-    )
-
-    config = {
-        'inference_config': inference_config,
-        'deployment_config': deployment_config,
-        'deployment_target': deployment_target
-    }
-
-    return config
-
-
-def get_webservice_config(config_file):
-
-    COMPUTE_TYPES = ['aci', 'aks']
-
-    with open(config_file) as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
-
-    webservice_type = config['computeType'].lower()
-    if webservice_type not in COMPUTE_TYPES:
-        raise ValueError('Wrong compute type. Expected: {}'.format(', '.join(COMPUTE_TYPES)))
-
-    compute = AciWebservice if webservice_type == 'aci' else AksWebservice if webservice_type == 'aks' else None
-    webservice_config = compute.deploy_configuration(**config['containerResourceRequirements'])
-
-    return webservice_type, webservice_config
-
-
-def deploy_model_group(ws, group_name, group_models, deployment_config, existing_services={}, name_prefix='manymodels-'):
-
-    if group_name in existing_services:
-        service = existing_services[group_name]
-        print(f'Launching updating of service {service.name} corresponding to group {group_name}...')
-        service.update(
-            models=group_models,
-            inference_config=deployment_config['inference_config']
-        )
-        print(f'Updating of {service.name} started')
-    else:
-        service_name = '{prefix}{group}'.format(
-            prefix=name_prefix,
-            group=group_name
-        ).lower()
-        print(f'Launching deployment of service {service_name} corresponding to group {group_name}...')
-        service = Model.deploy(
-            workspace=ws,
-            name=service_name,
-            models=group_models,
-            **deployment_config,
-            overwrite=True
-        )
-        print(f'Deployment of {service.name} started')
-
-    return service
-
-
 def parse_args(args=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('--subscription-id', required=True, type=str)
@@ -403,14 +327,11 @@ def parse_args(args=None):
     parser.add_argument('--sorting-tags', default='', type=lambda str: [t for t in str.split(',') if t])
     parser.add_argument('--routing-model-name', type=str, default='deployed_models_info')
     parser.add_argument('--output', type=str, default='models_deployed.json')
-    parser.add_argument('--aks-target', type=str)
-    parser.add_argument('--service-prefix', type=str)
+    parser.add_argument('--aks-target', type=str, default=None)
+    parser.add_argument('--service-prefix', type=str, default=None)
     parser.add_argument('--container-size', type=int, default=500)
     parser.add_argument('--reset', action='store_true')
     args_parsed = parser.parse_args(args)
-
-    if args_parsed.aks_target == '':
-        args_parsed.aks_target = None
 
     if args_parsed.service_prefix is None:
         args_parsed.service_prefix = 'test-manymodels-' if not args_parsed.aks_target else 'manymodels-'
@@ -420,7 +341,6 @@ def parse_args(args=None):
 
 if __name__ == "__main__":
     args = parse_args()
-    print(args)
 
     # Connect to workspace
     ws = Workspace.get(
