@@ -32,7 +32,7 @@ jobs:
   - task: CopyFiles@2
     displayName: 'Copy ARM templates'
     inputs:
-      sourceFolder: 'Custom_Script/mlops-pipelines/1-setup/deploy-infra/arm-templates'
+      sourceFolder: 'mlops-pipelines/1-setup/deploy-infra/arm-templates'
       targetFolder: '$(Build.ArtifactStagingDirectory)'
   - publish: '$(Build.ArtifactStagingDirectory)'
     artifact: infratemplates

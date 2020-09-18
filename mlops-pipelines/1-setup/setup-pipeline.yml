@@ -9,20 +9,20 @@
 #     - v2-preview
 #   paths:
 #     include:
-#     - Custom_Script/mlops-pipelines/1-setup/*
-#     - Custom_Script/mlops-pipelines/scripts/download_data.py
-#     - Custom_Script/mlops-pipelines/scripts/register_dataset.py
+#     - mlops-pipelines/1-setup/*
+#     - mlops-pipelines/scripts/download_data.py
+#     - mlops-pipelines/scripts/register_or_update_dataset.py
 
 variables:
-- template: ../many-models-variables.yml
+- template: ../configuration/many-models-variables.yml
 - group: manymodels-vg
 
 pool:
   vmImage: ubuntu-latest
 
 stages:
-- stage: deploy_infra
-  displayName: 'Deploy Infra'
+- stage: deploy_infrastructure
+  displayName: 'Deploy Infrastructure'
   jobs:
   - template: deploy-infra/deploy-infra.template.yml
     parameters:
@@ -38,10 +38,10 @@ stages:
 
 - stage: environment_setup
   displayName: 'Environment Setup'
+  dependsOn: deploy_infrastructure
   jobs:
   - template: environment-setup/environment-setup.template.yml
     parameters:
-      sdkVersion: '$(SDK_VERSION)'
       serviceConnection: '$(SERVICECONNECTION_GROUP)'
       resourceGroup: '$(RESOURCE_GROUP)'
       resourcesLocation: '$(LOCATION)'
@@ -50,6 +50,17 @@ stages:
       aksName: '$(AKS_NAME)'
       aksResourceGroup: '$(AKS_RESOURCE_GROUP)'
       amlAksName: '$(AML_AKS_NAME)'
+
+- stage: data_preparation
+  displayName: 'Data Preparation'
+  dependsOn: deploy_infrastructure
+  jobs:
+  - template: data-prep/data-prep.template.yml
+    parameters:
+      sdkVersion: '$(SDK_VERSION)'
+      serviceConnection: '$(SERVICECONNECTION_GROUP)'
+      resourceGroup: '$(RESOURCE_GROUP)'
+      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
       amlTrainDatasetName: '$(AML_DATASET_NAME)_train'
       amlInferenceDatasetName: '$(AML_DATASET_NAME)_inference'
       maxFiles: '$(DATASET_MAXFILES)'

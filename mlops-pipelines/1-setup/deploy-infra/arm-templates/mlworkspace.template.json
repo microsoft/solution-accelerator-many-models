@@ -25,13 +25,14 @@
             "name": "[parameters('workspaceName')]",
             "location": "[resourceGroup().location]",
             "identity": {
-                "type": "systemAssigned"
+                "type": "SystemAssigned"
             },
             "properties": {
                 "keyVault": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
                 "applicationInsights": "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]",
                 "containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries', parameters('containerRegistryName'))]",
-                "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+                "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                "sku": "enterprise"
             }
         }
     ]
