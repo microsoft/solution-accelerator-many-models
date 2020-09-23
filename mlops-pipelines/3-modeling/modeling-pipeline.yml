@@ -9,9 +9,9 @@
 #     - v2-preview
 #   paths:
 #     include:
-#     - Custom_Script/mlops-pipelines/3-modeling/*
-#     - Custom_Script/mlops-pipelines/scripts/deploy_grouped_models.py
-#     - Custom_Script/scripts/forecast_webservice.py
+#     - mlops-pipelines/3-modeling/*
+#     - mlops-pipelines/scripts/deploy_or_update_models.py
+#     - scripts/*/forecast_webservice.py
 #     - Custom_Script/scripts/routing_webservice.py
 #     - Custom_Script/scripts/routing_webservice.conda.yml
 
@@ -24,7 +24,7 @@
 #   always: true
 
 variables:
-- template: ../many-models-variables.yml
+- template: ../configuration/many-models-variables.yml
 - group: manymodels-vg
 
 pool:
@@ -35,7 +35,7 @@ stages:
 - stage: update_data
   displayName: 'Update Data for Training/Retraining'
   jobs:
-  - template: update-data/update-data.template.yml
+  - template: update-data.template.yml
     parameters:
       sdkVersion: '$(SDK_VERSION)'
       serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
@@ -49,7 +49,7 @@ stages:
   displayName: 'Run Model Training'
   dependsOn: update_data
   jobs:
-  - template: run-training/run-training.template.yml
+  - template: run-training.template.yml
     parameters:
       serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
       resourceGroup: '$(RESOURCE_GROUP)'

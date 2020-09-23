@@ -37,7 +37,7 @@ jobs:
         # Install dependencies
         python -m pip install --upgrade pip && python -m pip install azureml-opendatasets==${{parameters.sdkVersion}}
         # Download sample files
-        data_script="Custom_Script/mlops-pipelines/scripts/download_data.py"
+        data_script="mlops-pipelines/scripts/download_data.py"
         python $data_script --maxfiles ${{parameters.maxFiles}} --train-path "new-sample-data-train" --inference-path "new-sample-data-inference"
 
       name: download_files
@@ -96,14 +96,14 @@ jobs:
           # Install dependencies
           python -m pip install --upgrade pip && python -m pip install azureml-sdk==${{parameters.sdkVersion}}
           # Register train dataset
-          update_dataset_script=Custom_Script/mlops-pipelines/scripts/register_or_update_dataset.py
+          update_dataset_script=mlops-pipelines/scripts/register_or_update_dataset.py
           python $update_dataset_script --path $DATAPATH_TRAIN \
                                         --name ${{parameters.amlTrainDatasetName}} \
                                         --subscription-id $(az account show --query id -o tsv) \
                                         --resource-group ${{parameters.resourceGroup}} \
                                         --workspace-name ${{parameters.amlWorkspaceName}}
           # Register inference dataset
-          update_dataset_script=Custom_Script/mlops-pipelines/scripts/register_or_update_dataset.py
+          update_dataset_script=mlops-pipelines/scripts/register_or_update_dataset.py
           python $update_dataset_script --path $DATAPATH_INFERENCE \
                                         --name ${{parameters.amlInferenceDatasetName}} \
                                         --subscription-id $(az account show --query id -o tsv) \
