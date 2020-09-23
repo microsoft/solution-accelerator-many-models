@@ -15,6 +15,7 @@ You'll use Azure DevOps for running the MLOps pipelines. Create an [organization
 | LOCATION                    | [Azure location](https://azure.microsoft.com/en-us/global-infrastructure/locations/), no spaces |
 | RESOURCE_GROUP              | Name of the Azure Resource Group that you'll be using (should be already created) |
 | SERVICECONNECTION_GROUP     | Name of the connection you created in the last step |
+| TRAINING_METHOD             | "automl" or "customscript" depending which method you want to use for training the models |
 | DEPLOY_ACI                  | Whether to deploy in ACI (true/false, default false) |
 | DEPLOY_AKS                  | Whether to deploy in AKS (true/false, default false) |
 | AKS_NAME                    | [Optional] Name of the AKS resource you'll use for deploying the models |

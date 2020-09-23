@@ -5,3 +5,5 @@ dependencies:
   - pip:
       - joblib
       - sklearn
+      - azureml-core
+      - azureml-dataset-runtime[fuse]
