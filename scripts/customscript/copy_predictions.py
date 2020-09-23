@@ -1,10 +1,10 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-import pandas as pd
 import os
 import datetime
 import argparse
+import pandas as pd
 
 # Parse input arguments
 parser = argparse.ArgumentParser("parallel run step results directory")

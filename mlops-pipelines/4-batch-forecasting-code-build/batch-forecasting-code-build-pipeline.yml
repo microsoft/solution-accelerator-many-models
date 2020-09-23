@@ -9,14 +9,15 @@
 #     - v2-preview
 #   paths:
 #     include:
-#     - Custom_Script/mlops-pipelines/4-batch-forecasting-code-build/*
-#     - Custom_Script/mlops-pipelines/scripts/create_forecasting_pipeline.py
-#     - Custom_Script/scripts/forecast.py
-#     - Custom_Script/scripts/forecast.conda.yml
-#     - Custom_Script/scripts/utils/forecasting.py
+#     - mlops-pipelines/4-batch-forecasting-code-build/*
+#     - mlops-pipelines/scripts/create_forecasting_pipeline.py
+#     - mlops-pipelines/configuration/*/script-settings.yml
+#     - mlops-pipelines/configuration/*/forecast-parallelrunstep-config.yml
+#     - scripts/*/forecast.py
+#     - scripts/*/forecast.conda.yml
 
 variables:
-- template: ../many-models-variables.yml
+- template: ../configuration/many-models-variables.yml
 - group: manymodels-vg
 
 pool:
@@ -26,8 +27,20 @@ stages:
 - stage: build_forecasting
   displayName: 'Publish Forecasting AML Pipeline'
   jobs:
+  
+    - job: check_training_method
+      displayName: 'Check Training Method'
+      steps:
+        - bash: |
+            if [ "$TRAINING_METHOD" != "automl" ] && [ "$TRAINING_METHOD" != "customscript" ]; then
+              >&2 echo "Error: variable TRAINING_METHOD must be set to 'automl' or 'customscript'"
+            fi
+          displayName: 'Check Training Method'
+          failOnStderr: true
+
     - job: build_forecasting
       displayName: 'Publish Forecasting AML Pipeline'
+      dependsOn: check_training_method
       steps:
 
         - task: UsePythonVersion@0
@@ -42,15 +55,17 @@ stages:
             scriptLocation: inlineScript
             inlineScript: |
               # Install dependencies
-              python -m pip install --upgrade pip && python -m pip install azureml-sdk[contrib]==$SDK_VERSION
+              python -m pip install --upgrade pip && python -m pip install pyyaml azureml-sdk==$SDK_VERSION
               # Create/update forecasting pipeline
-              forecastingbuild_script=Custom_Script/mlops-pipelines/scripts/create_forecasting_pipeline.py
+              forecastingbuild_script=mlops-pipelines/scripts/create_forecasting_pipeline.py
               python $forecastingbuild_script --name $(AML_FORECASTING_PIPELINE_NAME) \
                                               --version $(Build.BuildId) \
+                                              --scripts-dir 'scripts/$(TRAINING_METHOD)/' \
+                                              --scripts-settings 'mlops-pipelines/configuration/$(TRAINING_METHOD)/script-settings.yml' \
+                                              --prs-config 'mlops-pipelines/configuration/$(TRAINING_METHOD)/forecast-parallelrunstep-config.yml' \
                                               --dataset $(AML_DATASET_NAME)_inference \
                                               --output $(PREDICTIONS_CONTAINER_NAME) \
                                               --compute $(AML_COMPUTE_NAME) \
                                               --subscription-id $(az account show --query id -o tsv) \
                                               --resource-group $(RESOURCE_GROUP) \
                                               --workspace-name $(AMLWORKSPACE_NAME)
-

@@ -6,3 +6,5 @@ dependencies:
       - joblib
       - pandas
       - sklearn
+      - azureml-core
+      - azureml-dataset-runtime[fuse]

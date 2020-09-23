@@ -1,108 +1,83 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+import os
 import argparse
-from azureml.core import Workspace, Datastore, Dataset, Environment
-from azureml.data.data_reference import DataReference
+import shutil
+
+from azureml.core import Workspace, Datastore
 from azureml.core.compute import AmlCompute
-from azureml.pipeline.core import Pipeline, PipelineData, PublishedPipeline
+from azureml.data.data_reference import DataReference
 from azureml.pipeline.steps import PythonScriptStep
-from azureml.contrib.pipeline.steps import ParallelRunConfig, ParallelRunStep
+
+from utils.pipelines import create_parallelrunstep, publish_pipeline
 
 
-def main(ws, pipeline_name, pipeline_version, dataset_name, output_name, compute_name):
+def main(ws, pipeline_name, pipeline_version, dataset_name, output_name, compute_name, 
+         scripts_dir, scripts_settings_file, config_file):
 
-    # Get forecasting dataset
-    dataset = Dataset.get_by_name(ws, name=dataset_name)
-    dataset_input = dataset.as_named_input(dataset_name)
+    # Get compute target
+    compute = AmlCompute(ws, compute_name)
 
-    # Set outputs
-    datastore = ws.get_default_datastore()
-    output_dir = PipelineData(name='forecasting_output', datastore=datastore)
-    predictions_datastore = Datastore.register_azure_blob_container(
+    # Get datastores
+    datastore_default = ws.get_default_datastore()
+    datastore_predictions = Datastore.register_azure_blob_container(
         workspace=ws,
         datastore_name=output_name,
         container_name=output_name,
-        account_name=datastore.account_name,
-        account_key=datastore.account_key,
+        account_name=datastore_default.account_name,
+        account_key=datastore_default.account_key,
         create_if_not_exists=True
     )
-    predictions_dref = DataReference(predictions_datastore)
 
-    # Get the compute target
-    compute = AmlCompute(ws, compute_name)
+    # Setup settings file to be read in script
+    settings_filename = os.path.basename(scripts_settings_file)
+    shutil.copyfile(scripts_settings_file, os.path.join(scripts_dir, settings_filename))
 
-    # Set up ParallelRunStep
-    parallel_run_config = get_parallel_run_config(ws, dataset_name, compute)
-    parallel_run_step = ParallelRunStep(
+    # Create the pipeline step for parallel batch forecasting
+    parallel_run_step = create_parallelrunstep(
+        ws,
         name='many-models-parallel-forecasting',
-        parallel_run_config=parallel_run_config,
-        inputs=[dataset_input],
-        output=output_dir,
-        allow_reuse=False,
+        compute=compute,
+        datastore=datastore_default,
+        input_dataset=dataset_name, 
+        output_dir='forecasting_output',
+        script_dir=scripts_dir,
+        script_file='forecast.py',
+        environment_file=os.path.join(scripts_dir, 'forecast.conda.yml'), 
+        config_file=config_file,
         arguments=[
-            '--id_columns', 'Store', 'Brand',
-            '--timestamp_column', 'WeekStarting',
-            '--model_type', 'lr'
+            '--settings-file', settings_filename
         ]
     )
 
-    # Create step to copy predictions
+    # Create the pipeline step to copy predictions
+    prev_step_output = parallel_run_step._output[0]
+    predictions_dref = DataReference(datastore_predictions)
     upload_predictions_step = PythonScriptStep(
         name='many-models-copy-predictions',
-        source_directory='Custom_Script/scripts/',
+        source_directory=scripts_dir,
         script_name='copy_predictions.py',
         compute_target=compute,
-        inputs=[predictions_dref, output_dir],
+        inputs=[predictions_dref, prev_step_output],
         allow_reuse=False,
         arguments=[
-            '--parallel_run_step_output', output_dir,
+            '--parallel_run_step_output', prev_step_output,
             '--output_dir', predictions_dref,
-            '--id_columns', 'Store', 'Brand',
-            '--target_column', 'Quantity',
-            '--timestamp_column', 'WeekStarting'
+            '--settings-file', scripts_settings_file
         ]
     )
 
-    # Create the pipeline
-    train_pipeline = Pipeline(workspace=ws, steps=[parallel_run_step, upload_predictions_step])
-    train_pipeline.validate()
-
-    # Publish it and replace old pipeline
-    disable_old_pipelines(ws, pipeline_name)
-    published_pipeline = train_pipeline.publish(
-        name=pipeline_name,
-        description="Many Models forecasting pipeline",
-        version=pipeline_version,
-        continue_on_step_failure=False
+    # Publish the pipeline
+    forecasting_pipeline = publish_pipeline(
+        ws, 
+        name=pipeline_name, 
+        steps=[parallel_run_step, upload_predictions_step],
+        description='Many Models forecasting pipeline',
+        version=pipeline_version
     )
 
-    return published_pipeline.id
-
-
-def get_parallel_run_config(ws, dataset_name, compute, processes_per_node=8, node_count=3, timeout=180):
-
-    # Configure environment for ParallelRunStep
-    forecast_env = Environment.from_conda_specification(
-        name='many_models_environment',
-        file_path='Custom_Script/scripts/forecast.conda.yml'
-    )
-
-    # Set up ParallelRunStep configuration
-    parallel_run_config = ParallelRunConfig(
-        source_directory='Custom_Script/scripts/',
-        entry_script='forecast.py',
-        mini_batch_size='1',
-        run_invocation_timeout=timeout,
-        error_threshold=25,
-        output_action='append_row',
-        environment=forecast_env,
-        process_count_per_node=processes_per_node,
-        compute_target=compute,
-        node_count=node_count
-    )
-
-    return parallel_run_config
+    return forecasting_pipeline.id
 
 
 def disable_old_pipelines(ws, pipeline_name):
@@ -118,7 +93,10 @@ def parse_args(args=None):
     parser.add_argument('--workspace-name', required=True, type=str)
     parser.add_argument('--name', required=True, type=str)
     parser.add_argument('--version', required=True, type=str)
-    parser.add_argument('--dataset', type=str, default='oj_sales_data')
+    parser.add_argument('--scripts-dir', required=True, type=str)
+    parser.add_argument('--scripts-settings', required=True, type=str)
+    parser.add_argument('--prs-config', required=True, type=str)
+    parser.add_argument('--dataset', type=str, default='oj_sales_data_inference')
     parser.add_argument('--output', type=str, default='predictions')
     parser.add_argument('--compute', type=str, default='cpu-compute')
     args_parsed = parser.parse_args(args)
@@ -141,7 +119,10 @@ if __name__ == "__main__":
         pipeline_version=args.version,
         dataset_name=args.dataset,
         output_name=args.output,
-        compute_name=args.compute
+        compute_name=args.compute,
+        scripts_dir=args.scripts_dir, 
+        scripts_settings_file=args.scripts_settings, 
+        config_file=args.prs_config
     )
 
     print('Forecasting pipeline {} version {} published with ID {}'.format(args.name, args.version, pipeline_id))
