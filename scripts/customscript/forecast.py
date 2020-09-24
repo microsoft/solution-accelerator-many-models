@@ -2,27 +2,33 @@
 # Licensed under the MIT License.
 
 import argparse
+import json
 import joblib
 import pandas as pd
 
 from azureml.core.model import Model
 from azureml.core.run import Run
 
+from utils.models import get_model_name
+
 
 # 0.0 Parse input arguments
-parser = argparse.ArgumentParser("split")
-parser.add_argument("--id_columns", type=str, nargs='*', required=True, help="input columns identifying the model entity")
-parser.add_argument("--timestamp_column", type=str, help="timestamp column from data", required=True)
-parser.add_argument("--model_type", type=str, help="model type", required=True)
-
+parser = argparse.ArgumentParser()
+parser.add_argument("--settings-file", type=str, required=True, help="file containing the script settings")
 args, _ = parser.parse_known_args()
 
-current_run = None
+with open(args.settings_file, 'r') as f:
+    customscript_settings = json.load(f)
+
+id_columns = customscript_settings['id_columns']
+timestamp_column = customscript_settings['timestamp_column']
+model_type = customscript_settings['model_type']
 
 
 def init():
-    global current_run
+    global ws
     current_run = Run.get_context()
+    ws = current_run.experiment.workspace
 
 
 def run(input_data):
@@ -33,18 +39,14 @@ def run(input_data):
     for csv_file_path in input_data:
         
         # 3.0 Set up data to predict on
-        data = (pd.read_csv(csv_file_path, parse_dates=[args.timestamp_column], header=0)
-                .set_index(args.timestamp_column))
+        data = (pd.read_csv(csv_file_path, parse_dates=[timestamp_column], header=0)
+                .set_index(timestamp_column))
 
         # 4.0 Load registered model from Workspace
-        id_dict = {id_col: str(data[id_col].iloc[0]) for id_col in args.id_columns}
-        tag_list = [list(kv) for kv in id_dict.items()]
-        tag_list.append(['ModelType', args.model_type])
-        ws = Run.get_context().experiment.workspace
-        models = Model.list(ws, tags=tag_list, latest=True)
-        if len(models) > 1:
-            raise ValueError(f'More than one models encountered for given timeseries ID: {[m.name for m in models]}')
-        model_path = models[0].download()
+        id_dict = {id_col: str(data[id_col].iloc[0]) for id_col in id_columns}
+        model_name = get_model_name(model_type, id_dict)
+        model = Model(ws, model_name)
+        model_path = model.download()
         forecaster = joblib.load(model_path)
 
         # 5.0 Make predictions

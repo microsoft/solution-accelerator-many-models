@@ -2,26 +2,28 @@
 # Licensed under the MIT License.
 
 import os
+import json
 import datetime
 import argparse
 import pandas as pd
 
 # Parse input arguments
-parser = argparse.ArgumentParser("parallel run step results directory")
-parser.add_argument("--parallel_run_step_output", type=str, help="output directory from parallel run step",
-                    required=True)
-parser.add_argument("--output_dir", type=str, help="output directory", required=True)
-parser.add_argument("--id_columns", type=str, nargs='*', required=True, help="input columns identifying the model entity")
-parser.add_argument("--target_column", type=str, help="column with actual values", default=None)
-parser.add_argument("--timestamp_column", type=str, help="timestamp column from data", required=True)
-# add list for the columns to pull ?
-
+parser = argparse.ArgumentParser()
+parser.add_argument("--parallel_run_step_output", type=str, required=True, help="output directory from parallel run step")
+parser.add_argument("--output_dir", type=str, required=True, help="output directory")
+parser.add_argument("--settings-file", type=str, required=True, help="file containing the script settings")
 args, _ = parser.parse_known_args()
 
-result_file = os.path.join(args.parallel_run_step_output, 'parallel_run_step.txt')
+with open(args.settings_file, 'r') as f:
+    customscript_settings = json.load(f)
+
+id_columns = customscript_settings['id_columns']
+target_column = customscript_settings['target_column']
+timestamp_column = customscript_settings['timestamp_column']
 
 # Read the log file and set the column names from the input timeseries schema
 # The parallel run step log does not have a header row, so add it for easier downstream processing
+result_file = os.path.join(args.parallel_run_step_output, 'parallel_run_step.txt')
 df_predictions = pd.read_csv(result_file, delimiter=" ", header=None)
 pred_column_names = [args.timestamp_column, 'Prediction']
 if args.target_column is not None:
