@@ -64,7 +64,7 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, output_name, compute
         arguments=[
             '--parallel_run_step_output', prev_step_output,
             '--output_dir', predictions_dref,
-            '--settings-file', scripts_settings_file
+            '--settings-file', settings_filename
         ]
     )
 

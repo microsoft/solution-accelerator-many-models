@@ -14,7 +14,7 @@ parameters:
   type: string
 - name: amlWorkspaceName
   type: string
-- name: amlTrainDatasetName
+- name: amlInferenceDatasetName
   type: string
 - name: maxFiles
   type: string
@@ -44,7 +44,7 @@ jobs:
     
     - task: AzureCLI@1
       name: upload_files
-      displayName: 'Upload trainimg files to AML datastore'
+      displayName: 'Upload inference files to AML datastore'
       inputs:
         azureSubscription: ${{parameters.serviceConnection}}
         scriptLocation: inlineScript
@@ -54,21 +54,21 @@ jobs:
           az extension add -n azure-cli-ml
           # Get default datastore
           datastore=$(az ml datastore show-default $workspace_params --query name -o tsv)
-          # Upload train files
-          datapath_train=new-sample-data-$(date +"%Y%m%d-%H%M%S")-train
+          # Upload inference files
+          datapath_inference=new-sample-data-$(date +"%Y%m%d-%H%M%S")-inference
           az ml datastore upload --name $datastore \
-                                 --src-path "new-sample-data-train" \
-                                 --target-path $datapath_train \
+                                 --src-path "new-sample-data-inference" \
+                                 --target-path $datapath_inference \
                                  --overwrite true \
                                  $workspace_params
-          echo "##vso[task.setvariable variable=datapath_train;isOutput=true;]$datapath_train"
+          echo "##vso[task.setvariable variable=datapath_inference;isOutput=true;]$datapath_inference"
 
 
 - job: update_dataset
-  displayName: 'Update Registered Training Dataset'
+  displayName: 'Update Registered Inference Dataset'
   dependsOn: download_new_data
   variables: 
-    datapath_train: $[ dependencies.download_new_data.outputs['upload_files.datapath_train'] ]
+    datapath_inference: $[ dependencies.download_new_data.outputs['upload_files.datapath_inference'] ]
   steps:
 
     - task: UsePythonVersion@0
@@ -77,17 +77,17 @@ jobs:
         versionSpec: 3.7
 
     - task: AzureCLI@1
-      displayName: 'Update training dataset'
+      displayName: 'Update inference dataset'
       inputs:
         azureSubscription: ${{parameters.serviceConnection}}
         scriptLocation: inlineScript
         inlineScript: |
           # Install dependencies
           python -m pip install --upgrade pip && python -m pip install azureml-sdk==${{parameters.sdkVersion}}
-          # Update train dataset
+          # Update inference dataset
           update_dataset_script=mlops-pipelines/scripts/register_or_update_dataset.py
-          python $update_dataset_script --path $DATAPATH_TRAIN \
-                                        --name ${{parameters.amlTrainDatasetName}} \
+          python $update_dataset_script --path $DATAPATH_INFERENCE \
+                                        --name ${{parameters.amlInferenceDatasetName}} \
                                         --subscription-id $(az account show --query id -o tsv) \
                                         --resource-group ${{parameters.resourceGroup}} \
                                         --workspace-name ${{parameters.amlWorkspaceName}}

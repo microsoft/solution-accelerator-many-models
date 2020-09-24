@@ -1,11 +1,13 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-import argparse
+import os
 import json
+import argparse
 import joblib
-import pandas as pd
+from pathlib import Path
 
+import pandas as pd
 from azureml.core.model import Model
 from azureml.core.run import Run
 
@@ -17,7 +19,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--settings-file", type=str, required=True, help="file containing the script settings")
 args, _ = parser.parse_known_args()
 
-with open(args.settings_file, 'r') as f:
+base_path = Path(__file__).absolute().parent
+with open(os.path.join(base_path, args.settings_file), 'r') as f:
     customscript_settings = json.load(f)
 
 id_columns = customscript_settings['id_columns']

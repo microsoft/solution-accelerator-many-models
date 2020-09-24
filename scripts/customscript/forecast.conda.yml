@@ -7,4 +7,5 @@ dependencies:
       - pandas
       - sklearn
       - azureml-core
+      - azureml-defaults
       - azureml-dataset-runtime[fuse]

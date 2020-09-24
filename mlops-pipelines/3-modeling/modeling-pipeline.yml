@@ -42,7 +42,6 @@ stages:
       resourceGroup: '$(RESOURCE_GROUP)'
       amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
       amlTrainDatasetName: '$(AML_DATASET_NAME)_train'
-      amlInferenceDatasetName: '$(AML_DATASET_NAME)_inference'
       maxFiles: '$(DATASET_MAXFILES)'
 
 - stage: run_training

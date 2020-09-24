@@ -20,7 +20,7 @@
 #   always: true
 
 variables:
-- template: ../many-models-variables.yml
+- template: ../configuration/many-models-variables.yml
 - group: manymodels-vg
 
 pool:
@@ -28,17 +28,22 @@ pool:
 
 stages:
 
-# There is no data to update in this example, but in the general case 
-# the registered dataset should be updated before forecasting.
-# - stage: update_data
-#   displayName: 'Update Data for Forecasting'
-#   jobs:
-#   - template: update-data/update-data.template.yml
+- stage: update_data
+  displayName: 'Update Data for Batch Forecasting'
+  jobs:
+  - template: update-data.template.yml
+    parameters:
+      sdkVersion: '$(SDK_VERSION)'
+      serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
+      resourceGroup: '$(RESOURCE_GROUP)'
+      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
+      amlInferenceDatasetName: '$(AML_DATASET_NAME)_inference'
+      maxFiles: '$(DATASET_MAXFILES)'
 
 - stage: run_forecasting
   displayName: 'Run Model Forecasting'
   jobs:
-  - template: run-forecasting/run-forecasting.template.yml
+  - template: run-forecasting.template.yml
     parameters:
       serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
       resourceGroup: '$(RESOURCE_GROUP)'
