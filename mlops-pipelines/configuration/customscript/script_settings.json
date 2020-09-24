@@ -1,0 +1,11 @@
+{
+      "id_columns": ["Store", "Brand"],
+      "target_column": "Quantity",
+      "timestamp_column": "WeekStarting",
+      "tag_columns": ["StoreGroup10", "StoreGroup100", "StoreGroup1000"],
+      "drop_id": true,
+      "drop_tags": true,
+      "drop_columns": ["Revenue"],
+      "model_type": "lr",
+      "test_size": 20
+}

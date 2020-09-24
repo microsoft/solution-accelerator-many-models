@@ -15,6 +15,8 @@
 #     - mlops-pipelines/configuration/*/train-parallelrunstep-config.yml
 #     - scripts/*/train.py
 #     - scripts/*/train.conda.yml
+#     - scripts/*/utils/models.py
+#     - scripts/*/utils/timeseries.py
 
 variables:
 - template: ../configuration/many-models-variables.yml
@@ -61,7 +63,7 @@ stages:
               python $trainingbuild_script --name $(AML_TRAINING_PIPELINE_NAME) \
                                            --version $(Build.BuildId) \
                                            --scripts-dir 'scripts/$(TRAINING_METHOD)/' \
-                                           --scripts-settings 'mlops-pipelines/configuration/$(TRAINING_METHOD)/script-settings.yml' \
+                                           --scripts-settings 'mlops-pipelines/configuration/$(TRAINING_METHOD)/script_settings.json' \
                                            --prs-config 'mlops-pipelines/configuration/$(TRAINING_METHOD)/train-parallelrunstep-config.yml' \
                                            --dataset $(AML_DATASET_NAME)_train \
                                            --compute $(AML_COMPUTE_NAME) \
