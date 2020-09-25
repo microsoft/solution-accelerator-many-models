@@ -60,9 +60,10 @@ stages:
   dependsOn: run_training
   condition: and(succeeded(), eq(variables['DEPLOY_ACI'], 'true'))
   jobs:
-  - template: deploy-models/deploy-models.template.yml
+  - template: deploy-models.template.yml
     parameters:
       sdkVersion: '$(SDK_VERSION)'
+      trainingMethod: '$(TRAINING_METHOD)'
       serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
       resourceGroup: '$(RESOURCE_GROUP)'
       amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
@@ -83,9 +84,10 @@ stages:
   dependsOn: run_training
   condition: and(succeeded(), eq(variables['DEPLOY_AKS'], 'true'), variables['AML_AKS_NAME'])
   jobs:
-  - template: deploy-models/deploy-models.template.yml
+  - template: deploy-models.template.yml
     parameters:
       sdkVersion: '$(SDK_VERSION)'
+      trainingMethod: '$(TRAINING_METHOD)'
       serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
       resourceGroup: '$(RESOURCE_GROUP)'
       amlWorkspaceName: '$(AMLWORKSPACE_NAME)'

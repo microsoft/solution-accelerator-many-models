@@ -6,6 +6,8 @@
 parameters:
 - name: sdkVersion
   type: string
+- name: trainingMethod
+  type: string
 - name: serviceConnection
   type: string
 - name: resourceGroup
@@ -57,12 +59,13 @@ jobs:
           # Install dependencies
           python -m pip install --upgrade pip && python -m pip install pyyaml azureml-sdk==${{parameters.sdkVersion}}
           # Deploy/update models in groups in webservices
-          deployment_config_path="Custom_Script/mlops-pipelines/3-modeling/deploy-models/"
-          deployment_config_file="$deployment_config_path/forecasting-deployment-config-${{parameters.deploymentType}}.yml"
-          deploy_script="Custom_Script/mlops-pipelines/scripts/deploy_or_update_models.py"
+          deployment_config_path="mlops-pipelines/configuration/${{parameters.trainingMethod}}/"
+          deployment_config_file="$deployment_config_path/model-deployment-config-${{parameters.deploymentType}}.yml"
+          deploy_script="mlops-pipelines/scripts/deploy_or_update_models.py"
           if [ "${{parameters.resetContainers}}" == "true" ]; then reset="--reset"; fi
           python $deploy_script --splitting-tags '${{parameters.splittingTags}}' \
                                 --sorting-tags '${{parameters.sortingTags}}' \
+                                --scripts-dir 'scripts/${{parameters.trainingMethod}}/' \
                                 --routing-model-name '${{parameters.routingModelName}}' \
                                 --output 'models_deployed.json' \
                                 --deploy-config-file $deployment_config_file \
@@ -127,11 +130,12 @@ jobs:
           # Install dependencies
           python -m pip install --upgrade pip && python -m pip install pyyaml azureml-sdk==${{parameters.sdkVersion}}
           # Deploy/update routing webservice
-          deployment_config_path="Custom_Script/mlops-pipelines/3-modeling/deploy-models/"
+          deployment_config_path="mlops-pipelines/configuration/${{parameters.trainingMethod}}/"
           deployment_config_file="$deployment_config_path/routing-deployment-config-${{parameters.deploymentType}}.yml"
-          deploy_script="Custom_Script/mlops-pipelines/scripts/deploy_or_update_router.py"
+          deploy_script="mlops-pipelines/scripts/deploy_or_update_router.py"
           python $deploy_script --model-name '${{parameters.routingModelName}}' \
                                 --service-name '${{parameters.routingServiceName}}' \
+                                --scripts-dir 'scripts/${{parameters.trainingMethod}}/' \
                                 --deploy-config-file $deployment_config_file \
                                 --aks-target '${{parameters.amlAksName}}' \
                                 --subscription-id $(az account show --query id -o tsv) \

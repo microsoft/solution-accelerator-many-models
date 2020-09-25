@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+import os
 import argparse
 import warnings
 import json
@@ -12,16 +13,16 @@ from azureml.exceptions import WebserviceException
 from utils.deployment import build_deployment_config, launch_deployment
 
 
-def main(ws, config_file, routing_model_name,
+def main(ws, scripts_dir, config_file, routing_model_name, 
          sorting_tags=[], splitting_tags=[], container_size=500,
          aks_target=None, service_prefix='manymodels-', reset=False):
 
     # Deployment configuration
     deployment_config = build_deployment_config(
         ws, 
-        script_dir='Custom_Script/scripts/',
-        script_file='forecast_webservice.py',
-        environment_file='Custom_Script/scripts/forecast_webservice.conda.yml',
+        script_dir=scripts_dir,
+        script_file='model_webservice.py',
+        environment_file=os.path.join(scripts_dir, 'model_webservice.conda.yml'),
         config_file=config_file,
         aks_target=aks_target
     )
@@ -322,6 +323,7 @@ def parse_args(args=None):
     parser.add_argument('--subscription-id', required=True, type=str)
     parser.add_argument('--resource-group', required=True, type=str)
     parser.add_argument('--workspace-name', required=True, type=str)
+    parser.add_argument('--scripts-dir', required=True, type=str)
     parser.add_argument('--deploy-config-file', required=True, type=str)
     parser.add_argument('--splitting-tags', default='', type=lambda str: [t for t in str.split(',') if t])
     parser.add_argument('--sorting-tags', default='', type=lambda str: [t for t in str.split(',') if t])
@@ -351,6 +353,7 @@ if __name__ == "__main__":
 
     models_deployed = main(
         ws,
+        scripts_dir=args.scripts_dir,
         config_file=args.deploy_config_file,
         routing_model_name=args.routing_model_name,
         splitting_tags=args.splitting_tags,

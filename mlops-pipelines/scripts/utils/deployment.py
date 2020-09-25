@@ -3,11 +3,13 @@
 
 import yaml
 
-from azureml.core import Environment, Model, Webservice
+from azureml.core import Model, Webservice
 from azureml.core.model import InferenceConfig
 from azureml.core.compute import AksCompute
 from azureml.core.webservice import AciWebservice, AksWebservice
 from azureml.exceptions import WebserviceException
+
+from utils.common import read_config_file, create_environment_conda
 
 
 def build_deployment_config(ws, script_dir, script_file, environment_file, config_file, aks_target=None):
@@ -24,12 +26,7 @@ def build_deployment_config(ws, script_dir, script_file, environment_file, confi
     deployment_target = AksCompute(ws, aks_target) if compute_type == 'aks' else None
 
     # Inference environment
-    environment = Environment.from_conda_specification(
-        name='many_models_environment',
-        file_path=environment_file
-    )
-    if environment_config:
-        environment.environment_variables = environment_config
+    environment = create_environment_conda(environment_file, environment_config)
 
     # Inference configuration
     inference_config = InferenceConfig(
@@ -61,9 +58,7 @@ def build_deployment_config(ws, script_dir, script_file, environment_file, confi
 
 def read_config(config_file):
 
-    with open(config_file) as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
-
+    config = read_config_file(config_file)
     compute_type = config['computeType'].lower()
     webservice_config = config['containerResourceRequirements']
     environment_config = config.get('environmentVariables', {})
