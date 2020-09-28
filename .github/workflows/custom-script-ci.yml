@@ -5,9 +5,9 @@ on:
     branches:
       - v2-preview
     paths:
-      - 00_Setup_AML_Workspace.ipynb
-      - 01_Data_Preparation.ipynb
-      - Custom_Script/**
+      - notebooks/00_Setup_AML_Workspace.ipynb
+      - notebooks/01_Data_Preparation.ipynb
+      - notebooks/Custom_Script/**
 env:
   SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
   RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
@@ -34,13 +34,13 @@ jobs:
           architecture: 'x64'
       - name: Install dependencies
         run: |
-          python -m pip install -r Custom_Script/requirements.txt
+          python -m pip install -r notebooks/Custom_Script/requirements.txt
       - name: Convert notebooks to python
         run: |
-          jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
-          jupyter nbconvert --to script 01_Data_Preparation.ipynb
-          jupyter nbconvert --to script Custom_Script/02_CustomScript_Training_Pipeline.ipynb
-          jupyter nbconvert --to script Custom_Script/03_CustomScript_Forecasting_Pipeline.ipynb
+          jupyter nbconvert --to script notebooks/00_Setup_AML_Workspace.ipynb
+          jupyter nbconvert --to script notebooks/01_Data_Preparation.ipynb
+          jupyter nbconvert --to script notebooks/Custom_Script/02_CustomScript_Training_Pipeline.ipynb
+          jupyter nbconvert --to script notebooks/Custom_Script/03_CustomScript_Forecasting_Pipeline.ipynb
       - name: Login via Az module
         uses: azure/login@v1.1
         with:
@@ -54,6 +54,7 @@ jobs:
             echo "************************************"
             echo "Using workspace: $Env:WORKSPACE_NAME"
             echo "************************************"
+            cd notebooks
             python 00_Setup_AML_Workspace.py
             $resource = Get-AzResource -Name $Env:WORKSPACE_NAME -ResourceGroupName $Env:RESOURCE_GROUP
             $expirationTime = (Get-Date).AddHours(24).ToUniversalTime()
@@ -61,12 +62,13 @@ jobs:
           azPSVersion: 'latest'
       - name: Data preparation
         run: |
+          cd notebooks
           ipython 01_Data_Preparation.py
       - name: Run training
         run: |
-          cd Custom_Script
-          python 02_CustomScript_Training_Pipeline.py
+          cd notebooks/Custom_Script
+          ipython 02_CustomScript_Training_Pipeline.py
       - name: Run prediction
         run: |
-          cd Custom_Script
-          python 03_CustomScript_Forecasting_Pipeline.py
+          cd notebooks/Custom_Script
+          ipython 03_CustomScript_Forecasting_Pipeline.py
