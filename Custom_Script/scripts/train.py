@@ -92,10 +92,10 @@ def run(input_data):
         mape = np.mean(np.abs((actuals - preds) / actuals) * 100)
 
         # 6.0 Log metrics
-        current_run.log(model_name + '_mse', mse)
-        current_run.log(model_name + '_rmse', rmse)
-        current_run.log(model_name + '_mae', mae)
-        current_run.log(model_name + '_mape', mape)
+        current_run.log_row('rmse', **id_dict, value=rmse, model_name=model_name, **tags_dict)
+        current_run.log_row('mae', **id_dict, value=mae, model_name=model_name, **tags_dict)
+        current_run.log_row('mse', **id_dict, value=mse, model_name=model_name, **tags_dict)
+        current_run.log_row('mape', **id_dict, value=mape, model_name=model_name, **tags_dict)
 
         # 7.0 Train model with full dataset
         forecaster.fit(data)
