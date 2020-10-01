@@ -31,20 +31,20 @@ The setup pipeline will:
 
 - Download as many files as you specified in the `DATASET_MAXFILES` variable and register them as a dataset in AML.
 
-Create the pipeline as in [here](https://github.com/microsoft/MLOpsPython/blob/master/docs/getting_started.md#create-the-iac-pipeline), selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/1-setup/setup-pipeline.yml](1-setup/setup-pipeline.yml).
+Create the pipeline as in [here](https://github.com/microsoft/MLOpsPython/blob/master/docs/getting_started.md#create-the-iac-pipeline), selecting branch **``v2-preview``** and setting the path to [/mlops-pipelines/1-setup/pipeline-setup.yml](1-setup/pipeline-setup.yml).
 
 The pipeline run should look like this:
 
-<img src="../../images/mlops_pipeline1.png"
+<img src="../images/mlops_pipeline1.png"
      width="1000"
      title="Setup Pipeline"
-     alt="Stage Deploy Infra with two jobs: IaC Build, IaC Deployment. Followed by stage Environment Setup with four jobs: Deploy AML Compute, Attach AKS cluster to AML, Sample Files Setup, Register Dataset" />
+     alt="Stage Deploy Infra with two jobs: IaC Build, IaC Deployment. Followed by stage Environment Setup with two jobs: Deploy AML Compute, Attach AKS cluster to AML, and also stage Data Preparation in parallel with tho jobs: Sample Files Setup, Register Dataset" />
 
 ## 2. Training Code Build Pipeline
 
 The training code build pipeline will:
 
-- Create an Azure Machine Learning Pipeline that will train many models in parallel using the [train script](../scripts/train.py).
+- Create an Azure Machine Learning Pipeline that will train many models in parallel using the `train.py` script in the corresponding [scripts folder](../scripts/).
 
 - Publish the AML Pipeline into the AML workspace so it's ready to use whenever we want to retrain.
 
@@ -60,32 +60,34 @@ Before creating the Azure DevOps pipeline:
 | --------------------------- | ----------------- |
 | SERVICECONNECTION_WORKSPACE | Name of the connection to the AML Workspace you have just created |
 
-Then, create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/2-training-code-build/training-code-build-pipeline.yml](2-training-code-build/training-code-build-pipeline.yml).
+Then, create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to [/mlops-pipelines/2-training-code-build/pipeline-training-code-build.yml](2-training-code-build/pipeline-training-code-build.yml).
 
 The pipeline run should look like this:
 
-<img src="../../images/mlops_pipeline2.png"
+<img src="../images/mlops_pipeline2.png"
      width="1000"
      title="Training Code Build Pipeline"
-     alt="Single job: Publish Training AML Pipeline" />
+     alt="Single stage with two jobs: Check Training Method, Publish Training AML Pipeline" />
 
 ## 3. Modeling Pipeline
 
 The modeling pipeline will:
 
+- Update the training dataset with the latest version of data.
+
 - Trigger the many models training by invoking the training AML Pipeline previously published.
 
 - Group the registered models according to specified tags and maximum container size (500 by default).
 
-- Deploy each group into a different webservice hosted in ACI and/or AKS. These webservices will all use the same [forecast script](../scripts/forecast_webservice.py).
+- Deploy each group into a different webservice hosted in ACI and/or AKS. These webservices will all use the same `model_webservice.py` script in the corresponding [scripts folder](../scripts/).
 
-- Deploy the entry point that will route the requests to the corresponding model webservice.
+- Deploy the entry point that will route the requests to the corresponding model webservice. This webservice will use the `routing_webservice.py` script in the corresponding [scripts folder](../scripts/).
 
-Create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/3-modeling/modeling-pipeline.yml](3-modeling/modeling-pipeline.yml).
+Create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to [/mlops-pipelines/3-modeling/pipeline-modeling.yml](3-modeling/pipeline-modeling.yml).
 
 The pipeline run should look like this:
 
-<img src="../../images/mlops_pipeline3.png"
+<img src="../images/mlops_pipeline3.png"
      width="1000"
      title="Modeling Pipeline"
      alt="Stage Run Model Training with two jobs: Get Training Pipeline ID, Run Training. After that two parallel stages are triggered with three identical jobs: Deploy Models to ACI and Deploy Models to AKS, with jobs Deploy Models, Register Routing Model, Deploy Routing Webservice" />
@@ -103,30 +105,32 @@ There are two variables you can add to the **``manymodels-vg``** variable group 
 
 The batch forecasting code build pipeline will:
 
-- Create an Azure Machine Learning Pipeline that will generate batch forecasts for all the models in parallel using the [forecast script](../scripts/forecast.py).
+- Create an Azure Machine Learning Pipeline that will generate batch forecasts for all the models in parallel using the `forecast.py` script in the corresponding [scripts folder](../scripts/).
 
 - Publish the AML Pipeline into the AML workspace so it's ready to use whenever we want to do batch forecasting.
 
-You only need to create this Azure DevOps pipeline if you want to do batch forecasting. Do it as you did before, selecting branch **``v2-preview``** and setting the path to [/Custom_Script/mlops-pipelines/4-batch-forecasting-code-build/batch-forecasting-code-build-pipeline.yml](4-batch-forecasting-code-build/batch-forecasting-code-build-pipeline.yml).
+You only need to create this Azure DevOps pipeline if you want to do batch forecasting. Do it as you did before, selecting branch **``v2-preview``** and setting the path to [/mlops-pipelines/4-batch-forecasting-code-build/pipeline-batch-forecasting-code-build.yml](4-batch-forecasting-code-build/pipeline-batch-forecasting-code-build.yml).
 
 The pipeline run should look like this:
 
-<img src="../../images/mlops_pipeline4.png"
+<img src="../images/mlops_pipeline4.png"
      width="1000"
      title="Batch Forecasting Code Build Pipeline"
-     alt="Single job: Publish Forecasting AML Pipeline" />
+     alt="Single stage with two jobs: Check Training Method, Publish Forecasting AML Pipeline" />
 
 ## 5. [Optional] Batch Forecasting Pipeline
 
 The batch forecasting pipeline will:
 
+- Update the inference dataset with the latest version of data.
+
 - Trigger the many models batch forecasting by invoking the batch forecasting AML Pipeline published in step 4.
 
-Create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to  [/Custom_Script/mlops-pipelines/5-batch-forecasting/batch-forecasting-pipeline.yml](5-batch-forecasting/batch-forecasting-pipeline.yml).
+Create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to  [/mlops-pipelines/5-batch-forecasting/pipeline-batch-forecasting.yml](5-batch-forecasting/pipeline-batch-forecasting.yml).
 
 The pipeline run should look like this:
 
-<img src="../../images/mlops_pipeline5.png"
+<img src="../images/mlops_pipeline5.png"
      width="1000"
      title="Batch Forecasting Pipeline"
-     alt="Two jobs: Get Forecasting Pipeline ID, Run Forecasting" />
+     alt="Stage Update Data with two jobs: Download New Sample, Update Registered Inference Dataset, followed by stage Run Model Forecasting with two jobs: Get Forecasting Pipeline ID, Run Forecasting" />
