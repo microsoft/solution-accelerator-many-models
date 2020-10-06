@@ -28,6 +28,8 @@ parameters:
   type: string
 - name: resetContainers
   type: string
+- name: updateServices
+  type: string
 - name: routingModelName
   type: string
 - name: routingModelTagName
@@ -63,6 +65,7 @@ jobs:
           deployment_config_file="$deployment_config_path/model-deployment-config-${{parameters.deploymentType}}.yml"
           deploy_script="mlops-pipelines/scripts/deploy_or_update_models.py"
           if [ "${{parameters.resetContainers}}" == "true" ]; then reset="--reset"; fi
+          if [ "${{parameters.updateServices}}" == "true" ]; then update="--update"; fi
           python $deploy_script --splitting-tags '${{parameters.splittingTags}}' \
                                 --sorting-tags '${{parameters.sortingTags}}' \
                                 --scripts-dir 'scripts/${{parameters.trainingMethod}}/' \
@@ -72,7 +75,7 @@ jobs:
                                 --aks-target '${{parameters.amlAksName}}' \
                                 --service-prefix '${{parameters.webservicePrefix}}' \
                                 --container-size '${{parameters.containerSize}}' \
-                                $reset \
+                                $reset $update \
                                 --subscription-id $(az account show --query id -o tsv) \
                                 --resource-group ${{parameters.resourceGroup}} \
                                 --workspace-name ${{parameters.amlWorkspaceName}}

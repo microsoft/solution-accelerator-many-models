@@ -100,6 +100,7 @@ There are two variables you can add to the **``manymodels-vg``** variable group 
 | --------------------------- | ----------------- |
 | MAX_CONTAINER_SIZE | Maximum number of models to fit into one webservice container |
 | RESET_DEPLOYMENT   | Set to `true` to reset existing containers |
+| UPDATE_DEPLOYMENT  | Set to `true` to update all existing webservices (for config changes to apply) |
 
 ## 4. [Optional] Batch Forecasting Code Build Pipeline
 
