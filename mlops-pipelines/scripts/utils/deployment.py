@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import yaml
+import inspect
 
 from azureml.core import Model, Webservice
 from azureml.core.model import InferenceConfig
@@ -80,9 +81,10 @@ def launch_deployment(ws, service_name, models, deployment_config, existing_serv
     service = existing_services.get(service_name)
     if service:
         print(f'Launching updating of service {service.name}...')
+        update_params = build_update_params(service, deployment_config)
         service.update(
             models=models,
-            inference_config=deployment_config['inference_config']  
+            **update_params
         )
         print(f'Updating of {service.name} started')
     else:
@@ -97,3 +99,19 @@ def launch_deployment(ws, service_name, models, deployment_config, existing_serv
         print(f'Deployment of {service.name} started')
 
     return service
+
+
+def build_update_params(service, deployment_config):
+
+    update_args = inspect.getfullargspec(service.update)[0]
+
+    params = {
+        **{
+            # Params of the configuration object that are defined as arguments in the update function
+            k:v for k,v in inspect.getmembers(deployment_config['deployment_config']) 
+                if k in update_args and v is not None
+        },
+        'inference_config': deployment_config['inference_config']
+    }
+
+    return params

@@ -15,7 +15,7 @@ from utils.deployment import build_deployment_config, launch_deployment
 
 def main(ws, scripts_dir, config_file, routing_model_name, 
          sorting_tags=[], splitting_tags=[], container_size=500,
-         aks_target=None, service_prefix='manymodels-', reset=False):
+         aks_target=None, service_prefix='manymodels-', reset=False, update=False):
 
     # Deployment configuration
     deployment_config = build_deployment_config(
@@ -35,6 +35,7 @@ def main(ws, scripts_dir, config_file, routing_model_name,
         models_deployed = {}
         for service in existing_services.values():
             service.delete()
+        existing_services = {}
 
     # Get models registered
     models_registered = get_models_registered(ws, exclude_names=[routing_model_name])
@@ -45,6 +46,11 @@ def main(ws, scripts_dir, config_file, routing_model_name,
         sorting_tags=sorting_tags, splitting_tags=splitting_tags,
         container_size=container_size
     )
+
+    # Force update in all webservices (when deployment config changes for example)
+    if update:
+        groups_update.update(groups_unchanged)
+        groups_unchanged = {}
 
     print(f'{len(groups_delete)} services to be deleted,',
           f'{len(groups_new)} new groups to be deployed,',
@@ -189,7 +195,7 @@ def create_deployment_groups(models_registered, models_deployed,
         names_all_subgroups_delete += [get_subgroup_name(group_name, i) for i in subgroups_deployed if i not in subgroups_registered]
 
 
-    container_sizes = [len(container) for container in all_subgroups_registered]
+    container_sizes = [len(container) for container in all_subgroups_registered.values()]
     print(f'Grouped models in {len(all_subgroups_registered)} groups.',
           f'Min size: {min(container_sizes)}. Max size: {max(container_sizes)}.')
 
@@ -333,6 +339,7 @@ def parse_args(args=None):
     parser.add_argument('--service-prefix', type=str, default=None)
     parser.add_argument('--container-size', type=int, default=500)
     parser.add_argument('--reset', action='store_true')
+    parser.add_argument('--update', action='store_true')
     args_parsed = parser.parse_args(args)
 
     if args_parsed.service_prefix is None:
@@ -361,7 +368,8 @@ if __name__ == "__main__":
         aks_target=args.aks_target,
         service_prefix=args.service_prefix,
         container_size=args.container_size,
-        reset=args.reset
+        reset=args.reset,
+        update=args.update
     )
 
     with open(args.output, 'w') as f:
