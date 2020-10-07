@@ -88,6 +88,7 @@ jobs:
 - job: routing_model
   displayName: 'Register Routing Model'
   dependsOn: deploy_models
+  condition: and(succeeded(), in(variables['DEPLOY_ROUTING_WEBSERVICE'], '', 'true'))
   steps:
 
     - download: current

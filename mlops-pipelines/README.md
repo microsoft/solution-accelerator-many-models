@@ -81,7 +81,7 @@ The modeling pipeline will:
 
 - Deploy each group into a different webservice hosted in ACI and/or AKS. These webservices will all use the same `model_webservice.py` script in the corresponding [scripts folder](../scripts/).
 
-- Deploy the entry point that will route the requests to the corresponding model webservice. This webservice will use the `routing_webservice.py` script in the corresponding [scripts folder](../scripts/).
+- [Optional] Deploy the entry point that will route the requests to the corresponding model webservice. This webservice will use the `routing_webservice.py` script in the corresponding [scripts folder](../scripts/).
 
 Create the pipeline as you did before, selecting branch **``v2-preview``** and setting the path to [/mlops-pipelines/3-modeling/pipeline-modeling.yml](3-modeling/pipeline-modeling.yml).
 
@@ -101,6 +101,7 @@ There are two variables you can add to the **``manymodels-vg``** variable group 
 | MAX_CONTAINER_SIZE | Maximum number of models to fit into one webservice container |
 | RESET_DEPLOYMENT   | Set to `true` to reset existing containers |
 | UPDATE_DEPLOYMENT  | Set to `true` to update all existing webservices (for config changes to apply) |
+| DEPLOY_ROUTING_WEBSERVICE  | Set to `false` to avoid deploying the routing webservice  |
 
 ## 4. [Optional] Batch Forecasting Code Build Pipeline
 
