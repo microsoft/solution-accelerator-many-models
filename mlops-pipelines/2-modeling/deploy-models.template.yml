@@ -112,7 +112,7 @@ jobs:
 
     - publish: 'routing_model.json'
       artifact: routingmodel-${{parameters.deploymentType}}
-      displayName: 'Publish Routing Model Artifact'
+      displayName: 'Artifact: Routing Model'
 
 
 - job: routing_webservice

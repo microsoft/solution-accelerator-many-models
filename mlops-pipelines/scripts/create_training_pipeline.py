@@ -65,6 +65,7 @@ def parse_args(args=None):
     parser.add_argument('--prs-config', required=True, type=str)
     parser.add_argument('--dataset', type=str, default='oj_sales_data_train')
     parser.add_argument('--compute', type=str, default='cpu-compute')
+    parser.add_argument('--artifact', type=str)
     args_parsed = parser.parse_args(args)
     return args_parsed
 
@@ -90,4 +91,8 @@ if __name__ == "__main__":
         config_file=args.prs_config
     )
 
+    if args.artifact:
+        with open(args.artifact, 'w') as f:
+            f.write(pipeline_id)
+    
     print('Training pipeline {} version {} published with ID {}'.format(args.name, args.version, pipeline_id))

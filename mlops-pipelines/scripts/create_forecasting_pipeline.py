@@ -99,6 +99,7 @@ def parse_args(args=None):
     parser.add_argument('--dataset', type=str, default='oj_sales_data_inference')
     parser.add_argument('--output', type=str, default='predictions')
     parser.add_argument('--compute', type=str, default='cpu-compute')
+    parser.add_argument('--artifact', type=str)
     args_parsed = parser.parse_args(args)
     return args_parsed
 
@@ -124,5 +125,9 @@ if __name__ == "__main__":
         scripts_settings_file=args.scripts_settings, 
         config_file=args.prs_config
     )
+
+    if args.artifact:
+        with open(args.artifact, 'w') as f:
+            f.write(pipeline_id)
 
     print('Forecasting pipeline {} version {} published with ID {}'.format(args.name, args.version, pipeline_id))
