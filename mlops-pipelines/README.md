@@ -1,3 +1,5 @@
+# Many Models MLOps Pipelines
+
 # Instructions
 
 You'll use Azure DevOps for running the MLOps pipelines. Create an [organization](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/create-organization?view=azure-devops#create-an-organization) an a [project](https://docs.microsoft.com/en-us/azure/devops/organizations/projects/create-project?view=azure-devops&tabs=preview-page#create-a-project) for the Many Models solution.
@@ -35,7 +37,7 @@ Create the pipeline as in [here](https://github.com/microsoft/MLOpsPython/blob/m
 
 The pipeline run should look like this:
 
-<img src="../images/mlops_pipeline1.png"
+<img src="../.images/mlops_pipeline1.png"
      width="1000"
      title="Setup Pipeline"
      alt="Stage Deploy Infra with two jobs: IaC Build, IaC Deployment. Followed by stage Environment Setup with two jobs: Deploy AML Compute, Attach AKS cluster to AML, and also stage Data Preparation in parallel with tho jobs: Sample Files Setup, Register Dataset" />
@@ -64,7 +66,7 @@ Then, create the pipeline as you did before, selecting branch **``v2-preview``**
 
 The pipeline run should look like this:
 
-<img src="../images/mlops_pipeline2.png"
+<img src="../.images/mlops_pipeline2.png"
      width="1000"
      title="Training Code Build Pipeline"
      alt="Single stage with two jobs: Check Training Method, Publish Training AML Pipeline" />
@@ -87,7 +89,7 @@ Create the pipeline as you did before, selecting branch **``v2-preview``** and s
 
 The pipeline run should look like this:
 
-<img src="../images/mlops_pipeline3.png"
+<img src="../.images/mlops_pipeline3.png"
      width="1000"
      title="Modeling Pipeline"
      alt="Stage Run Model Training with two jobs: Get Training Pipeline ID, Run Training. After that two parallel stages are triggered with three identical jobs: Deploy Models to ACI and Deploy Models to AKS, with jobs Deploy Models, Register Routing Model, Deploy Routing Webservice" />
@@ -115,7 +117,7 @@ You only need to create this Azure DevOps pipeline if you want to do batch forec
 
 The pipeline run should look like this:
 
-<img src="../images/mlops_pipeline4.png"
+<img src="../.images/mlops_pipeline4.png"
      width="1000"
      title="Batch Forecasting Code Build Pipeline"
      alt="Single stage with two jobs: Check Training Method, Publish Forecasting AML Pipeline" />
@@ -132,7 +134,7 @@ Create the pipeline as you did before, selecting branch **``v2-preview``** and s
 
 The pipeline run should look like this:
 
-<img src="../images/mlops_pipeline5.png"
+<img src="../.images/mlops_pipeline5.png"
      width="1000"
      title="Batch Forecasting Pipeline"
      alt="Stage Update Data with two jobs: Download New Sample, Update Registered Inference Dataset, followed by stage Run Model Forecasting with two jobs: Get Forecasting Pipeline ID, Run Forecasting" />
