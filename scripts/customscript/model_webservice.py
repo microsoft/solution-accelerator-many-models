@@ -4,6 +4,8 @@
 import os
 import joblib
 from pathlib import Path
+
+from azureml.contrib.services.aml_request import AMLRequest, rawhttp
 from azureml.contrib.services.aml_response import AMLResponse
 
 from utils.webservices import read_input, format_output_record
@@ -18,7 +20,18 @@ def init():
     print('Models loaded:', model_dict.keys())
 
 
-def run(rawdata):
+@rawhttp
+def run(request):
+    if request.method == 'GET':
+        return list(model_dict.keys())
+    elif request.method == 'POST':
+        rawdata = request.get_data(cache=False, as_text=True)
+        return serve_forecasting_request(rawdata)
+    else:
+        return AMLResponse("bad request", 500)
+
+
+def serve_forecasting_request(rawdata):
 
     batch = read_input(rawdata, format=True)
 
@@ -27,7 +40,7 @@ def run(rawdata):
 
         metadata = model_record['metadata']
         data_historical, data_future = model_record['data']
-        print(f'Received request for: {metadata}')
+        # print(f'Received request for: {metadata}')
 
         # Load model
         try:
@@ -63,15 +76,18 @@ def load_all_models(models_root_path):
     ''' Load all the models from the models root dir.
         It returns a dict with key as model name and value as desealized model ready for scoring '''
 
-    p = Path(models_root_path)
-    models_path_list = [x for x in p.iterdir() if x.is_dir()]
-
     model_dict = {}
 
-    for model_dir_path in models_path_list:
-        model_name = model_dir_path.name
-        last_version_dir = max(v for v in model_dir_path.iterdir() if v.is_dir())
-        model_dict[model_name] = load_model_via_joblib(last_version_dir, model_name, file_extn='')
+    models_root_dir = Path(models_root_path)
+    models_path_list = [x for x in models_root_dir.iterdir() if x.is_dir()]
+    if models_path_list:  # Multiple models deployed
+        for model_dir_path in models_path_list:
+            model_name = model_dir_path.name
+            last_version_dir = max(v for v in model_dir_path.iterdir() if v.is_dir())
+            model_dict[model_name] = load_model_via_joblib(last_version_dir, model_name, file_extn='')
+    else:  # Single model deployed
+        model_name = models_root_dir.parent.name
+        model_dict[model_name] = load_model_via_joblib(models_root_dir, model_name, file_extn='')
 
     return model_dict
 
