@@ -59,7 +59,8 @@ def main(ws, scripts_dir, config_file, routing_model_name,
 
     # Delete old services
     for group_name in groups_delete:
-        existing_services[group_name].delete()
+        service_name = get_service_name(group_name, service_prefix)
+        existing_services[service_name].delete()
 
     deployments = []
 

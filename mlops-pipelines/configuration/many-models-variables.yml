@@ -37,9 +37,9 @@ variables:
   - name: AML_AKS_NAME
     value: manymodels-aks
   - name: AML_MODEL_SPLITTING_TAGS
-    value: Store
+    value: 
   - name: AML_MODEL_SORTING_TAGS
-    value: Brand
+    value: Store
   - name: AML_WEBSERVICE_PREFIX
     value: manymodels-
   - name: AML_ROUTING_MODEL_NAME
