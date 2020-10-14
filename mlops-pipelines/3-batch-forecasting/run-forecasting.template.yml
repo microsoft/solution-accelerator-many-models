@@ -60,6 +60,10 @@ jobs:
                                           --resource-group $(RESOURCE_GROUP) \
                                           --workspace-name $(AMLWORKSPACE_NAME)
 
+    - publish: 'forecasting_pipeline_id.txt'
+      artifact: forecasting_pipeline_id
+      displayName: 'Publish Forecasting Pipeline ID'
+
 
 - job: pipeline_id
   displayName: 'Get Forecasting Pipeline ID'
