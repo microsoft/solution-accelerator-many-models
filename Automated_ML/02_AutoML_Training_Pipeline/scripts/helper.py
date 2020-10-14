@@ -2,13 +2,12 @@
 # Licensed under the MIT License.
 
 
-import argparse
 import json
 import sys
 
 from azureml.core import Experiment
 from azureml.core.run import Run
-
+from azureml.core import Workspace
 sys.path.append("..")
 
 
@@ -35,7 +34,7 @@ def build_parallel_run_config(train_env, compute, nodecount, workercount, timeou
     from common.scripts.helper import validate_parallel_run_config
     parallel_run_config = ParallelRunConfig(
         source_directory='./scripts',
-        entry_script='train_automl.py',
+        entry_script='train_minibatch.py',
         mini_batch_size="1",  # do not modify this setting
         run_invocation_timeout=timeout,
         error_threshold=-1,
@@ -48,9 +47,9 @@ def build_parallel_run_config(train_env, compute, nodecount, workercount, timeou
     return parallel_run_config
 
 
-def get_automl_environment():
+def get_automl_environment(workspace: Workspace, automl_settings_dict: dict):
     from common.scripts.helper import get_automl_environment as get_env
-    return get_env()
+    return get_env(workspace, automl_settings_dict)
 
 
 def get_training_output(run, training_results_name, training_output_name):
