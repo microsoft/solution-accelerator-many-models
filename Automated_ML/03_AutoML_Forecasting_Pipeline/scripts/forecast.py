@@ -22,7 +22,10 @@ parser.add_argument("--target_column_name", type=str,
                     help="target column", default=None)
 parser.add_argument("--time_column_name", type=str,
                     help="time column", default=None)
-parser.add_argument("--many_models_run_id", type=str, default=None,
+parser.add_argument("--many_models_run_id",
+                    type=str,
+                    default=None,
+                    required=False,
                     help="many_models_run_id: many models training run id.")
 
 args, _ = parser.parse_known_args()
@@ -30,7 +33,8 @@ args, _ = parser.parse_known_args()
 print("Argument 1 group_column_names: {}".format(args.group_column_names))
 print("Argument 2 target_column_name: {}".format(args.target_column_name))
 print("Argument 3 time_column_name: {}".format(args.time_column_name))
-print("Argument 4 many_models_run_id: {}".format(args.many_models_run_id))
+if hasattr(args, "many_models_run_id") and not args.many_models_run_id:
+    print("Argument 4 many_models_run_id: {}".format(args.many_models_run_id))
 
 current_step_run = Run.get_context()
 
@@ -55,7 +59,7 @@ def run(input_data):
             data = pd.read_csv(file_path)
 
         tags_dict = {}
-        if not args.many_models_run_id:
+        if hasattr(args, "many_models_run_id") and args.many_models_run_id:
             tags_dict['RunId'] = args.many_models_run_id
 
         for column_name in args.group_column_names:
@@ -65,7 +69,7 @@ def run(input_data):
         print(tags_dict)
 
         model_string = '_'.join(str(v) for k, v in sorted(
-            tags_dict.items()) if k in args.group_column_names)
+            tags_dict.items()) if k in args.group_column_names).lower()
         logger.info("model string to encode " + model_string)
         sha = hashlib.sha256()
         sha.update(model_string.encode())
