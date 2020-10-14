@@ -24,43 +24,16 @@ stages:
 - stage: deploy_infrastructure
   displayName: 'Deploy Infrastructure'
   jobs:
-  - template: deploy-infra/deploy-infra.template.yml
-    parameters:
-      environment: '$(ENVIRONMENT)'
-      serviceConnection: '$(SERVICECONNECTION_GROUP)'
-      resourceGroup: '$(RESOURCE_GROUP)'
-      resourcesLocation: '$(LOCATION)'
-      storageAccountName: '$(STORAGEACCOUNT_NAME)'
-      keyVaultName: '$(KEYVAULT_NAME)'
-      appInsightsName: '$(APPINSIGHTS_NAME)'
-      containerRegistryName: '$(CONTAINERREGISTRY_NAME)'
-      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
+  - template: deploy-infra.template.yml
 
 - stage: environment_setup
   displayName: 'Environment Setup'
   dependsOn: deploy_infrastructure
   jobs:
-  - template: environment-setup/environment-setup.template.yml
-    parameters:
-      serviceConnection: '$(SERVICECONNECTION_GROUP)'
-      resourceGroup: '$(RESOURCE_GROUP)'
-      resourcesLocation: '$(LOCATION)'
-      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
-      amlComputeName: '$(AML_COMPUTE_NAME)'
-      aksName: '$(AKS_NAME)'
-      aksResourceGroup: '$(AKS_RESOURCE_GROUP)'
-      amlAksName: '$(AML_AKS_NAME)'
+  - template: environment-setup.template.yml
 
 - stage: data_preparation
   displayName: 'Data Preparation'
   dependsOn: deploy_infrastructure
   jobs:
-  - template: data-prep/data-prep.template.yml
-    parameters:
-      sdkVersion: '$(SDK_VERSION)'
-      serviceConnection: '$(SERVICECONNECTION_GROUP)'
-      resourceGroup: '$(RESOURCE_GROUP)'
-      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
-      amlTrainDatasetName: '$(AML_DATASET_NAME)_train'
-      amlInferenceDatasetName: '$(AML_DATASET_NAME)_inference'
-      maxFiles: '$(DATASET_MAXFILES)'
+  - template: data-prep.template.yml

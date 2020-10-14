@@ -9,11 +9,17 @@
 #     - v2-preview
 #   paths:
 #     include:
-#     - mlops-pipelines/3-modeling/*
+#     - mlops-pipelines/2-modeling/*
+#     - mlops-pipelines/scripts/download_data.py
+#     - mlops-pipelines/scripts/register_or_update_dataset.py
+#     - mlops-pipelines/scripts/create_training_pipeline.py
 #     - mlops-pipelines/scripts/deploy_or_update_models.py
-#     - scripts/*/forecast_webservice.py
-#     - Custom_Script/scripts/routing_webservice.py
-#     - Custom_Script/scripts/routing_webservice.conda.yml
+#     - scripts/*/train.py
+#     - scripts/*/train.conda.yml
+#     - scripts/*/model_webservice.py
+#     - scripts/*/model_webservice.conda.yml
+#     - scripts/*/routing_webservice.py
+#     - scripts/*/routing_webservice.conda.yml
 
 # schedules:
 # - cron: "0 0 * * 1"
@@ -36,24 +42,12 @@ stages:
   displayName: 'Update Data for Training/Retraining'
   jobs:
   - template: update-data.template.yml
-    parameters:
-      sdkVersion: '$(SDK_VERSION)'
-      serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
-      resourceGroup: '$(RESOURCE_GROUP)'
-      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
-      amlTrainDatasetName: '$(AML_DATASET_NAME)_train'
-      maxFiles: '$(DATASET_MAXFILES)'
 
 - stage: run_training
   displayName: 'Run Model Training'
   dependsOn: update_data
   jobs:
   - template: run-training.template.yml
-    parameters:
-      serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
-      resourceGroup: '$(RESOURCE_GROUP)'
-      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
-      trainingPipelineName: '$(AML_TRAINING_PIPELINE_NAME)'
 
 - stage: deploy_models_aci
   displayName: 'Deploy Models to ACI'
@@ -62,22 +56,10 @@ stages:
   jobs:
   - template: deploy-models.template.yml
     parameters:
-      sdkVersion: '$(SDK_VERSION)'
-      trainingMethod: '$(TRAINING_METHOD)'
-      serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
-      resourceGroup: '$(RESOURCE_GROUP)'
-      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
       deploymentType: aci
       amlAksName: ''
-      splittingTags: '$(AML_MODEL_SPLITTING_TAGS)'
-      sortingTags: '$(AML_MODEL_SORTING_TAGS)'
       webservicePrefix: test-'$(AML_WEBSERVICE_PREFIX)'
-      containerSize: '$(MAX_CONTAINER_SIZE)'
-      resetContainers: '$(RESET_DEPLOYMENT)'
-      updateServices: '$(UPDATE_DEPLOYMENT)'
       routingModelName: test-'$(AML_ROUTING_MODEL_NAME)'
-      routingModelTagName: '$(AML_ROUTING_MODEL_TAG_NAME)'
-      routingModelTagValue: '$(AML_ROUTING_MODEL_TAG_VALUE)'
       routingServiceName: test-'$(AML_ROUTING_WEBSERVICE)'
 
 - stage: deploy_models_aks
@@ -87,20 +69,8 @@ stages:
   jobs:
   - template: deploy-models.template.yml
     parameters:
-      sdkVersion: '$(SDK_VERSION)'
-      trainingMethod: '$(TRAINING_METHOD)'
-      serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
-      resourceGroup: '$(RESOURCE_GROUP)'
-      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
       deploymentType: aks
       amlAksName: '$(AML_AKS_NAME)'
-      splittingTags: '$(AML_MODEL_SPLITTING_TAGS)'
-      sortingTags: '$(AML_MODEL_SORTING_TAGS)'
       webservicePrefix: '$(AML_WEBSERVICE_PREFIX)'
-      containerSize: '$(MAX_CONTAINER_SIZE)'
-      resetContainers: '$(RESET_DEPLOYMENT)'
-      updateServices: '$(UPDATE_DEPLOYMENT)'
       routingModelName: '$(AML_ROUTING_MODEL_NAME)'
-      routingModelTagName: '$(AML_ROUTING_MODEL_TAG_NAME)'
-      routingModelTagValue: '$(AML_ROUTING_MODEL_TAG_VALUE)'
       routingServiceName: '$(AML_ROUTING_WEBSERVICE)'

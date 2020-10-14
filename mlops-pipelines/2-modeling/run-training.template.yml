@@ -3,24 +3,13 @@
 
 # Azure Pipeline Template for running the training pipeline
 
-parameters:
-- name: serviceConnection
-  type: string
-- name: resourceGroup
-  type: string
-- name: amlWorkspaceName
-  type: string
-- name: trainingPipelineName
-  type: string
-
-
 jobs:
 
 - job: check_training_method
   displayName: 'Check Training Method'
   steps:
     - bash: |
-        if [ "$TRAINING_METHOD" != "automl" ] && [ "$TRAINING_METHOD" != "customscript" ]; then
+        if [ "$(TRAINING_METHOD)" != "automl" ] && [ "$(TRAINING_METHOD)" != "customscript" ]; then
           >&2 echo "Error: variable TRAINING_METHOD must be set to 'automl' or 'customscript'"
         fi
       displayName: 'Check Training Method'
@@ -44,7 +33,8 @@ jobs:
         scriptLocation: inlineScript
         inlineScript: |
           # Install dependencies
-          python -m pip install --upgrade pip && python -m pip install pyyaml azureml-sdk==$SDK_VERSION
+          dependencies="pyyaml azureml-sdk==$(SDK_VERSION)"
+          python -m pip install --upgrade pip && python -m pip install $dependencies --use-feature=2020-resolver
           # Create/update training pipeline
           trainingbuild_script=mlops-pipelines/scripts/create_training_pipeline.py
           python $trainingbuild_script --name $(AML_TRAINING_PIPELINE_NAME) \
@@ -94,8 +84,6 @@ jobs:
     - task: ms-air-aiagility.vss-services-azureml.azureml-restApi-task.MLPublishedPipelineRestAPITask@0
       displayName: 'Invoke AML Training Pipeline'
       inputs:
-        azureSubscription: '${{parameters.serviceConnection}}'
+        azureSubscription: '$(SERVICECONNECTION_WORKSPACE)'
         PipelineId: '$(PIPELINE_ID)'
-        ExperimentName: '${{parameters.trainingPipelineName}}'
-
-
+        ExperimentName: '$(AML_TRAINING_PIPELINE_NAME)'

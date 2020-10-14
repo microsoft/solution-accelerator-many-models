@@ -1,0 +1,42 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Azure Pipeline Template for ML Workspace Setup
+
+jobs:
+
+- job: aml_compute
+  displayName: 'Deploy AML Compute'
+  steps:
+  - task: AzureResourceGroupDeployment@2
+    displayName: 'Deploy AML Compute'
+    inputs:
+      azureSubscription: $(SERVICECONNECTION_GROUP)
+      resourceGroupName: $(RESOURCE_GROUP)
+      location: $(LOCATION)
+      csmFile: '$(Build.SourcesDirectory)/mlops-pipelines/1-setup/arm-templates/mlcompute.template.json'
+      csmParametersFile: '$(Build.SourcesDirectory)/mlops-pipelines/1-setup/arm-templates/mlcompute.parameters.json'
+      overrideParameters: '-workspaceName $(AMLWORKSPACE_NAME) -clusterName $(AML_COMPUTE_NAME)'
+
+
+- job: aml_aks
+  condition: and( variables['AKS_NAME'], variables['AKS_RESOURCE_GROUP'] )
+  displayName: 'Attach AKS Target to AML'
+  steps:
+  - task: AzureCLI@1
+    displayName: 'Attach AKS Target to AML'
+    inputs:
+      azureSubscription: $(SERVICECONNECTION_GROUP)
+      scriptLocation: inlineScript
+      inlineScript: |
+        workspace_params="--workspace-name $(AMLWORKSPACE_NAME) --resource-group $(RESOURCE_GROUP)"
+        # Install ML extension
+        az extension add -n azure-cli-ml
+        # Check if AKS target is already attached and attach if not
+        az ml computetarget show --name $(AML_AKS_NAME) $workspace_params
+        if [ $? -eq 1 ]; then
+          # Get AKS resource id
+          aks_id=$(az resource list -n $(AKS_NAME) -g $(AKS_RESOURCE_GROUP) --query "[0].id" -o tsv)
+          # Attach AKS
+          az ml computetarget attach aks --name $(AML_AKS_NAME) --compute-resource-id $aks_id $workspace_params
+        fi
