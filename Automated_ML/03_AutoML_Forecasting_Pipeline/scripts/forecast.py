@@ -69,7 +69,7 @@ def run(input_data):
         print(tags_dict)
 
         model_string = '_'.join(str(v) for k, v in sorted(
-            tags_dict.items()) if k in args.group_column_names).lower()
+            tags_dict.items()) if k in args.group_column_names)
         logger.info("model string to encode " + model_string)
         sha = hashlib.sha256()
         sha.update(model_string.encode())
