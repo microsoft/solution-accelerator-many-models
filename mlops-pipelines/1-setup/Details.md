@@ -15,4 +15,4 @@ During the environment setup:
 
 ## Data Preparation
 
-The pipeline will download as many files as you specified in the `DATASET_MAXFILES` variable in the [variable group](../#2-create-variable-group), split them, and register them as train and inference datasets in AML.
+The pipeline will download as many files as you specified in the `DATASET_MAXFILES` variable in the [variable group](../#3-create-variable-group), split them, and register them as train and inference datasets in AML.

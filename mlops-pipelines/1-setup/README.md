@@ -4,7 +4,7 @@ The setup pipeline will:
 
 - Deploy Azure Machine Learning and the other necessary resources into the resource group you specified.
 - Set up the Azure Machine Learning worskpace.
-- Download as many files as you specified in the `DATASET_MAXFILES` variable in the [variable group](../#2-create-variable-group), and register them as a dataset in AML.
+- Download as many files as you specified in the `DATASET_MAXFILES` variable in the [variable group](../#3-create-variable-group), and register them as a dataset in AML.
 
 ## Instructions
 

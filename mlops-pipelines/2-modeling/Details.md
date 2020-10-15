@@ -5,7 +5,7 @@
 The data update stage is there for demonstration purposes only, as the Orange Juice dataset is not going to change.
 But in a real scenario the training dataset would be updated before training to incorporate the latest observations.
 
-If you change the `DATASET_MAXFILES` variable in the [variable group](../#2-create-variable-group) after running the data preparation step in the previous pipeline, this step will update the training dataset with the new number of files. 
+If you change the `DATASET_MAXFILES` variable in the [variable group](../#3-create-variable-group) after running the data preparation step in the previous pipeline, this step will update the training dataset with the new number of files. 
 
 ## Training
 
@@ -78,7 +78,7 @@ The *router webservice* will use the `routing_webservice.py` script in the corre
 #### Enabling deployment
 
 Deployment of models for real-time forecasting is optional and disabled by default. 
-To enable it, you must add a `DEPLOY_ACI` or/and `DEPLOY_AKS` variable to the [variable group](../#2-create-variable-group)
+To enable it, you must add a `DEPLOY_ACI` or/and `DEPLOY_AKS` variable to the [variable group](../#3-create-variable-group)
 and set them to `true`. This will trigger the corresponding deployment stage.
 
 Deploying in ACI (Azure Container Instances) is only recommended for development or testing pruposes, in a system in production you should use AKS (Azure Kubernetes Service) instead. In that case, you must also set variables to identify the AKS cluster you will be using.
@@ -98,7 +98,7 @@ When you enable AKS deployment, make sure you run the "Environment Setup" stage 
 
 By default, models are packed in groups of 500 and deployed in a single webservice container that will pick the correct model to generate predictions based on the information provided in the request body.
 
-But you can change this behaviour by adding the following variable to the [variable group](../#2-create-variable-group):
+But you can change this behaviour by adding the following variable to the [variable group](../#3-create-variable-group):
 
 | Variable Name               | Short description |
 | --------------------------- | ----------------- |
@@ -112,7 +112,7 @@ Since there is a limit in the number of models that can be deployed in the same 
 
 By default, a router webservice is deployed to act as an entrypoint for all the requests, forward them to the appropiate model endpoint, and return the response back to the user. Sending a GET request to the router will return the mapping table it's using.
 
-But you can disable the deployment of the router webservice by adding the following variable to the [variable group](../#2-create-variable-group):
+But you can disable the deployment of the router webservice by adding the following variable to the [variable group](../#3-create-variable-group):
 
 | Variable Name               | Short description |
 | --------------------------- | ----------------- |
@@ -138,7 +138,7 @@ For more details on how to customize container configuration check [here](../con
 
 In the third stage of the pipeline, models are deployed in a *smart way*, meaning that only models that have changed since last deployment are updated. New models are deployed, new versions are updated, models that have been deleted are removed, and the rest of them remain unchanged.
 
-This means that if you change the deployment configuration file, these changes will only be applied in the webservices that contain new/updated models. If you want the new configuration to be applied to all webservices, you can do so by setting the `UPDATE_DEPLOYMENT` variable in the [variable group](../#2-create-variable-group).
+This means that if you change the deployment configuration file, these changes will only be applied in the webservices that contain new/updated models. If you want the new configuration to be applied to all webservices, you can do so by setting the `UPDATE_DEPLOYMENT` variable in the [variable group](../#3-create-variable-group).
 
 If you want to resize the containers to allow a higher o lower number of models per webservice, you need to reset the deployment via the `RESET_DEPLOYMENT` variable. Please notice that webservices will not be available during this redeployment operation.
 

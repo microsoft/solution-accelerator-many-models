@@ -1,11 +1,11 @@
-# 2 - Batch Forecasting Pipeline - Details
+# 3 - Batch Forecasting Pipeline - Details
 
 ## Data Update
 
 The data update stage is there for demonstration purposes only, as the Orange Juice dataset is not going to change.
 But in a real scenario the dataset would be updated before launching batch forecasting to incorporate the latest observations and make predictions into the future.
 
-If you change the `DATASET_MAXFILES` variable in the [variable group](../#2-create-variable-group) after running the data preparation step in the previous pipeline, this step will update the inference dataset with the new number of files, but will fail to make forecasts for some models if no training has been run for these new files.
+If you change the `DATASET_MAXFILES` variable in the [variable group](../#3-create-variable-group) after running the data preparation step in the previous pipeline, this step will update the inference dataset with the new number of files, but will fail to make forecasts for some models if no training has been run for these new files.
 
 ## Batch Forecasting
 

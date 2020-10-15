@@ -14,7 +14,7 @@ Before creating the Azure DevOps pipeline:
 
 2. Create an **Azure Resource Manager** [service connection](https://docs.microsoft.com/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml#create-a-service-connection) to access the Machine Learning Workspace that was created when you ran the [setup pipeline](../1-setup/). As you did [when you created a service connection before](../#1-create-service-connection), mark the option to grant access permission to all pipelines, and copy the name as you'll need it in the next step.
 
-3. Modify the **``manymodels-vg``** [variable group you created before](../#2-create-variable-group), and add two new variables:
+3. Modify the **``manymodels-vg``** [variable group you created before](../#3-create-variable-group), and add two new variables:
 
 | Variable Name               | Short description |
 | --------------------------- | ----------------- |

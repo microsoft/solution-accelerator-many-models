@@ -40,6 +40,6 @@ Each pipeline is a YAML file that contains all the steps necessary to achieve ea
 
 Navigate into each pipeline's folder for specific instructions on how to set them up.
 
-## 4. [Optional] Customizing the pipelines
+## [Optional] Customizing the pipelines
 
 There are several things that can be customized in the Many Models Solution Accelerator. Please read the [details page](Details.md) if you want to find out more.
