@@ -63,11 +63,29 @@ def create_parallelrunconfig(ws, compute, script_dir, script_file, environment_f
         **config_params
     )
 
+    validate_parallel_run_config(parallel_run_config)
+
     return parallel_run_config
 
 
-def create_step_pythonscript():
-    pass
+def validate_parallel_run_config(parallel_run_config):
+    errors = False
+
+    if parallel_run_config.mini_batch_size != 1:
+        errors = True
+        print('Error: mini_batch_size should be set to 1')
+
+    if 'automl' in parallel_run_config.source_directory:
+        max_concurrency = 20
+        curr_concurrency = parallel_run_config.process_count_per_node * parallel_run_config.node_count
+        if curr_concurrency > max_concurrency:
+            errors = True
+            print(f'Error: node_count*process_count_per_node must be between 1 and max_concurrency {max_concurrency}.',
+                  f'Please decrease concurrency from current {curr_concurrency} to maximum of {max_concurrency}',
+                  'as currently AutoML does not support it.')
+
+    if not errors:
+        print('Validation successful')
 
 
 def publish_pipeline(ws, name, steps, description=None, version=None):
