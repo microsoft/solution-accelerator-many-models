@@ -43,7 +43,7 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, output_name, compute
         input_dataset=dataset_name, 
         output_dir='forecasting_output',
         script_dir=scripts_dir,
-        script_file='forecast.py',
+        script_file='batch_forecasting.py',
         environment_file=os.path.join(scripts_dir, 'forecast.conda.yml'), 
         config_file=config_file,
         arguments=[

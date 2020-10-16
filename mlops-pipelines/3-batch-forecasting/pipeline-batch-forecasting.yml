@@ -13,7 +13,7 @@
 #     - mlops-pipelines/scripts/download_data.py
 #     - mlops-pipelines/scripts/register_or_update_dataset.py
 #     - mlops-pipelines/scripts/create_forecasting_pipeline.py
-#     - scripts/*/forecast.py
+#     - scripts/*/batch_forecasting.py
 #     - scripts/*/forecast.conda.yml
 #     - scripts/*/copy_predictions.py
 

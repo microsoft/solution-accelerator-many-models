@@ -15,7 +15,7 @@ During the forecasting stage, three main tasks are performed:
 - Trigger the many models batch forecasting by invoking the batch forecasting AML Pipeline previously published.
 - Store the predictions in a separate container.
 
-The predictions will be generated using the `forecast.py` script in the corresponding [scripts folder](../../scripts/).
+The predictions will be generated using the `batch_forecasting.py` script in the corresponding [scripts folder](../../scripts/).
 If you are using the Custom Script version, you should modify that script to meet your needs.
 
 In both versions, AutoML and Custom Script, script settings are read from the `script_settings.json` file in the corresponding [configuration folder](../configuration/). These settings are right now based on the orange juice dataset. You can modify them if you want to use a different dataset.

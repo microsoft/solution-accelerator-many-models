@@ -8,7 +8,7 @@ When running the pipelines, the quickest way to see if the pipeline is running s
 
 While there's a lot of valuable information in logs, there's a couple of key files to look at first.
 
-- ```70_driver_log.txt``` contains information from the controller that launches parallel run step code. This file will include any print statements that you put into ```train.py``` or ```forecast.py```.
+- ```70_driver_log.txt``` contains information from the controller that launches parallel run step code. This file will include any print statements that you put into ```train.py``` or ```batch_forecasting.py```.
 
 - ```~/logs/sys/error/<ip_address>/Process-*.txt``` is the quickest ways to see errors in your pipeline. If the ```error``` folder doesn't exist, you likely haven't hit errors in your scripts yet. If it does, there's likely a problem.
 
