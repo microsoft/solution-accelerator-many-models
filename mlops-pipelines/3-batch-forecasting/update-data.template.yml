@@ -5,21 +5,6 @@
 # The dataset in this example is updated for illustration purposes only, the data downloaded is the same
 
 
-parameters:
-- name: sdkVersion
-  type: string
-- name: serviceConnection
-  type: string
-- name: resourceGroup
-  type: string
-- name: amlWorkspaceName
-  type: string
-- name: amlInferenceDatasetName
-  type: string
-- name: maxFiles
-  type: string
-
-
 jobs:
 
 - job: download_new_data
@@ -33,10 +18,11 @@ jobs:
     
     - bash: |
         # Install dependencies
-        python -m pip install --upgrade pip && python -m pip install azureml-opendatasets==${{parameters.sdkVersion}}
+        dependencies="azureml-opendatasets==$(SDK_VERSION)"
+        python -m pip install --upgrade pip && python -m pip install $dependencies --use-feature=2020-resolver
         # Download sample files
         data_script="mlops-pipelines/scripts/download_data.py"
-        python $data_script --maxfiles ${{parameters.maxFiles}} --train-path "new-sample-data-train" --inference-path "new-sample-data-inference"
+        python $data_script --maxfiles $(DATASET_MAXFILES) --train-path "new-sample-data-train" --inference-path "new-sample-data-inference"
 
       name: download_files
       displayName: 'Download Sample Files'
@@ -46,10 +32,10 @@ jobs:
       name: upload_files
       displayName: 'Upload inference files to AML datastore'
       inputs:
-        azureSubscription: ${{parameters.serviceConnection}}
+        azureSubscription: $(SERVICECONNECTION_WORKSPACE)
         scriptLocation: inlineScript
         inlineScript: |
-          workspace_params="--workspace-name ${{parameters.amlWorkspaceName}} --resource-group ${{parameters.resourceGroup}}"
+          workspace_params="--workspace-name $(AMLWORKSPACE_NAME) --resource-group $(RESOURCE_GROUP)"
           # Install ML extension
           az extension add -n azure-cli-ml
           # Get default datastore
@@ -69,6 +55,7 @@ jobs:
   dependsOn: download_new_data
   variables: 
     datapath_inference: $[ dependencies.download_new_data.outputs['upload_files.datapath_inference'] ]
+    aml_datasetname_inference: $(AML_DATASET_NAME)_inference
   steps:
 
     - task: UsePythonVersion@0
@@ -79,15 +66,16 @@ jobs:
     - task: AzureCLI@1
       displayName: 'Update inference dataset'
       inputs:
-        azureSubscription: ${{parameters.serviceConnection}}
+        azureSubscription: $(SERVICECONNECTION_WORKSPACE)
         scriptLocation: inlineScript
         inlineScript: |
           # Install dependencies
-          python -m pip install --upgrade pip && python -m pip install azureml-sdk==${{parameters.sdkVersion}}
+          dependencies="azureml-sdk==$(SDK_VERSION)"
+          python -m pip install --upgrade pip && python -m pip install $dependencies --use-feature=2020-resolver
           # Update inference dataset
           update_dataset_script=mlops-pipelines/scripts/register_or_update_dataset.py
           python $update_dataset_script --path $DATAPATH_INFERENCE \
-                                        --name ${{parameters.amlInferenceDatasetName}} \
+                                        --name $AML_DATASETNAME_INFERENCE \
                                         --subscription-id $(az account show --query id -o tsv) \
-                                        --resource-group ${{parameters.resourceGroup}} \
-                                        --workspace-name ${{parameters.amlWorkspaceName}}
+                                        --resource-group $(RESOURCE_GROUP) \
+                                        --workspace-name $(AMLWORKSPACE_NAME)

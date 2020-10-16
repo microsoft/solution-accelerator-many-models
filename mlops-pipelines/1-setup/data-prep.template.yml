@@ -3,23 +3,6 @@
 
 # Azure Pipeline Template for ML Workspace Setup
 
-parameters:
-- name: sdkVersion
-  type: string
-- name: serviceConnection
-  type: string
-- name: resourceGroup
-  type: string
-- name: amlWorkspaceName
-  type: string
-- name: amlTrainDatasetName
-  type: string
-- name: amlInferenceDatasetName
-  type: string
-- name: maxFiles
-  type: string
-
-
 jobs:
 
 - job: sample_files
@@ -33,13 +16,13 @@ jobs:
     
     - bash: |
         # Install dependencies
-        dependencies="azureml-opendatasets==${{parameters.sdkVersion}} pandas"
+        dependencies="azureml-opendatasets==$(SDK_VERSION) pandas"
         python -m pip install --upgrade pip && python -m pip install $dependencies --use-feature=2020-resolver
         # Download sample files
         datapath_train="sample-data-train"
         datapath_inference="sample-data-inference"
         data_script="mlops-pipelines/scripts/download_data.py"
-        python $data_script --maxfiles ${{parameters.maxFiles}} \
+        python $data_script --maxfiles $(DATASET_MAXFILES) \
                             --train-path $datapath_train \
                             --inference-path $datapath_inference
         echo "##vso[task.setvariable variable=datapath_train;isOutput=true;]$datapath_train"
@@ -51,10 +34,10 @@ jobs:
     - task: AzureCLI@1
       displayName: 'Upload files to AML datastore'
       inputs:
-        azureSubscription: ${{parameters.serviceConnection}}
+        azureSubscription: $(SERVICECONNECTION_GROUP)
         scriptLocation: inlineScript
         inlineScript: |
-          workspace_params="--workspace-name ${{parameters.amlWorkspaceName}} --resource-group ${{parameters.resourceGroup}}"
+          workspace_params="--workspace-name $(AMLWORKSPACE_NAME) --resource-group $(RESOURCE_GROUP)"
           # Install ML extension
           az extension add -n azure-cli-ml
           # Get default datastore
@@ -79,6 +62,8 @@ jobs:
   variables: 
     datapath_train: $[ dependencies.sample_files.outputs['download_files.datapath_train'] ]
     datapath_inference: $[ dependencies.sample_files.outputs['download_files.datapath_inference'] ]
+    aml_datasetname_train: $(AML_DATASET_NAME)_train
+    aml_datasetname_inference: $(AML_DATASET_NAME)_inference
   steps:
 
     - task: UsePythonVersion@0
@@ -89,21 +74,22 @@ jobs:
     - task: AzureCLI@1
       displayName: 'Register dataset'
       inputs:
-        azureSubscription: ${{parameters.serviceConnection}}
+        azureSubscription: $(SERVICECONNECTION_GROUP)
         scriptLocation: inlineScript
         inlineScript: |
           # Install dependencies
-          python -m pip install --upgrade pip && python -m pip install azureml-sdk==${{parameters.sdkVersion}}
+          dependencies="azureml-sdk==$(SDK_VERSION)"
+          python -m pip install --upgrade pip && python -m pip install $dependencies --use-feature=2020-resolver
           # Register train dataset
           register_dataset_script=mlops-pipelines/scripts/register_or_update_dataset.py
           python $register_dataset_script --path $DATAPATH_TRAIN \
-                                          --name ${{parameters.amlTrainDatasetName}} \
+                                          --name $AML_DATASETNAME_TRAIN \
                                           --subscription-id $(az account show --query id -o tsv) \
-                                          --resource-group ${{parameters.resourceGroup}} \
-                                          --workspace-name ${{parameters.amlWorkspaceName}}
+                                          --resource-group $(RESOURCE_GROUP) \
+                                          --workspace-name $(AMLWORKSPACE_NAME)
           # Register inference dataset
           python $register_dataset_script --path $DATAPATH_INFERENCE \
-                                          --name ${{parameters.amlInferenceDatasetName}} \
+                                          --name $AML_DATASETNAME_INFERENCE \
                                           --subscription-id $(az account show --query id -o tsv) \
-                                          --resource-group ${{parameters.resourceGroup}} \
-                                          --workspace-name ${{parameters.amlWorkspaceName}}
+                                          --resource-group $(RESOURCE_GROUP) \
+                                          --workspace-name $(AMLWORKSPACE_NAME)

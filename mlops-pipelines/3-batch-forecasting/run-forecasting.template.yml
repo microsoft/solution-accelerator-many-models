@@ -1,0 +1,90 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Azure Pipeline Template for running the forecasting pipeline
+
+jobs:
+
+- job: check_training_method
+  displayName: 'Check Training Method'
+  steps:
+    - bash: |
+        if [ "$(TRAINING_METHOD)" != "automl" ] && [ "$(TRAINING_METHOD)" != "customscript" ]; then
+          >&2 echo "Error: variable TRAINING_METHOD must be set to 'automl' or 'customscript'"
+        fi
+      displayName: 'Check Training Method'
+      failOnStderr: true
+
+
+- job: publish_forecasting_pipeline
+  displayName: 'Publish Forecasting AML Pipeline'
+  dependsOn: check_training_method
+  steps:
+
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.7'
+      inputs:
+        versionSpec: 3.7
+
+    - task: AzureCLI@1
+      displayName: 'Publish Forecasting AML Pipeline'
+      inputs:
+        azureSubscription: $(SERVICECONNECTION_WORKSPACE)
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Install dependencies
+          dependencies="pyyaml azureml-sdk==$(SDK_VERSION)"
+          python -m pip install --upgrade pip && python -m pip install $dependencies --use-feature=2020-resolver
+          # Create/update forecasting pipeline
+          forecastingbuild_script=mlops-pipelines/scripts/create_forecasting_pipeline.py
+          python $forecastingbuild_script --name $(AML_FORECASTING_PIPELINE_NAME) \
+                                          --version $(Build.BuildId) \
+                                          --scripts-dir 'scripts/$(TRAINING_METHOD)/' \
+                                          --scripts-settings 'mlops-pipelines/configuration/$(TRAINING_METHOD)/script_settings.json' \
+                                          --prs-config 'mlops-pipelines/configuration/$(TRAINING_METHOD)/forecast-parallelrunstep-config.yml' \
+                                          --dataset $(AML_DATASET_NAME)_inference \
+                                          --output $(PREDICTIONS_CONTAINER_NAME) \
+                                          --compute $(AML_COMPUTE_NAME) \
+                                          --artifact 'forecasting_pipeline_id.txt' \
+                                          --subscription-id $(az account show --query id -o tsv) \
+                                          --resource-group $(RESOURCE_GROUP) \
+                                          --workspace-name $(AMLWORKSPACE_NAME)
+
+    - publish: 'forecasting_pipeline_id.txt'
+      artifact: forecasting_pipeline_id
+      displayName: 'Publish Forecasting Pipeline ID'
+
+
+- job: pipeline_id
+  displayName: 'Get Forecasting Pipeline ID'
+  dependsOn: publish_forecasting_pipeline
+  steps:
+
+    - download: current
+      artifact: forecasting_pipeline_id
+    
+    - bash: |
+        # Get pipeline ID
+        artifact='$(Pipeline.Workspace)/forecasting_pipeline_id/forecasting_pipeline_id.txt'
+        pipeline_id=$(cat $artifact)
+        echo "##vso[task.setvariable variable=pipeline_id;isOutput=true;]$pipeline_id"
+      name: get_pipeline_id
+      displayName: 'Get Forecasting Pipeline ID'
+      failOnStderr: true
+
+
+- job: run_forecasting
+  displayName: 'Run Forecasting'
+  pool: server
+  timeoutInMinutes: 0
+  dependsOn: pipeline_id
+  variables: 
+    pipeline_id: $[ dependencies.pipeline_id.outputs['get_pipeline_id.pipeline_id'] ]
+  steps:
+
+    - task: ms-air-aiagility.vss-services-azureml.azureml-restApi-task.MLPublishedPipelineRestAPITask@0
+      displayName: 'Invoke AML Forecasting Pipeline'
+      inputs:
+        azureSubscription: '$(SERVICECONNECTION_WORKSPACE)'
+        PipelineId: '$(PIPELINE_ID)'
+        ExperimentName: '$(AML_FORECASTING_PIPELINE_NAME)'

@@ -9,7 +9,13 @@
 #     - v2-preview
 #   paths:
 #     include:
-#     - Custom_Script/mlops-pipelines/5-batch-forecasting/*
+#     - mlops-pipelines/3-batch-forecasting/*
+#     - mlops-pipelines/scripts/download_data.py
+#     - mlops-pipelines/scripts/register_or_update_dataset.py
+#     - mlops-pipelines/scripts/create_forecasting_pipeline.py
+#     - scripts/*/forecast.py
+#     - scripts/*/forecast.conda.yml
+#     - scripts/*/copy_predictions.py
 
 # schedules:
 # - cron: "30 7 * * *"
@@ -32,20 +38,8 @@ stages:
   displayName: 'Update Data for Batch Forecasting'
   jobs:
   - template: update-data.template.yml
-    parameters:
-      sdkVersion: '$(SDK_VERSION)'
-      serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
-      resourceGroup: '$(RESOURCE_GROUP)'
-      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
-      amlInferenceDatasetName: '$(AML_DATASET_NAME)_inference'
-      maxFiles: '$(DATASET_MAXFILES)'
 
 - stage: run_forecasting
   displayName: 'Run Model Forecasting'
   jobs:
   - template: run-forecasting.template.yml
-    parameters:
-      serviceConnection: '$(SERVICECONNECTION_WORKSPACE)'
-      resourceGroup: '$(RESOURCE_GROUP)'
-      amlWorkspaceName: '$(AMLWORKSPACE_NAME)'
-      forecastingPipelineName: '$(AML_FORECASTING_PIPELINE_NAME)'

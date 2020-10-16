@@ -1,0 +1,76 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Pipeline that runs AML Pipeline for model training
+
+# trigger:
+#   branches:
+#     include:
+#     - v2-preview
+#   paths:
+#     include:
+#     - mlops-pipelines/2-modeling/*
+#     - mlops-pipelines/scripts/download_data.py
+#     - mlops-pipelines/scripts/register_or_update_dataset.py
+#     - mlops-pipelines/scripts/create_training_pipeline.py
+#     - mlops-pipelines/scripts/deploy_or_update_models.py
+#     - scripts/*/train.py
+#     - scripts/*/train.conda.yml
+#     - scripts/*/model_webservice.py
+#     - scripts/*/model_webservice.conda.yml
+#     - scripts/*/routing_webservice.py
+#     - scripts/*/routing_webservice.conda.yml
+
+# schedules:
+# - cron: "0 0 * * 1"
+#   displayName: 'Weekly training at midnight on Mondays'
+#   branches:
+#     include:
+#     - v2-preview
+#   always: true
+
+variables:
+- template: ../configuration/many-models-variables.yml
+- group: manymodels-vg
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+- stage: update_data
+  displayName: 'Update Data for Training/Retraining'
+  jobs:
+  - template: update-data.template.yml
+
+- stage: run_training
+  displayName: 'Run Model Training'
+  dependsOn: update_data
+  jobs:
+  - template: run-training.template.yml
+
+- stage: deploy_models_aci
+  displayName: 'Deploy Models to ACI'
+  dependsOn: run_training
+  condition: and(succeeded(), eq(variables['DEPLOY_ACI'], 'true'))
+  jobs:
+  - template: deploy-models.template.yml
+    parameters:
+      deploymentType: aci
+      amlAksName: ''
+      webservicePrefix: test-'$(AML_WEBSERVICE_PREFIX)'
+      routingModelName: test-'$(AML_ROUTING_MODEL_NAME)'
+      routingServiceName: test-'$(AML_ROUTING_WEBSERVICE)'
+
+- stage: deploy_models_aks
+  displayName: 'Deploy Models to AKS'
+  dependsOn: run_training
+  condition: and(succeeded(), eq(variables['DEPLOY_AKS'], 'true'), variables['AML_AKS_NAME'])
+  jobs:
+  - template: deploy-models.template.yml
+    parameters:
+      deploymentType: aks
+      amlAksName: '$(AML_AKS_NAME)'
+      webservicePrefix: '$(AML_WEBSERVICE_PREFIX)'
+      routingModelName: '$(AML_ROUTING_MODEL_NAME)'
+      routingServiceName: '$(AML_ROUTING_WEBSERVICE)'

@@ -36,7 +36,6 @@ def run(request):
         return routing_model_artifact
     elif request.method == 'POST':
         rawdata = request.get_data(cache=False, as_text=True)
-        print(rawdata)
         return route_forecasting_requests(rawdata)
     else:
         return AMLResponse("bad request", 500)
@@ -55,7 +54,7 @@ def route_forecasting_requests(rawdata):
             model_name = get_model_name(model_data['model_type'], model_data['id'])
             model_service = service_mapping[model_name]
         except KeyError:
-            return AMLResponse(f"Model not found  of type {model_data['model_type']} for ID {model_data['id']}", 400)
+            return AMLResponse(f"Router: Model not found  of type {model_data['model_type']} for ID {model_data['id']}", 400)
         # Append data to service minibatch
         services_tocall[model_service].append(model_data)
 
