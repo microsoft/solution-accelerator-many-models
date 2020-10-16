@@ -3,7 +3,7 @@ containerResourceRequirements:
   cpu_cores: 0.1
   memory_gb: 0.5
 # environmentVariables:
-  # WORKER_COUNT: 4
-  # MKL_NUM_THREADS: 4
-  # OMP_NUM_THREADS: 4
+  # WORKER_COUNT: 1
+  # MKL_NUM_THREADS: 1
+  # OMP_NUM_THREADS: 1
   # WORKER_PRELOAD: False
