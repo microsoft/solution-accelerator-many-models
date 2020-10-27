@@ -6,7 +6,7 @@ from azureml.train.automl._azureautomlsettings import AzureAutoMLSettings
 
 
 def validate_parallel_run_config(parallel_run_config):
-    max_concurrency = 20
+    max_concurrency = 320
     if (parallel_run_config.process_count_per_node * parallel_run_config.node_count) > max_concurrency:
         print("Please decrease concurrency to maximum of 20 as currently AutoML does not support it.")
         raise ValueError("node_count*process_count_per_node must be between 1 and max_concurrency {}"
