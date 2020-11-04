@@ -40,6 +40,7 @@ jobs:
           azureml-pipeline-steps jupyter numpy pandas
       - name: Convert notebooks to python
         run: |
+          source ./automl_environment/bin/activate
           jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
           jupyter nbconvert --to script 01_Data_Preparation.ipynb
           jupyter nbconvert --to script Automated_ML/02_AutoML_Training_Pipeline/02_AutoML_Training_Pipeline.ipynb
