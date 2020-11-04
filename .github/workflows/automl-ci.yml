@@ -34,13 +34,10 @@ jobs:
           architecture: 'x64'
       - name: Install dependencies
         run: |
-          python -m venv --clear automl_environment
-          source ./automl_environment/bin/activate
           python -m pip install --upgrade azureml-sdk[automl] \
           azureml-pipeline-steps jupyter numpy pandas
       - name: Convert notebooks to python
         run: |
-          source ./automl_environment/bin/activate
           jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
           jupyter nbconvert --to script 01_Data_Preparation.ipynb
           jupyter nbconvert --to script Automated_ML/02_AutoML_Training_Pipeline/02_AutoML_Training_Pipeline.ipynb
@@ -58,22 +55,19 @@ jobs:
             echo "************************************"
             echo "Using workspace: $Env:WORKSPACE_NAME"
             echo "************************************"
-            ./automl_environment/bin/python 00_Setup_AML_Workspace.py
+            python 00_Setup_AML_Workspace.py
             $resource = Get-AzResource -Name $Env:WORKSPACE_NAME -ResourceGroupName $Env:RESOURCE_GROUP
             $expirationTime = (Get-Date).AddHours(24).ToUniversalTime()
             New-AzTag -ResourceId $resource.id -Tag @{"expiresOn"=$expirationTime}
           azPSVersion: 'latest'
       - name: Data preparation
         run: |
-          source ./automl_environment/bin/activate
           ipython 01_Data_Preparation.py
       - name: Run training
         run: |
-          source ./automl_environment/bin/activate
           cd Automated_ML/02_AutoML_Training_Pipeline
           python 02_AutoML_Training_Pipeline.py
       - name: Run prediction
         run: |
-          source ./automl_environment/bin/activate
           cd Automated_ML/03_AutoML_Forecasting_Pipeline
           python 03_AutoML_Forecasting_Pipeline.py

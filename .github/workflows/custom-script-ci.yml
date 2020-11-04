@@ -34,14 +34,11 @@ jobs:
           architecture: 'x64'
       - name: Install dependencies
         run: |
-          python -m venv --clear custom_script_environment
-          source ./custom_script_environment/bin/activate
-          python -m pip install --no-cache-dir --upgrade azureml-sdk \
-          azureml-opendatasets azureml-pipeline-steps jupyter matplotlib numpy pandas \
+          python -m pip install --upgrade azureml-sdk azureml-opendatasets \
+          azureml-pipeline-steps jupyter matplotlib numpy pandas \
           seaborn
       - name: Convert notebooks to python
         run: |
-          source ./custom_script_environment/bin/activate
           jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
           jupyter nbconvert --to script 01_Data_Preparation.ipynb
           jupyter nbconvert --to script Custom_Script/02_CustomScript_Training_Pipeline.ipynb
@@ -59,22 +56,19 @@ jobs:
             echo "************************************"
             echo "Using workspace: $Env:WORKSPACE_NAME"
             echo "************************************"
-            ./custom_script_environment/bin/python 00_Setup_AML_Workspace.py
+            python 00_Setup_AML_Workspace.py
             $resource = Get-AzResource -Name $Env:WORKSPACE_NAME -ResourceGroupName $Env:RESOURCE_GROUP
             $expirationTime = (Get-Date).AddHours(24).ToUniversalTime()
             New-AzTag -ResourceId $resource.id -Tag @{"expiresOn"=$expirationTime}
           azPSVersion: 'latest'
       - name: Data preparation
         run: |
-          source ./custom_script_environment/bin/activate
           ipython 01_Data_Preparation.py
       - name: Run training
         run: |
-          source ./custom_script_environment/bin/activate
           cd Custom_Script
           python 02_CustomScript_Training_Pipeline.py
       - name: Run prediction
         run: |
-          source ./custom_script_environment/bin/activate
           cd Custom_Script
           python 03_CustomScript_Forecasting_Pipeline.py
