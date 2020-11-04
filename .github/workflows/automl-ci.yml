@@ -54,6 +54,7 @@ jobs:
         uses: azure/powershell@v1
         with:
           inlineScript: |
+            source ./automl_environment/bin/activate
             $Env:WORKSPACE_NAME = "$Env:WORKSPACE_PREFIX-$Env:PR_NUMBER"
             echo "************************************"
             echo "Using workspace: $Env:WORKSPACE_NAME"
@@ -65,12 +66,15 @@ jobs:
           azPSVersion: 'latest'
       - name: Data preparation
         run: |
+          source ./automl_environment/bin/activate
           ipython 01_Data_Preparation.py
       - name: Run training
         run: |
+          source ./automl_environment/bin/activate
           cd Automated_ML/02_AutoML_Training_Pipeline
           python 02_AutoML_Training_Pipeline.py
       - name: Run prediction
         run: |
+          source ./automl_environment/bin/activate
           cd Automated_ML/03_AutoML_Forecasting_Pipeline
           python 03_AutoML_Forecasting_Pipeline.py

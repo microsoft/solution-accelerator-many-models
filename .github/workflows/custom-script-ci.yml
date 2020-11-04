@@ -41,6 +41,7 @@ jobs:
           seaborn
       - name: Convert notebooks to python
         run: |
+          source ./custom_script_environment/bin/activate
           jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
           jupyter nbconvert --to script 01_Data_Preparation.ipynb
           jupyter nbconvert --to script Custom_Script/02_CustomScript_Training_Pipeline.ipynb
@@ -54,6 +55,7 @@ jobs:
         uses: azure/powershell@v1
         with:
           inlineScript: |
+            source ./custom_script_environment/bin/activate
             $Env:WORKSPACE_NAME = "$Env:WORKSPACE_PREFIX-$Env:PR_NUMBER"
             echo "************************************"
             echo "Using workspace: $Env:WORKSPACE_NAME"
@@ -65,12 +67,15 @@ jobs:
           azPSVersion: 'latest'
       - name: Data preparation
         run: |
+          source ./custom_script_environment/bin/activate
           ipython 01_Data_Preparation.py
       - name: Run training
         run: |
+          source ./custom_script_environment/bin/activate
           cd Custom_Script
           python 02_CustomScript_Training_Pipeline.py
       - name: Run prediction
         run: |
+          source ./custom_script_environment/bin/activate
           cd Custom_Script
           python 03_CustomScript_Forecasting_Pipeline.py
