@@ -36,7 +36,7 @@ jobs:
         run: |
           python -m venv --clear custom_script_environment
           source ./custom_script_environment/bin/activate
-          python -m pip install --upgrade azureml-sdk \
+          python -m pip install --no-cache-dir --upgrade azureml-sdk \
           azureml-opendatasets azureml-pipeline-steps jupyter matplotlib numpy pandas \
           seaborn
       - name: Convert notebooks to python
