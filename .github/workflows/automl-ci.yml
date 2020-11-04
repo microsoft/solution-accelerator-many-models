@@ -54,7 +54,7 @@ jobs:
         uses: azure/powershell@v1
         with:
           inlineScript: |
-            source ./automl_environment/bin/activate
+            ./automl_environment/bin/activate.ps1
             $Env:WORKSPACE_NAME = "$Env:WORKSPACE_PREFIX-$Env:PR_NUMBER"
             echo "************************************"
             echo "Using workspace: $Env:WORKSPACE_NAME"
