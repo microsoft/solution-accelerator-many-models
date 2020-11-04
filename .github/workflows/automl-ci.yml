@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m venv --clear automl_environment
-          ./automl_environment/Scripts/activate
+          source ./automl_environment/bin/activate
           python -m pip install --upgrade azureml-sdk[automl] \
           azureml-pipeline-steps jupyter numpy pandas
       - name: Convert notebooks to python
