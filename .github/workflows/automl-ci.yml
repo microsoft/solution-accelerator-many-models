@@ -54,12 +54,11 @@ jobs:
         uses: azure/powershell@v1
         with:
           inlineScript: |
-            ./automl_environment/bin/activate.ps1
             $Env:WORKSPACE_NAME = "$Env:WORKSPACE_PREFIX-$Env:PR_NUMBER"
             echo "************************************"
             echo "Using workspace: $Env:WORKSPACE_NAME"
             echo "************************************"
-            python 00_Setup_AML_Workspace.py
+            ./automl_environment/bin/python 00_Setup_AML_Workspace.py
             $resource = Get-AzResource -Name $Env:WORKSPACE_NAME -ResourceGroupName $Env:RESOURCE_GROUP
             $expirationTime = (Get-Date).AddHours(24).ToUniversalTime()
             New-AzTag -ResourceId $resource.id -Tag @{"expiresOn"=$expirationTime}
