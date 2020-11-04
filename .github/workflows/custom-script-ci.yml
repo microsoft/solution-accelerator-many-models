@@ -34,7 +34,9 @@ jobs:
           architecture: 'x64'
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade azureml-sdk azureml-core \
+          python -m venv --clear custom_script_environment
+          ./custom_script_environment/Scripts/activate
+          python -m pip install --upgrade azureml-sdk \
           azureml-opendatasets azureml-pipeline-steps jupyter matplotlib numpy pandas \
           seaborn
       - name: Convert notebooks to python
