@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade azureml-sdk[automl] \
-          azureml-pipeline-steps jupyter numpy pandas>=0.22.0,<=0.23.4
+          azureml-pipeline-steps jupyter numpy "pandas>=0.22.0,<=0.23.4"
       - name: Convert notebooks to python
         run: |
           jupyter nbconvert --to script 00_Setup_AML_Workspace.ipynb
