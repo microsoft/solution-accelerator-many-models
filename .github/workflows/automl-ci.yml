@@ -7,7 +7,7 @@ on:
     paths:
       - 00_Setup_AML_Workspace.ipynb
       - 01_Data_Preparation.ipynb
-      - Automated_ML/02_AutoML_Training_Pipeline/02_AutoML_Training_Pipeline.ipynb
+      - Automated_ML/**
 env:
   SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
   RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
@@ -67,7 +67,7 @@ jobs:
         run: |
           cd Automated_ML/02_AutoML_Training_Pipeline
           python 02_AutoML_Training_Pipeline.py
-      - name: Run prediction
-        run: |
-          cd Automated_ML/03_AutoML_Forecasting_Pipeline
-          python 03_AutoML_Forecasting_Pipeline.py
+      #- name: Run prediction
+      #  run: |
+      #    cd Automated_ML/03_AutoML_Forecasting_Pipeline
+      #    python 03_AutoML_Forecasting_Pipeline.py
