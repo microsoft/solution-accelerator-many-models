@@ -15,7 +15,7 @@ Then, run the pipeline and wait for it to finish.
 
 The pipeline run should look like this:
 
-<img src="../../images/mlops_pipeline_3_batchforecasting.png"
+<img src="../../.images/mlops_pipeline_3_batchforecasting.png"
      width="1000"
      title="Batch Forecasting Pipeline"
      alt="Stages and jobs as described below" />

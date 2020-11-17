@@ -29,7 +29,7 @@ Run the pipeline and wait for it to finish.
 
 The pipeline run should look like this (deployment stages will have run or not depending on your configuration, read more [here](Details.md#enabling-deployment)):
 
-<img src="../../images/mlops_pipeline_2_modeling.png"
+<img src="../../.images/mlops_pipeline_2_modeling.png"
      width="1000"
      title="Modeling Pipeline"
      alt="Stages and jobs as described below" />

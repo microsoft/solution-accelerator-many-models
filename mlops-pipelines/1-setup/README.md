@@ -16,7 +16,7 @@ Then, run the pipeline and wait for it to finish.
 
 The pipeline run should look like this:
 
-<img src="../../images/mlops_pipeline_1_setup.png"
+<img src="../../.images/mlops_pipeline_1_setup.png"
      width="1000"
      title="Setup Pipeline"
      alt="Stages and jobs as described below" />
