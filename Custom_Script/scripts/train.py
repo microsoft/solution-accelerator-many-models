@@ -82,20 +82,21 @@ def run(input_data):
         mape = np.mean(np.abs((actuals - preds) / actuals) * 100)
 
         # 6.0 Log metrics
-        current_run.log(model_name + '_mse', mse)
-        current_run.log(model_name + '_rmse', rmse)
-        current_run.log(model_name + '_mae', mae)
-        current_run.log(model_name + '_mape', mape)
+        current_run.log_row('mape', **ts_id_dict, value=mape, model_name=model_name)
+        current_run.log_row('rmse', **ts_id_dict, value=rmse, model_name=model_name)
+        current_run.log_row('mae', **ts_id_dict, value=mae, model_name=model_name)
+        current_run.log_row('mse', **ts_id_dict, value=mse, model_name=model_name)
 
         # 7.0 Train model with full dataset
         forecaster.fit(data)
 
-        # 8.0 Save the forecasting pipeline
-        joblib.dump(forecaster, filename=os.path.join('./outputs/', model_name))
+        # 8.0 Save the forecasting pipeline and upload to workspace
+        model_path = os.path.join('./outputs/', model_name)
+        joblib.dump(forecaster, filename=model_path)
+        current_run.upload_file(model_name, model_path)
 
         # 9.0 Register the model to the workspace
         # Uses the values in the timeseries id columns from the first row of data to form tags for the model
-        current_run.upload_file(model_name, os.path.join('./outputs/', model_name))
         ts_id_dict = {id_col: str(data[id_col].iloc[0]) for id_col in args.timeseries_id_columns}
         tags_dict = {**ts_id_dict, 'ModelType': args.model_type}
         current_run.register_model(model_path=model_name, model_name=model_name,
@@ -109,7 +110,7 @@ def run(input_data):
         result['model_name'] = model_name
         result['start_date'] = str(start_datetime)
         result['end_date'] = str(end_datetime)
-        result['duration'] = str(end_datetime-start_datetime)
+        result['duration'] = str(end_datetime - start_datetime)
         result['mse'] = mse
         result['rmse'] = rmse
         result['mae'] = mae
