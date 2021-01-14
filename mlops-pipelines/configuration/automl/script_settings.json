@@ -1,11 +1,16 @@
 {
-      "id_columns": ["Store", "Brand"],
-      "target_column": "Quantity",
-      "timestamp_column": "WeekStarting",
-      "tag_columns": ["StoreGroup10", "StoreGroup100", "StoreGroup1000"],
-      "drop_id": true,
-      "drop_tags": true,
-      "drop_columns": ["Revenue"],
-      "model_type": "lr",
-      "test_size": 20
+      "task": "forecasting",
+      "primary_metric": "normalized_root_mean_squared_error",
+      "iteration_timeout_minutes": 10,
+      "iterations": 15,
+      "experiment_timeout_hours": 1,
+      "label_column_name": "Quantity",
+      "n_cross_validations": 3,
+      "verbosity": 20,
+      "debug_log": "automl_oj_sales_debug.txt",
+      "time_column_name": "WeekStarting",
+      "max_horizon": 20,
+      "group_column_names": ["Store", "Brand"],
+      "grain_column_names": ["Store", "Brand"],
+      "drop_column_names": ["Revenue"]
 }
