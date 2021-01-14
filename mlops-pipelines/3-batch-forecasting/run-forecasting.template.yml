@@ -34,7 +34,7 @@ jobs:
         inlineScript: |
           # Install dependencies
           dependencies="pyyaml azureml-sdk==$(SDK_VERSION)"
-          python -m pip install --upgrade pip && python -m pip install $dependencies --use-feature=2020-resolver
+          python -m pip install --upgrade pip && python -m pip install $dependencies
           # Create/update forecasting pipeline
           forecastingbuild_script=mlops-pipelines/scripts/create_forecasting_pipeline.py
           python $forecastingbuild_script --name $(AML_FORECASTING_PIPELINE_NAME) \

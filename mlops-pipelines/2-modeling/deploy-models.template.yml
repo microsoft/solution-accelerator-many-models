@@ -36,7 +36,7 @@ jobs:
         inlineScript: |
           # Install dependencies
           dependencies="pyyaml azureml-sdk==$(SDK_VERSION)"
-          python -m pip install --upgrade pip && python -m pip install $dependencies --use-feature=2020-resolver
+          python -m pip install --upgrade pip && python -m pip install $dependencies
           # Deploy/update models in groups in webservices
           deployment_config_path="mlops-pipelines/configuration/$(TRAINING_METHOD)/"
           deployment_config_file="$deployment_config_path/model-deployment-config-${{parameters.deploymentType}}.yml"
@@ -110,7 +110,7 @@ jobs:
         inlineScript: |
           # Install dependencies
           dependencies="pyyaml azureml-sdk==$(SDK_VERSION)"
-          python -m pip install --upgrade pip && python -m pip install $dependencies --use-feature=2020-resolver
+          python -m pip install --upgrade pip && python -m pip install $dependencies
           # Deploy/update routing webservice
           deployment_config_path="mlops-pipelines/configuration/$(TRAINING_METHOD)/"
           deployment_config_file="$deployment_config_path/routing-deployment-config-${{parameters.deploymentType}}.yml"

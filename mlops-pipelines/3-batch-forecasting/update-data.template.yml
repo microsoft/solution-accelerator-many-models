@@ -19,7 +19,7 @@ jobs:
     - bash: |
         # Install dependencies
         dependencies="azureml-opendatasets==$(SDK_VERSION)"
-        python -m pip install --upgrade pip && python -m pip install $dependencies --use-feature=2020-resolver
+        python -m pip install --upgrade pip && python -m pip install $dependencies
         # Download sample files
         data_script="mlops-pipelines/scripts/download_data.py"
         python $data_script --maxfiles $(DATASET_MAXFILES) --train-path "new-sample-data-train" --inference-path "new-sample-data-inference"
@@ -71,7 +71,7 @@ jobs:
         inlineScript: |
           # Install dependencies
           dependencies="azureml-sdk==$(SDK_VERSION)"
-          python -m pip install --upgrade pip && python -m pip install $dependencies --use-feature=2020-resolver
+          python -m pip install --upgrade pip && python -m pip install $dependencies
           # Update inference dataset
           update_dataset_script=mlops-pipelines/scripts/register_or_update_dataset.py
           python $update_dataset_script --path $DATAPATH_INFERENCE \
