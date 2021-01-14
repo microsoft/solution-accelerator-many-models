@@ -1,0 +1,5 @@
+mini_batch_size: "1"
+run_invocation_timeout: 300
+error_threshold: -1
+process_count_per_node: 8
+node_count: 3
