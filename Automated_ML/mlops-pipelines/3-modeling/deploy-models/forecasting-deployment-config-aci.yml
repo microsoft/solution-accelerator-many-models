@@ -1,4 +1,0 @@
-computeType: ACI
-containerResourceRequirements:
-  cpu_cores: 1
-  memory_gb: 1

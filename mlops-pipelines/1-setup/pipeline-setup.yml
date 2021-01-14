@@ -1,0 +1,39 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Pipeline that configures the environment for this solution accelerator
+
+# trigger:
+#   branches:
+#     include:
+#     - v2-preview
+#   paths:
+#     include:
+#     - mlops-pipelines/1-setup/*
+#     - mlops-pipelines/scripts/download_data.py
+#     - mlops-pipelines/scripts/register_or_update_dataset.py
+
+variables:
+- template: ../configuration/many-models-variables.yml
+- group: manymodels-vg
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: deploy_infrastructure
+  displayName: 'Deploy Infrastructure'
+  jobs:
+  - template: deploy-infra.template.yml
+
+- stage: environment_setup
+  displayName: 'Environment Setup'
+  dependsOn: deploy_infrastructure
+  jobs:
+  - template: environment-setup.template.yml
+
+- stage: data_preparation
+  displayName: 'Data Preparation'
+  dependsOn: deploy_infrastructure
+  jobs:
+  - template: data-prep.template.yml

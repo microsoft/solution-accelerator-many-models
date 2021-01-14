@@ -1,8 +1,0 @@
-name: many_models_forecast_environment
-dependencies:
-  - python=3.7.7
-  - pip
-  - pip:
-      - joblib
-      - pandas
-      - sklearn

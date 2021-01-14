@@ -1,0 +1,125 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Azure Pipeline Template for deploying models to ACI
+
+parameters:
+- name: deploymentType
+  type: string
+- name: amlAksName
+  type: string
+- name: webservicePrefix
+  type: string
+- name: routingModelName
+  type: string
+- name: routingServiceName
+  type: string
+
+
+jobs:
+
+- job: deploy_models
+  displayName: 'Deploy Models'
+  timeoutInMinutes: 0
+  steps:
+
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.7'
+      inputs:
+        versionSpec: 3.7
+
+    - task: AzureCLI@1
+      displayName: 'Deploy Models in Groups'
+      inputs:
+        azureSubscription: $(SERVICECONNECTION_WORKSPACE)
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Install dependencies
+          dependencies="pyyaml azureml-sdk==$(SDK_VERSION)"
+          python -m pip install --upgrade pip && python -m pip install $dependencies
+          # Deploy/update models in groups in webservices
+          deployment_config_path="mlops-pipelines/configuration/$(TRAINING_METHOD)/"
+          deployment_config_file="$deployment_config_path/model-deployment-config-${{parameters.deploymentType}}.yml"
+          deploy_script="mlops-pipelines/scripts/deploy_or_update_models.py"
+          if [ "$(RESET_DEPLOYMENT)" == "true" ]; then reset="--reset"; fi
+          if [ "$(UPDATE_DEPLOYMENT)" == "true" ]; then update="--update"; fi
+          python $deploy_script --splitting-tags '$(AML_MODEL_SPLITTING_TAGS)' \
+                                --sorting-tags '$(AML_MODEL_SORTING_TAGS)' \
+                                --scripts-dir 'scripts/$(TRAINING_METHOD)/' \
+                                --routing-model-name '${{parameters.routingModelName}}' \
+                                --output 'models_deployed.json' \
+                                --deploy-config-file $deployment_config_file \
+                                --aks-target '${{parameters.amlAksName}}' \
+                                --service-prefix '${{parameters.webservicePrefix}}' \
+                                --container-size '$(MAX_CONTAINER_SIZE)' \
+                                $reset $update \
+                                --subscription-id $(az account show --query id -o tsv) \
+                                --resource-group $(RESOURCE_GROUP) \
+                                --workspace-name $(AMLWORKSPACE_NAME)
+
+    - publish: 'models_deployed.json'
+      artifact: modelsdeployed-${{parameters.deploymentType}}
+      displayName: 'Publish Models Deployed Artifact'
+
+
+- job: routing_model
+  displayName: 'Register Routing Model'
+  dependsOn: deploy_models
+  condition: and(succeeded(), in(variables['DEPLOY_ROUTING_WEBSERVICE'], '', 'true'))
+  steps:
+
+    - download: current
+      artifact: modelsdeployed-${{parameters.deploymentType}}
+
+    - task: AzureCLI@1
+      displayName: 'Register Routing Model'
+      inputs:
+        azureSubscription: $(SERVICECONNECTION_WORKSPACE)
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Install ML extension
+          az extension add -n azure-cli-ml
+          # Register model
+          az ml model register --name ${{parameters.routingModelName}} \
+                               --model-path '$(Pipeline.Workspace)/modelsdeployed-${{parameters.deploymentType}}/models_deployed.json' \
+                               --tag '$(AML_ROUTING_MODEL_TAG_NAME)=$(AML_ROUTING_MODEL_TAG_VALUE)' \
+                               --output-metadata-file routing_model.json \
+                               --workspace-name $(AMLWORKSPACE_NAME) \
+                               --resource-group $(RESOURCE_GROUP)
+
+    - publish: 'routing_model.json'
+      artifact: routingmodel-${{parameters.deploymentType}}
+      displayName: 'Artifact: Routing Model'
+
+
+- job: routing_webservice
+  displayName: 'Deploy Routing Webservice'
+  dependsOn: routing_model
+  steps:
+
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.7'
+      inputs:
+        versionSpec: 3.7
+
+    - task: AzureCLI@1
+      displayName: 'Deploy Routing Webservice'
+      inputs:
+        azureSubscription: $(SERVICECONNECTION_WORKSPACE)
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Install dependencies
+          dependencies="pyyaml azureml-sdk==$(SDK_VERSION)"
+          python -m pip install --upgrade pip && python -m pip install $dependencies
+          # Deploy/update routing webservice
+          deployment_config_path="mlops-pipelines/configuration/$(TRAINING_METHOD)/"
+          deployment_config_file="$deployment_config_path/routing-deployment-config-${{parameters.deploymentType}}.yml"
+          deploy_script="mlops-pipelines/scripts/deploy_or_update_router.py"
+          python $deploy_script --model-name '${{parameters.routingModelName}}' \
+                                --service-name '${{parameters.routingServiceName}}' \
+                                --scripts-dir 'scripts/$(TRAINING_METHOD)/' \
+                                --deploy-config-file $deployment_config_file \
+                                --aks-target '${{parameters.amlAksName}}' \
+                                --subscription-id $(az account show --query id -o tsv) \
+                                --resource-group $(RESOURCE_GROUP) \
+                                --workspace-name $(AMLWORKSPACE_NAME)
