@@ -33,29 +33,21 @@ LOG_NAME = "user_log"
 
 
 parser = argparse.ArgumentParser("split")
-parser.add_argument("--process_count_per_node", default=1, type=int, help="number of processes per node")
-parser.add_argument("--retrain_failed_models", default=False, type=str2bool, help="retrain failed models only")
-
+parser.add_argument("--settings-file", type=str, required=True, help="file containing the script settings")
 args, _ = parser.parse_known_args()
 
 
-def read_from_json():
-    full_path = Path(__file__).absolute().parent
-    with open(str(full_path) + "/automlconfig.json") as json_file:
-        return json.load(json_file)
-
-
-automl_settings = read_from_json()
-# ''"{\"task\": \"forecasting\", \"iteration_timeout_minutes\": 10, \"iterations\": 10, \"n_cross_validations\": 3,
-#  \"primary_metric\": \"accuracy\", \"preprocess\": false,  \"verbosity\": 20, \"label_column_name\": \"Quantity\",
-#  \"debug_log\": \"automl_oj_sales_errors.log\", \"time_column_name\": \"WeekStarting\", \"max_horizon\": 6,
-# \"drop_column_names\": [\"logQuantity\"], \"group_column_names\": [\"Store\", \"Brand\"]}"''
+base_path = Path(__file__).absolute().parent
+with open(os.path.join(base_path, args.settings_file), 'r') as f:
+    automl_settings = json.load(f)
 
 timestamp_column = automl_settings.get('time_column_name', None)
 grain_column_names = automl_settings.get('grain_column_names', [])
 group_column_names = automl_settings.get('group_column_names', [])
 max_horizon = automl_settings.get('max_horizon', 0)
 target_column = automl_settings.get('label_column_name', None)
+process_count_per_node = automl_settings.get('process_count_per_node', 1)
+retrain_failed_models = automl_settings.get('retrain_failed_models', False)
 
 
 print("max_horizon: {}".format(max_horizon))
@@ -63,7 +55,7 @@ print("target_column: {}".format(target_column))
 print("timestamp_column: {}".format(timestamp_column))
 print("group_column_names: {}".format(group_column_names))
 print("grain_column_names: {}".format(grain_column_names))
-print("retrain_failed_models: {}".format(args.retrain_failed_models))
+print("retrain_failed_models: {}".format(retrain_failed_models))
 
 
 def init():
@@ -77,7 +69,7 @@ def init():
     t_log_dir = Path(log_dir)
     t_log_dir.mkdir(parents=True, exist_ok=True)
     automl_settings['many_models'] = True
-    automl_settings['many_models_process_count_per_node'] = args.process_count_per_node
+    automl_settings['many_models_process_count_per_node'] = process_count_per_node
 
     debug_log = automl_settings.get('debug_log', None)
     if debug_log is not None:
@@ -151,7 +143,7 @@ def run(input_data):
 
             tags_dict.update(group_columns_dict)
 
-            if args.retrain_failed_models:
+            if retrain_failed_models:
                 logger.info('querying for existing models')
                 try:
                     tags = [[k, v] for k, v in tags_dict.items()]

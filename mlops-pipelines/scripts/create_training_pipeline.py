@@ -21,6 +21,8 @@ def main(ws, pipeline_name, pipeline_version, dataset_name, compute_name,
     datastore_default = ws.get_default_datastore()
 
     # Setup settings file to be read in script
+    print(f"Settings origin: {scripts_settings_file}")
+    print(f"Settings dest dir: {scripts_dir}")
     settings_filename = os.path.basename(scripts_settings_file)
     shutil.copyfile(scripts_settings_file, os.path.join(scripts_dir, settings_filename))
 

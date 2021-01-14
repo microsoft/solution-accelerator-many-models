@@ -12,5 +12,7 @@
       "max_horizon": 20,
       "group_column_names": ["Store", "Brand"],
       "grain_column_names": ["Store", "Brand"],
-      "drop_column_names": ["Revenue"]
+      "drop_column_names": ["Revenue"],
+      "process_count_per_node": 1,
+      "retrain_failed_models": false
 }
