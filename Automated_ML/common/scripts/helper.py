@@ -5,14 +5,6 @@ from azureml.core import Workspace
 from azureml.train.automl._azureautomlsettings import AzureAutoMLSettings
 
 
-def validate_parallel_run_config(parallel_run_config):
-    max_concurrency = 320
-    if (parallel_run_config.process_count_per_node * parallel_run_config.node_count) > max_concurrency:
-        print("Please decrease concurrency to maximum of 20 as currently AutoML does not support it.")
-        raise ValueError("node_count*process_count_per_node must be between 1 and max_concurrency {}"
-                         .format(max_concurrency))
-
-
 def get_automl_environment(workspace: Workspace, automl_settings_dict: AzureAutoMLSettings):
     from azureml.core import RunConfiguration
     from azureml.train.automl._environment_utilities import modify_run_configuration
