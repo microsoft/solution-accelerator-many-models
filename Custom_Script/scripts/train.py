@@ -94,8 +94,9 @@ def run(input_data):
             # 7.0 Train model with full dataset
             forecaster.fit(data)
 
-            # import time
-            # time.sleep(180)
+            # Simulating the 3 minutes run to test concurrency
+            import time
+            time.sleep(180)
 
             # 8.0 Save the forecasting pipeline
             joblib.dump(forecaster, filename=os.path.join('./outputs/', model_name))
@@ -128,12 +129,32 @@ def run(input_data):
             result['index'] = idx
             result['num_models'] = len(input_data)
             result['status'] = child_run.get_status()
+            result['run_id'] = str(child_run.id)
 
             print('ending (' + csv_file_path + ') ' + str(end_datetime))
             result_list.append(result)
         except Exception:
             if child_run and child_run.get_status() != 'Completed':
                 child_run.fail()
+            result['model_type'] = args.model_type
+            end_datetime = datetime.datetime.now()
+            result['file_name'] = file_name
+            result['model_name'] = model_name
+            result['start_date'] = str(start_datetime)
+            result['end_date'] = str(end_datetime)
+            result['duration'] = str(end_datetime-start_datetime)
+            result['mse'] = str(None)
+            result['rmse'] = str(None)
+            result['mae'] = str(None)
+            result['mape'] = str(None)
+            result['index'] = idx
+            result['num_models'] = len(input_data)
+            if child_run:
+                result['status'] = child_run.get_status()
+                result['run_id'] = str(child_run.id)
+            else:
+                result['status'] = 'Failed'
+                result['run_id'] = str(None)
 
     # Data returned by this function will be available in parallel_run_step.txt
     return pd.DataFrame(result_list)
