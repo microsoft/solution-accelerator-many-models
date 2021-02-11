@@ -59,6 +59,7 @@ def run(input_data):
         train = data[:-args.test_size]
         test = data[-args.test_size:]
 
+	child_run = None
         try:
             child_run = current_run.child_run(name=model_name)
 
