@@ -6,7 +6,7 @@ To start with, we will create a Azure ML Compute Instance. The Compute Instance 
 
 1. Open [Azure Machine Learning Studio](https://ml.azure.com/).
 2. Navigate to 'Compute Instances' tab in Compute and click on 'New'.
-3. Choose some sufficiently unique name, keep the default VM type (STANDARD_DS3V2 -- a fairly inexpensive machine type costing about $0.27/hour) and click 'Create':
+3. Choose some sufficiently unique name, keep the default VM type (STANDARD_DS3V2 -- a fairly inexpensive machine type) and click 'Create':
 ![](./images/create_notebook_vm.png)
 
 See [here](https://docs.microsoft.com/en-us/azure/machine-learning/concept-compute-instance) for details on creating AzureML Compute Instances.
