@@ -37,7 +37,7 @@ def init():
 
 
 def set_telemetry(run):
-    prop = {"azureml.runsource": "azureml.ManyModelsCustomTraining"}
+    prop = {"azureml.runsource": "azureml.ManyModelsCustomTrain"}
     try:
         run.add_properties(prop)
     except Exception:
