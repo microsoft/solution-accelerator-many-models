@@ -36,6 +36,14 @@ def init():
     current_run = Run.get_context()
 
 
+def set_telemetry(run):
+    prop = {"azureml.runsource": "azureml.ManyModelsCustomTraining"}
+    try:
+        run.add_properties(prop)
+    except Exception:
+        pass
+
+
 def run(input_data):
     # 1.0 Set up output directory and the results list
     os.makedirs('./outputs', exist_ok=True)
@@ -59,9 +67,12 @@ def run(input_data):
         train = data[:-args.test_size]
         test = data[-args.test_size:]
 
-	child_run = None
+        child_run = None
         try:
             child_run = current_run.child_run(name=model_name)
+
+            # Do not remove the following code
+            set_telemetry(child_run)
 
             # 3.0 Create and fit the forecasting pipeline
             # The pipeline will drop unhelpful features, make a calendar feature, and make lag features
