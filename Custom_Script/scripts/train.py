@@ -13,7 +13,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.linear_model import LinearRegression
 
 from timeseries_utilities import ColumnDropper, SimpleLagger, SimpleCalendarFeaturizer, SimpleForecaster
-
+from utilities import set_telemetry_scenario
 
 # 0.0 Parse input arguments
 parser = argparse.ArgumentParser("split")
@@ -34,6 +34,8 @@ current_run = None
 def init():
     global current_run
     current_run = Run.get_context()
+    # Update step run with the right traits to denote it is training
+    set_telemetry_scenario(current_run, 'ManyModelsCustomScriptTrain')
 
 
 def set_telemetry(run):
