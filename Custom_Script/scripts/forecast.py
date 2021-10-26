@@ -7,6 +7,7 @@ import pandas as pd
 
 from azureml.core.model import Model
 from azureml.core.run import Run
+from utilities import set_telemetry_scenario
 
 
 # 0.0 Parse input arguments
@@ -24,6 +25,9 @@ current_run = None
 def init():
     global current_run
     current_run = Run.get_context()
+
+    # set the current run trait to be inference run
+    set_telemetry_scenario(current_run, 'ManyModelsCustomScriptInference')
 
 
 def run(input_data):
@@ -51,7 +55,7 @@ def run(input_data):
         # 5.0 Make predictions
         forecasts = forecaster.forecast(data)
         prediction_df = forecasts.to_frame(name='Prediction')
-        
+
         # 6.0 Add actuals to the returned dataframe if they are available
         if forecaster.target_column_name in data.columns:
             prediction_df[forecaster.target_column_name] = data[forecaster.target_column_name]
